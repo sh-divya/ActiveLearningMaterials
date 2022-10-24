@@ -12,9 +12,10 @@ API_KEY = 'ZOyRKuvwhXfX8jJPK'
 mpr = MPRester(API_KEY)
 
 class CrystalDataset(Dataset):
-    def __init__(self, data_path):
+    def __init__(self, data_path, csv_path):
         self.data_path = data_path
         self.cifs = os.listdir(data_path)
+        self.write_csv = csv_path
 
     def oracle_data(self, crystal):
         nn_calc = CrystalNN()
@@ -67,15 +68,23 @@ class CrystalDataset(Dataset):
         composition['space_group'] = crystal.get_space_group_info()[1]
         return composition
 
-    def __getitem__(self, idx):
+    def populate(self):
         warnings.filterwarnings('ignore')
-        struc = osp.join(self.data_path, self.cifs[idx])
-        struc = Structure.from_file(struc)
-        struc.add_oxidation_state_by_guess()
-        oracle = self.oracle_data(struc)
-        bb = self.building_blocks(struc)
-
-        return self.cifs[idx], torch.tensor(oracle) , torch.tensor(list(bb.values()))
+        fobj = open(self.write_csv, 'a')
+        # fobj.write('\t'.join(['ID', 'LLB', 'SBI', 'AFC', 'LASD', 'LLSD']) + '\n')
+        for cif in self.cifs[3852:]:
+            struc = osp.join(self.data_path, cif)
+            struc = Structure.from_file(struc)
+            struc.add_oxidation_state_by_guess()
+            try:
+                oracle = self.oracle_data(struc)
+                line = '\t'.join([cif.split('.')[0]] + list(map(str, oracle))) + '\n'
+                fobj.write(line)
+            except:
+                print(cif)
+                continue
+            # break
+        fobj.close()
 
 
 def download(criteria, properties, save_dir):
@@ -88,7 +97,7 @@ def download(criteria, properties, save_dir):
 if __name__ == '__main__':
     data_base = '/Users/divya-sh/Documents/' \
                 'MILA - AI for Materials/data/'
-
+    csv_path = 'lissb.csv'
     destination = 'li-ssb'
 
 
@@ -101,6 +110,5 @@ if __name__ == '__main__':
     # extra_properties = []
     # download(query_crit, extra_properties, osp.join(data_base, destination))
 
-    dataObj = CrystalDataset(osp.join(data_base, destination))
-    for d in dataObj:
-        print(d[0])
+    dataObj = CrystalDataset(osp.join(data_base, destination), csv_path)
+    dataObj.populate()
