@@ -69,7 +69,7 @@ class CrystalDataset(Dataset):
 
     def populate(self):
         warnings.filterwarnings('ignore')
-        fobj = open(self.write_csv, 'a')
+        fobj = open(self.write_csv, 'w+')
         fobj.write('\t'.join(['ID', 'LLB', 'SBI', 'AFC', 'LASD', 'LLSD']) + '\n')
         for cif in self.cifs[:]:
             struc = osp.join(self.data_path, cif)
@@ -98,8 +98,8 @@ def download(queryObj, criteria, properties, save_dir):
 @click.option('--apikey_filepath', default='./apikey.txt')
 def data_setup(filepath, apikey_filepath):
     with open(apikey_filepath) as fobj:
-        apikey = fobj.read(apikey_filepath).strip()
-        mpr = MPRester(API_KEY)
+        apikey = fobj.read().strip()
+        mpr = MPRester(apikey)
         query_crit = {
             "elements":{
                 "$all":['Li']
@@ -107,13 +107,16 @@ def data_setup(filepath, apikey_filepath):
         }
 
         extra_properties = []
-        download(mpr, query_crit, extra_properties, osp.join(data_base, destination))
+        download(mpr, query_crit, extra_properties, filepath)
 
+
+@click.command()
+@click.option('--datapath', default='./data')
+@click.option('--csvfile', default='./temp.csv')
+def process_data(datapath, csvfile):
+    dataObj = CrystalDataset(datapath, csvfile)
+    dataObj.populate()
 
 if __name__ == '__main__':
-    data_setup()
-    # csv_path = 'lissb.csv'
-
-
-    # dataObj = CrystalDataset(osp.join(data_base, destination), csv_path)
-    # dataObj.populate()
+    # data_setup()
+    process_data()
