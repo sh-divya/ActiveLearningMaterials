@@ -6,10 +6,9 @@ import os.path as osp
 import pandas as pd
 import warnings
 import torch
+import click
 import os
 
-API_KEY = 'ZOyRKuvwhXfX8jJPK'
-mpr = MPRester(API_KEY)
 
 class CrystalDataset(Dataset):
     def __init__(self, data_path, csv_path):
@@ -71,8 +70,8 @@ class CrystalDataset(Dataset):
     def populate(self):
         warnings.filterwarnings('ignore')
         fobj = open(self.write_csv, 'a')
-        # fobj.write('\t'.join(['ID', 'LLB', 'SBI', 'AFC', 'LASD', 'LLSD']) + '\n')
-        for cif in self.cifs[3852:]:
+        fobj.write('\t'.join(['ID', 'LLB', 'SBI', 'AFC', 'LASD', 'LLSD']) + '\n')
+        for cif in self.cifs[:]:
             struc = osp.join(self.data_path, cif)
             struc = Structure.from_file(struc)
             struc.add_oxidation_state_by_guess()
@@ -87,28 +86,34 @@ class CrystalDataset(Dataset):
         fobj.close()
 
 
-def download(criteria, properties, save_dir):
+def download(queryObj, criteria, properties, save_dir):
     write_path = osp.join(save_dir)
-    for i, d in enumerate(mpr.query(criteria=criteria, properties=["material_id" , "cif"] + properties)):
+    for i, d in enumerate(queryObj.query(criteria=criteria, properties=["material_id" , "cif"] + properties)):
         with open(osp.join(write_path, d['material_id'] + '.cif'), 'w+') as fobj:
             fobj.write(d['cif'])
 
 
+@click.command()
+@click.option('--filepath', default='./data')
+@click.option('--apikey_filepath', default='./apikey.txt')
+def data_setup(filepath, apikey_filepath):
+    with open(apikey_filepath) as fobj:
+        apikey = fobj.read(apikey_filepath).strip()
+        mpr = MPRester(API_KEY)
+        query_crit = {
+            "elements":{
+                "$all":['Li']
+                }
+        }
+
+        extra_properties = []
+        download(mpr, query_crit, extra_properties, osp.join(data_base, destination))
+
+
 if __name__ == '__main__':
-    data_base = '/Users/divya-sh/Documents/' \
-                'MILA - AI for Materials/data/'
-    csv_path = 'lissb.csv'
-    destination = 'li-ssb'
+    data_setup()
+    # csv_path = 'lissb.csv'
 
 
-    query_crit = {
-        "elements":{
-            "$all":['Li']
-            }
-    }
-
-    # extra_properties = []
-    # download(query_crit, extra_properties, osp.join(data_base, destination))
-
-    dataObj = CrystalDataset(osp.join(data_base, destination), csv_path)
-    dataObj.populate()
+    # dataObj = CrystalDataset(osp.join(data_base, destination), csv_path)
+    # dataObj.populate()
