@@ -82,13 +82,13 @@ class CrystalDataset(Dataset):
 
     def populate(self):
         warnings.filterwarnings('ignore')
-        fobj = open(self.write_csv, 'w+')
-        fobj.write('\t'.join(['ID', 'LLB', 'SBI', 'AFC', 'LASD', 'LLSD', 'Psuperionic']) + '\n')
+        fobj = open(self.write_csv, 'a')
+        # fobj.write('\t'.join(['ID', 'LLB', 'SBI', 'AFC', 'LASD', 'LLSD', 'Psuperionic']) + '\n')
         if self.skip:
             skip_cifs  = [line.split()[0] for line in self.skipObj]
         else:
             skip_cifs = []
-        for cif in self.cifs[:1000]:
+        for cif in self.cifs[1000:]:
             if self.skip:
                 if cif in skip_cifs:
                     continue
@@ -208,5 +208,5 @@ def verify_sendek():
 
 if __name__ == '__main__':
     # data_setup()
-    # process_data()
-    verify_sendek()
+    process_data()
+    # verify_sendek()
