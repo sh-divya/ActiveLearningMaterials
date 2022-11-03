@@ -1,3 +1,4 @@
+from pymatgen.core.periodic_table import Element
 from pymatgen.ext.matproj import MPRester
 from torch.utils.data import Dataset
 from pymatgen.core import Structure
@@ -5,6 +6,7 @@ import matplotlib.pyplot as plt
 import os.path as osp
 import torch.nn as nn
 import numpy as np
+import pandas as pd
 import warnings
 import torch
 import click
@@ -68,17 +70,43 @@ class CrystalDataset(Dataset):
 
         return (llb, sbi, afc, lasd, llsd)
 
-    def building_blocks(self, crystal):
+    def building_blocks(self):
         # print(crystal.formula)
-        composition = {i:0 for i in range(1, 119)}
-        denom = len(crystal)
-        
-        for elem in crystal:
-            e = elem.specie.Z
-        composition[e] += 1 / denom
+        proxy_features = {'MP ID': [], 'Li content': [], 'Natoms': [], 'Space Group': [],
+                        'a': [], 'b': [], 'c': [], 'alpha': [], 'beta': [],
+                        'gamma':[]}
+        for i in range(1, 119):
+            if i != 3:
+                proxy_features[Element('H').from_Z(i).symbol] = []
+        for m, mp in enumerate(self.cifs[:]):
+            warnings.filterwarnings('ignore')
+            path = osp.join(self.data_path, mp)
+            struc = Structure.from_file(path)
+            lattice = struc.lattice
+            a, b, c = lattice.abc
+            alpha, beta, gamma = lattice.angles
+            proxy_features['a'].append(a) 
+            proxy_features['b'].append(b) 
+            proxy_features['c'].append(c) 
+            proxy_features['alpha'].append(alpha) 
+            proxy_features['beta'].append(beta)
+            proxy_features['gamma'].append(gamma) 
+            proxy_features['MP ID'].append(mp)
+            proxy_features['Space Group'].append(struc.get_space_group_info()[1])
+            comp = struc.composition
+            proxy_features['Natoms'].append(comp.num_atoms)
+            comp_dix = dict(comp.fractional_composition.as_dict())
+            proxy_features['Li content'].append(comp_dix['Li'])
+            for elem in list(proxy_features.keys())[10:]:
+                if elem in comp_dix:
+                    proxy_features[elem].append(comp_dix[elem])
+                else:
+                    proxy_features[elem].append(0)
+            # break
+        df = pd.DataFrame.from_dict(proxy_features)
+        # print(df)
+        df.to_csv(self.write_csv, index=False)
 
-        composition['space_group'] = crystal.get_space_group_info()[1]
-        return composition
 
     def populate(self):
         warnings.filterwarnings('ignore')
@@ -153,7 +181,8 @@ def process_data(datapath, csvfile, avoidfile, avoid):
     dataObj = CrystalDataset(datapath, csvfile, avoid, avoidfile)
     # dataObj.verify_structs()
     # dataObj.skipObj.close()
-    dataObj.populate()
+    # dataObj.populate()
+    dataObj.building_blocks()
 
 
 def verify_sendek():
@@ -209,5 +238,5 @@ def verify_sendek():
 
 if __name__ == '__main__':
     # data_setup()
-    # process_data()
-    verify_sendek()
+    process_data()
+    # verify_sendek()
