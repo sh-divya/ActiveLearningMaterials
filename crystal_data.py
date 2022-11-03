@@ -45,7 +45,7 @@ class CrystalDataset(Dataset):
         for s, site in enumerate(crystal_neighs):
             if crystal[s].specie.Z == 3:
                 llsd.append(min([neigh[1] for neigh in site if neigh.specie.Z == 3]))
-                lasd.append(min([neigh[1] for neigh in site if neigh.specie.X >= 0]))
+                lasd.append(min([neigh[1] for neigh in site if neigh.specie.Z == A]))
 
         for e, elem in enumerate(crystal):
             
@@ -83,7 +83,7 @@ class CrystalDataset(Dataset):
     def populate(self):
         warnings.filterwarnings('ignore')
         fobj = open(self.write_csv, 'a')
-        # fobj.write('\t'.join(['ID', 'LLB', 'SBI', 'AFC', 'LASD', 'LLSD', 'Psuperionic']) + '\n')
+        fobj.write('\t'.join(['ID', 'LLB', 'SBI', 'AFC', 'LASD', 'LLSD', 'Psuperionic']) + '\n')
         if self.skip:
             skip_cifs  = [line.split()[0] for line in self.skipObj]
         else:
@@ -177,7 +177,7 @@ def verify_sendek():
         'mp-15789': 0.901,
         'mp-15790': 0.899,
         'mp-15791': 0.899,
-        'mp-561095': 0.984, # a
+        'mp-561095': 0.984 , # a
         'mp-8430': 0.76
     }
 
@@ -193,8 +193,9 @@ def verify_sendek():
 
     y_sendek = list(sendek_candidates.values())
     error = [i - j for i, j in zip(y, y_sendek)]
-    plt.plot(error, label='Error LR outputs')
-    plt.plot([0.0 for e in error], label='No Error')
+    plt.scatter(y_sendek, y, label='Sendek vs Divya', color='k')
+    # plt.scatter()
+    plt.plot(y_sendek, y_sendek, label='No Error')
     error = [abs(e) for e in error]
     minE = min(error)
     maxE = max(error)
@@ -208,5 +209,5 @@ def verify_sendek():
 
 if __name__ == '__main__':
     # data_setup()
-    process_data()
-    # verify_sendek()
+    # process_data()
+    verify_sendek()
