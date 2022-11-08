@@ -14,10 +14,14 @@ import os
 
 
 class CrystalDataset(Dataset):
-    def __init__(self, data_path='./data', csv_path='./csvfile.csv', skip=False, skip_fptr='skip.txt'):
+    def __init__(self, data_path='./data', true_path='./csvfile.csv',
+                 skip=False, skip_fptr='skip.txt', feat_path='./proxy.csv',
+                 final_path='./compile.csv'):
         self.data_path = data_path
         self.cifs = os.listdir(data_path)
-        self.write_csv = csv_path
+        self.true_csv = true_path
+        self.feat_csv = feat_path
+        self.compile_csv = final_path
         self.oracleSendek = nn.Sequential(
             nn.Linear(5, 1, bias=True),
             nn.Sigmoid()
@@ -33,6 +37,8 @@ class CrystalDataset(Dataset):
                 self.skipObj = open(skip_fptr, 'w+')
         else:
             self.skipObj = open(skip_fptr, 'r')
+            self.skip_crys = [i.split()[0] for i in self.skipObj]
+            self.mat_df = pd.read_csv(self.compile_csv)
 
     def oracle_data(self, crystal):
         llb = []
@@ -71,8 +77,7 @@ class CrystalDataset(Dataset):
         return (llb, sbi, afc, lasd, llsd)
 
     def building_blocks(self):
-        # print(crystal.formula)
-        proxy_features = {'MP ID': [], 'Li content': [], 'Natoms': [], 'Space Group': [],
+        proxy_features = {'ID': [], 'Li content': [], 'Natoms': [], 'Space Group': [],
                         'a': [], 'b': [], 'c': [], 'alpha': [], 'beta': [],
                         'gamma':[]}
         for i in range(1, 119):
@@ -91,7 +96,7 @@ class CrystalDataset(Dataset):
             proxy_features['alpha'].append(alpha) 
             proxy_features['beta'].append(beta)
             proxy_features['gamma'].append(gamma) 
-            proxy_features['MP ID'].append(mp)
+            proxy_features['ID'].append(mp.split('.')[0])
             proxy_features['Space Group'].append(struc.get_space_group_info()[1])
             comp = struc.composition
             proxy_features['Natoms'].append(comp.num_atoms)
@@ -102,24 +107,16 @@ class CrystalDataset(Dataset):
                     proxy_features[elem].append(comp_dix[elem])
                 else:
                     proxy_features[elem].append(0)
-            # break
         df = pd.DataFrame.from_dict(proxy_features)
-        # print(df)
-        df.to_csv(self.write_csv, index=False)
+        df.to_csv(self.feat_csv, index=False)
 
 
     def populate(self):
         warnings.filterwarnings('ignore')
-        fobj = open(self.write_csv, 'a')
+        fobj = open(self.true_csv, 'a')
         fobj.write('\t'.join(['ID', 'LLB', 'SBI', 'AFC', 'LASD', 'LLSD', 'Psuperionic']) + '\n')
-        if self.skip:
-            skip_cifs  = [line.split()[0] for line in self.skipObj]
-        else:
-            skip_cifs = []
+        skip_cifs = []
         for cif in self.cifs[1000:]:
-            if self.skip:
-                if cif in skip_cifs:
-                    continue
             struc = osp.join(self.data_path, cif)
             struc = Structure.from_file(struc)
             struc.add_oxidation_state_by_guess()
@@ -146,6 +143,20 @@ class CrystalDataset(Dataset):
             except UserWarning:
                 self.skipObj.write(cif.split()[0] + '\tReadWarning\n')
                 continue
+
+    def compile(self):
+        df_true = pd.read_csv(self.true_csv, sep=r'\s+', engine='python', header=0)
+        df_feat = pd.read_csv(self.feat_csv)
+        df = pd.merge(df_feat, df_true[['ID', 'Psuperionic']], on='ID', how='left')
+        df.to_csv(self.compile_csv, index=False)
+
+    def __getitem__(self, idx):
+        mat = self.mat_df.iloc[idx][1:]
+        mat = pd.to_numeric(mat)
+        mat, y = mat[:-1], mat[-1]
+        # print(mat.columns)
+        return torch.from_numpy(mat.values), torch.tensor(y)
+
 
 
 def download(queryObj, criteria, properties, save_dir):
@@ -174,15 +185,19 @@ def data_setup(filepath, apikey_filepath):
 
 @click.command()
 @click.option('--datapath', default='./data')
-@click.option('--csvfile', default='./temp.csv')
+@click.option('--truecsv', default='./temp.csv')
+@click.option('--featcsv', default='./proxy.csv')
+@click.option('--finalcsv', default='./compile.csv')
 @click.option('--avoidfile', default='./skip.txt')
 @click.option('--avoid', default=False)
-def process_data(datapath, csvfile, avoidfile, avoid):
-    dataObj = CrystalDataset(datapath, csvfile, avoid, avoidfile)
+def process_data(datapath, truecsv, avoid, avoidfile, featcsv, finalcsv):
+    dataObj = CrystalDataset(datapath, truecsv, avoid, avoidfile, featcsv, finalcsv)
+    # dataObj.compile()
+    print(dataObj[10])
     # dataObj.verify_structs()
     # dataObj.skipObj.close()
     # dataObj.populate()
-    dataObj.building_blocks()
+    # dataObj.building_blocks()
 
 
 def verify_sendek():
