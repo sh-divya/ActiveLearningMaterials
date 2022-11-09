@@ -1,7 +1,8 @@
 from pymatgen.core.periodic_table import Element
 from pymatgen.ext.matproj import MPRester
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 from pymatgen.core import Structure
+from torch.nn.functional import one_hot
 import matplotlib.pyplot as plt
 import os.path as osp
 import torch.nn as nn
@@ -39,6 +40,10 @@ class CrystalDataset(Dataset):
             self.skipObj = open(skip_fptr, 'r')
             self.skip_crys = [i.split()[0] for i in self.skipObj]
             self.mat_df = pd.read_csv(self.compile_csv)
+
+    def __len__(self):
+        return len(self.mat_df.index)
+
 
     def oracle_data(self, crystal):
         llb = []
@@ -147,15 +152,23 @@ class CrystalDataset(Dataset):
     def compile(self):
         df_true = pd.read_csv(self.true_csv, sep=r'\s+', engine='python', header=0)
         df_feat = pd.read_csv(self.feat_csv)
-        df = pd.merge(df_feat, df_true[['ID', 'Psuperionic']], on='ID', how='left')
+        df = pd.merge(df_feat, df_true[['ID', 'Psuperionic']], on='ID', how='right')
         df.to_csv(self.compile_csv, index=False)
 
     def __getitem__(self, idx):
         mat = self.mat_df.iloc[idx][1:]
         mat = pd.to_numeric(mat)
-        mat, y = mat[:-1], mat[-1]
-        # print(mat.columns)
-        return torch.from_numpy(mat.values), torch.tensor(y)
+        mat, y = mat[:-1].values, mat[-1]
+        # print(torch.from_numpy(mat[:2]).unsqueeze(0).shape)
+        # print(one_hot(torch.Tensor([mat[2]]).to(torch.int64), 230).shape)
+        # print(torch.from_numpy(mat[3:]).unsqueeze(0).shape)
+        mat = torch.cat((
+            torch.from_numpy(mat[:2]).unsqueeze(0),
+            one_hot(torch.Tensor([mat[2] - 1]).to(torch.int64), 230),
+            torch.from_numpy(mat[3:]).unsqueeze(0)
+            ), dim=1
+        )
+        return mat, torch.tensor(y)
 
 
 
@@ -192,12 +205,16 @@ def data_setup(filepath, apikey_filepath):
 @click.option('--avoid', default=False)
 def process_data(datapath, truecsv, avoid, avoidfile, featcsv, finalcsv):
     dataObj = CrystalDataset(datapath, truecsv, avoid, avoidfile, featcsv, finalcsv)
-    # dataObj.compile()
-    print(dataObj[10])
     # dataObj.verify_structs()
-    # dataObj.skipObj.close()
     # dataObj.populate()
-    # dataObj.building_blocks()
+    # dataObj.building_blocks(
+    # dataObj.compile()
+    temploader = DataLoader(dataObj, batch_size=15962)
+    for x, y in temploader:
+        m = x.mean(dim=0)
+        s = x.std(dim=0)
+        torch.save(m, './data/mean.pt')
+        torch.save(s, './data/std.pt')
 
 
 def verify_sendek():
