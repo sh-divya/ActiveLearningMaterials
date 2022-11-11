@@ -17,7 +17,7 @@ import os
 class CrystalDataset(Dataset):
     def __init__(self, data_path='./data', true_path='./csvfile.csv',
                  skip=False, skip_fptr='skip.txt', feat_path='./proxy.csv',
-                 final_path='./compile.csv'):
+                 final_path='./compile.csv', transform=None):
         self.data_path = data_path
         self.cifs = os.listdir(data_path)
         self.true_csv = true_path
@@ -31,6 +31,7 @@ class CrystalDataset(Dataset):
             self.oracleSendek[0].weight = nn.Parameter(torch.tensor([0.18, -4.01, -0.47, 8.70, -2.17]).float())
             self.oracleSendek[0].bias = nn.Parameter(torch.tensor(-6.56).float())
         self.skip = skip
+        self.transform = transform
         if not skip:
             if osp.isfile(skip_fptr):
                 self.skipObj = open(skip_fptr, 'a')
@@ -40,6 +41,7 @@ class CrystalDataset(Dataset):
             self.skipObj = open(skip_fptr, 'r')
             self.skip_crys = [i.split()[0] for i in self.skipObj]
             self.mat_df = pd.read_csv(self.compile_csv)
+            self.mat_df = self.mat_df.loc[:, (self.mat_df != 0).any(axis=0)]
 
     def __len__(self):
         return len(self.mat_df.index)
@@ -168,7 +170,9 @@ class CrystalDataset(Dataset):
             torch.from_numpy(mat[3:]).unsqueeze(0)
             ), dim=1
         )
-        return mat, torch.tensor(y)
+        if self.transform:
+            mat = (mat - self.transform['mean']) / self.transform['std']
+        return torch.nan_to_num(mat, nan=0.0).squeeze(0), torch.tensor(y)
 
 
 
@@ -209,12 +213,14 @@ def process_data(datapath, truecsv, avoid, avoidfile, featcsv, finalcsv):
     # dataObj.populate()
     # dataObj.building_blocks(
     # dataObj.compile()
-    temploader = DataLoader(dataObj, batch_size=15962)
-    for x, y in temploader:
-        m = x.mean(dim=0)
-        s = x.std(dim=0)
-        torch.save(m, './data/mean.pt')
-        torch.save(s, './data/std.pt')
+    temp, _ = dataObj[0]
+    print(temp.shape)
+    # temploader = DataLoader(dataObj, batch_size=15962)
+    # for x, y in temploader:
+    #     m = x.mean(dim=0)
+    #     s = x.std(dim=0)
+    #     torch.save(m, './data/mean.pt')
+    #     torch.save(s, './data/std.pt')
 
 
 def verify_sendek():
