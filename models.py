@@ -21,14 +21,13 @@ class ProxyMLP(nn.Module):
         self.hidden_act = nn.LeakyReLU(0.2)
         self.drop = nn.Dropout(p=0.5)
         # self.hidden_act = nn.ReLU()
-        self.final_act = nn.Tanh()
+        self.final_act = nn.Sigmoid()
 
     def forward(self, x):
         for l, layer in enumerate(self.nn_layers):
             x = layer(x)
             # print(layer)
             if l == len(self.nn_layers) - 1:
-                # print(self.final_act)
                 x = self.final_act(x)
             if l % 2 == 1:
                 # print(self.hidden_act)

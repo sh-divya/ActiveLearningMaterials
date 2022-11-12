@@ -15,6 +15,7 @@ torch.manual_seed(SEED)
 random.seed(SEED)
 np.random.seed(SEED)
 
+# torch.autograd.set_detect_anomaly(True)
 
 def weights_init(m):
     if isinstance(m, nn.Linear):
@@ -26,8 +27,8 @@ def validate(model, loader, criterion, device):
     with torch.no_grad():
         vl = 0
         for i, (x, y) in enumerate(loader):
-            inp = x.to(device).to(torch.float32)
-            true = y.to(device).to(torch.float32)
+            inp = x.to(device).to(torch.float64)
+            true = y.to(device).to(torch.float64)
             out = model(inp).squeeze(-1).squeeze(-1)
             vl += criterion(out, true).item()
         vl = vl / (i + 1)
@@ -42,29 +43,35 @@ def train(batch_size, lr, num_epochs, layers, lmda, split):
         'mean':torch.load('./data/mean.pt'),
         'std':torch.load('./data/std.pt')
     }
+    # print(standard['mean'].isnan().sum())
+    # print(standard['std'].isnan().sum())
 
     dataset = CrystalDataset('./data/li-ssb', './data/lissb.csv', True,
                              './data/skip.txt', './data/proxy.csv', 
-                             './data/compile.csv', transform=standard)
+                             './data/compile.csv' , transform=standard)
     sets = random_split(dataset, split)
     trainset, valset, testset = sets
 
     trainloader = DataLoader(trainset, batch_size=batch_size, shuffle=True)
     valloader = DataLoader(valset, batch_size=batch_size, shuffle=True)
 
-    model = ProxyMLP(322, layers).to(device)
+    model = ProxyMLP(322, layers).to(device).to(torch.float64)
     model.apply(weights_init)
-    criterion = nn.MSELoss()
+    criterion = nn.BCELoss()
     # optimizer = optim.SGD(model.parameters(), lr=lr)
-    optimizer = optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.999), weight_decay=lmda)
+    optimizer = optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.999))
 
     for epoch in range(num_epochs):
         model.train()
         loss = 0
         for i, (x, y) in enumerate(trainloader):
-            inp = x.to(device).to(torch.float32)
-            true = y.to(device).to(torch.float32)
+            inp = x.to(device).to(torch.float64)
+            true = y.to(device).to(torch.float64)
             out = model(inp).squeeze(-1).squeeze(-1)
+            # test = out.isnan().sum()
+            # if test.item() > 0:
+            #     print('Out', inp.isnan().sum())
+            #     print(i, test)
             l1_weights = torch.Tensor([
                 m.weight.data.abs().sum()
                 for m in model.modules
@@ -73,7 +80,7 @@ def train(batch_size, lr, num_epochs, layers, lmda, split):
                 m.bias.data.abs().sum()
                 for m in model.modules
             ]).sum()
-            l = criterion(out, true) + lmda * (l1_weights + l1_biases)
+            l = criterion(out, true)  # + lmda * (l1_weights + l1_biases)
             loss += l.item()
             optimizer.zero_grad()
             l.backward()
@@ -96,16 +103,16 @@ def train(batch_size, lr, num_epochs, layers, lmda, split):
 if __name__ == '__main__':
     wb.init(project='AL-Li', entity='sh-divya')
     config = {
-        'lr': 1e-4,
-        'batch': 64,
+        'lr': 1e-2,
+        'batch': 128,
         'epochs': 5,
-        'layers': [256, 256, 128],
+        'layers': [512, 512, 256],
         'split': [0.6, 0.2, 0.2],
-        'lambda': 0.5
+        'lambda': 0.2
     }
-    name = [key + '-' + str(config[key]) for key in ['lr', 'batch', 'lambda']]
-    wb.run.name = 'Reduced' + '_'.join(name) + '_layers' # + '-'.join(config['layers'])
-    wb.run.name = 'test'
+    name = [key + '-' + str(config[key]) for key in ['lr', 'batch']] #, 'lambda']]
+    wb.run.name = 'BCE' + '_'.join(name) + '_layers' + '-'.join([str(l) for l in config['layers']])
+    # wb.run.name = 'test'
     train(
         config['batch'],
         config['lr'], config['epochs'],

@@ -42,6 +42,7 @@ class CrystalDataset(Dataset):
             self.skip_crys = [i.split()[0] for i in self.skipObj]
             self.mat_df = pd.read_csv(self.compile_csv)
             self.mat_df = self.mat_df.loc[:, (self.mat_df != 0).any(axis=0)]
+            self.mat_df = self.mat_df.dropna(axis=0, subset=['Psuperionic'])
 
     def __len__(self):
         return len(self.mat_df.index)
@@ -172,7 +173,7 @@ class CrystalDataset(Dataset):
         )
         if self.transform:
             mat = (mat - self.transform['mean']) / self.transform['std']
-        return torch.nan_to_num(mat, nan=0.0).squeeze(0), torch.tensor(y)
+        return torch.nan_to_num(mat, nan=0.0).squeeze(0), torch.tensor(y) >= 0.5
 
 
 
@@ -213,14 +214,12 @@ def process_data(datapath, truecsv, avoid, avoidfile, featcsv, finalcsv):
     # dataObj.populate()
     # dataObj.building_blocks(
     # dataObj.compile()
-    temp, _ = dataObj[0]
-    print(temp.shape)
-    # temploader = DataLoader(dataObj, batch_size=15962)
-    # for x, y in temploader:
-    #     m = x.mean(dim=0)
-    #     s = x.std(dim=0)
-    #     torch.save(m, './data/mean.pt')
-    #     torch.save(s, './data/std.pt')
+    temploader = DataLoader(dataObj, batch_size=15962)
+    for x, y in temploader:
+        m = x.mean(dim=0)
+        s = x.std(dim=0)
+        torch.save(m, './data/mean.pt')
+        torch.save(s, './data/std.pt')
 
 
 def verify_sendek():
