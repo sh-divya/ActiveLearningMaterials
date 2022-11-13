@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+import torch.optim as optim
+import pytorch_lightning as pl
 
 class ProxyMLP(nn.Module):
     
@@ -36,3 +38,54 @@ class ProxyMLP(nn.Module):
                 x = self.drop(x)
             
         return x
+
+class ProxyModel(pl.LightningModule):
+    def __init__(self, proxy, loss, lr, device):
+        super().__init__()
+        self.model = proxy
+        self.criterion = loss
+        self.lr = lr
+        # self.device = device
+
+    def training_step(self, batch, batch_idx):
+        x, y = batch
+        inp = x.to(torch.float32) # .to(self.device)
+        true = y.to(torch.float32) # .to(self.device)
+        out = self.model(inp).squeeze(-1).squeeze(-1)
+
+        # l1_weights = torch.Tensor([
+        #     m.weight.data.abs().sum()
+        #     for m in model.modules
+        # ]).sum()
+        # l1_biases = torch.Tensor([
+        #     m.bias.data.abs().sum()
+        #     for m in model.modules
+        # ]).sum()
+        loss = self.criterion(out, true)
+        self.log('train_loss', loss)
+        
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        x, y = batch
+        inp = x.to(torch.float32).to(self.device)
+        true = y.to(torch.float32).to(self.device)
+        out = self.model(inp).squeeze(-1).squeeze(-1)
+        loss = self.criterion(out, true)
+        self.log('val_loss', loss)
+
+        return loss
+
+    def test_step(self, batch, batch_idx):
+        x, y = batch
+        inp = x.to(torch.float32).to(self.device)
+        true = y.to(torch.float32).to(self.device)
+        out = self.model(inp).squeeze(-1).squeeze(-1)
+        loss = self.criterion(out, true)
+        
+        return loss
+        
+
+    def configure_optimizers(self):
+        optimizer = optim.Adam(self.parameters(), self.lr)
+        return optimizer
