@@ -1,3 +1,6 @@
+lightning_logs
+__pycache__/
+wandb/
 data/li-ssb/
 apikey.txt
 *.slurm
