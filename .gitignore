@@ -1,4 +1,5 @@
-lightning_logs
+lightning_logs/
+AL-Li/
 __pycache__/
 wandb/
 data/li-ssb/
