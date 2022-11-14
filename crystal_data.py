@@ -17,7 +17,7 @@ import os
 class CrystalDataset(Dataset):
     def __init__(self, data_path='./data', true_path='./csvfile.csv',
                  skip=False, skip_fptr='skip.txt', feat_path='./proxy.csv',
-                 final_path='./compile.csv', transform=None):
+                 final_path='./compile.csv', transform=None, subset=False):
         self.data_path = data_path
         self.cifs = os.listdir(data_path)
         self.true_csv = true_path
@@ -43,6 +43,7 @@ class CrystalDataset(Dataset):
             self.mat_df = pd.read_csv(self.compile_csv)
             self.mat_df = self.mat_df.loc[:, (self.mat_df != 0).any(axis=0)]
             self.mat_df = self.mat_df.dropna(axis=0, subset=['Psuperionic'])
+            self.subset = subset
 
     def __len__(self):
         return len(self.mat_df.index)
@@ -161,16 +162,23 @@ class CrystalDataset(Dataset):
     def __getitem__(self, idx):
         mat = self.mat_df.iloc[idx][1:]
         mat = pd.to_numeric(mat)
+        # print(mat)
+
         mat, y = mat[:-1].values, mat[-1]
-        # print(torch.from_numpy(mat[:2]).unsqueeze(0).shape)
-        # print(one_hot(torch.Tensor([mat[2]]).to(torch.int64), 230).shape)
-        # print(torch.from_numpy(mat[3:]).unsqueeze(0).shape)
-        mat = torch.cat((
-            torch.from_numpy(mat[:2]).unsqueeze(0),
-            one_hot(torch.Tensor([mat[2] - 1]).to(torch.int64), 230),
-            torch.from_numpy(mat[3:]).unsqueeze(0)
-            ), dim=1
-        )
+        if self.subset:
+            # print(mat.shape)
+            mat = mat[:][[0, 1] + list(range(10, 93))]
+
+        if self.subset:
+            mat = torch.from_numpy(mat).unsqueeze(0)
+        else:
+            mat = torch.cat((
+                torch.from_numpy(mat[:2]).unsqueeze(0),
+                one_hot(torch.Tensor([mat[2] - 1]).to(torch.int64), 230),
+                torch.from_numpy(mat[3:]).unsqueeze(0)
+                ), dim=1
+            )
+
         if self.transform:
             mat = (mat - self.transform['mean']) / self.transform['std']
         return torch.nan_to_num(mat, nan=0.0).squeeze(0), torch.tensor(y) >= 0.5
@@ -202,14 +210,15 @@ def data_setup(filepath, apikey_filepath):
 
 
 @click.command()
-@click.option('--datapath', default='./data')
-@click.option('--truecsv', default='./temp.csv')
-@click.option('--featcsv', default='./proxy.csv')
-@click.option('--finalcsv', default='./compile.csv')
-@click.option('--avoidfile', default='./skip.txt')
-@click.option('--avoid', default=False)
+@click.option('--datapath', default='./data/li-ssb')
+@click.option('--truecsv', default='./data/lissb.csv')
+@click.option('--featcsv', default='./data/proxy.csv')
+@click.option('--finalcsv', default='./data/compile.csv')
+@click.option('--avoidfile', default='./data/skip.txt')
+@click.option('--avoid', default=True)
 def process_data(datapath, truecsv, avoid, avoidfile, featcsv, finalcsv):
-    dataObj = CrystalDataset(datapath, truecsv, avoid, avoidfile, featcsv, finalcsv)
+    dataObj = CrystalDataset(datapath, truecsv, avoid, avoidfile, featcsv, finalcsv, None, True)
+    # print(dataObj[0])
     # dataObj.verify_structs()
     # dataObj.populate()
     # dataObj.building_blocks(
@@ -218,8 +227,8 @@ def process_data(datapath, truecsv, avoid, avoidfile, featcsv, finalcsv):
     for x, y in temploader:
         m = x.mean(dim=0)
         s = x.std(dim=0)
-        torch.save(m, './data/mean.pt')
-        torch.save(s, './data/std.pt')
+        torch.save(m, './data/mean85.pt')
+        torch.save(s, './data/std85.pt')
 
 
 def verify_sendek():

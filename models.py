@@ -45,6 +45,7 @@ class ProxyModel(pl.LightningModule):
         self.model = proxy
         self.criterion = loss
         self.lr = lr
+        self.loss = 0
         # self.device = device
 
     def training_step(self, batch, batch_idx):
@@ -62,7 +63,10 @@ class ProxyModel(pl.LightningModule):
         #     for m in model.modules
         # ]).sum()
         loss = self.criterion(out, true)
+        # self.loss += loss.item()
+        # if (batch_idx + 1) % 100 == 0:
         self.log('train_loss', loss)
+        #     self.loss = 0
         
         return loss
 
