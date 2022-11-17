@@ -52,7 +52,7 @@ class ProxyModel(pl.LightningModule):
         x, y = batch
         inp = x.to(torch.float32) # .to(self.device)
         true = y.to(torch.float32) # .to(self.device)
-        out = self.model(inp).squeeze(-1).squeeze(-1)
+        out = self.model(inp)
 
         # l1_weights = torch.Tensor([
         #     m.weight.data.abs().sum()
@@ -63,28 +63,31 @@ class ProxyModel(pl.LightningModule):
         #     for m in model.modules
         # ]).sum()
         loss = self.criterion(out, true)
-        # self.loss += loss.item()
-        # if (batch_idx + 1) % 100 == 0:
         self.log('train_loss', loss)
-        #     self.loss = 0
         
         return loss
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
-        inp = x.to(torch.float32).to(self.device)
-        true = y.to(torch.float32).to(self.device)
-        out = self.model(inp).squeeze(-1).squeeze(-1)
+        inp = x.to(torch.float32)
+        true = y.to(torch.float32)
+        out = self.model(inp)
         loss = self.criterion(out, true)
+
+        true = true >= 0.5
+        pred = out >= 0.5
+        acc = (pred == true).sum() / inp.shape[0]
+
         self.log('val_loss', loss)
+        self.log('val_acc', acc)
 
         return loss
 
     def test_step(self, batch, batch_idx):
         x, y = batch
-        inp = x.to(torch.float32).to(self.device)
-        true = y.to(torch.float32).to(self.device)
-        out = self.model(inp).squeeze(-1).squeeze(-1)
+        inp = x.to(torch.float32)
+        true = y.to(torch.float32)
+        out = self.model(inp)
         loss = self.criterion(out, true)
         
         return loss

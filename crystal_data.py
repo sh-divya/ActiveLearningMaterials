@@ -43,10 +43,15 @@ class CrystalDataset(Dataset):
             self.mat_df = pd.read_csv(self.compile_csv)
             self.mat_df = self.mat_df.loc[:, (self.mat_df != 0).any(axis=0)]
             self.mat_df = self.mat_df.dropna(axis=0, subset=['Psuperionic'])
+            cols = self.mat_df.columns[self.mat_df.columns != 'ID']
+            self.mat_df[cols] = self.mat_df[cols].astype('float64')
             self.subset = subset
 
     def __len__(self):
         return len(self.mat_df.index)
+
+    def get_all_y(self):
+        return self.mat_df.iloc[:, -1] >= 0.5
 
 
     def oracle_data(self, crystal):
@@ -160,28 +165,30 @@ class CrystalDataset(Dataset):
         df.to_csv(self.compile_csv, index=False)
 
     def __getitem__(self, idx):
-        mat = self.mat_df.iloc[idx][1:]
-        mat = pd.to_numeric(mat)
+        mat = self.mat_df.iloc[[idx], 1:]
+        # mat = pd.to_numeric(mat)
         # print(mat)
+        # print(type(mat))
+        mat, y = mat.iloc[:, :-1].values, mat.iloc[:, -1].values
+        # print('Here')
 
-        mat, y = mat[:-1].values, mat[-1]
         if self.subset:
             # print(mat.shape)
-            mat = mat[:][[0, 1] + list(range(10, 93))]
+            mat = mat[:, [0, 1] + list(range(10, 93))]
 
         if self.subset:
             mat = torch.from_numpy(mat).unsqueeze(0)
         else:
+            mat = torch.tensor(mat).squeeze(0)
             mat = torch.cat((
-                torch.from_numpy(mat[:2]).unsqueeze(0),
-                one_hot(torch.Tensor([mat[2] - 1]).to(torch.int64), 230),
-                torch.from_numpy(mat[3:]).unsqueeze(0)
-                ), dim=1
-            )
-
+                mat[:2],
+                one_hot((mat[2] - 1).to(torch.int64), 230),
+                mat[3:]
+            ))
         if self.transform:
             mat = (mat - self.transform['mean']) / self.transform['std']
-        return torch.nan_to_num(mat, nan=0.0).squeeze(0), torch.tensor(y) >= 0.5
+
+        return torch.nan_to_num(mat, nan=0.0).squeeze(0).squeeze(0), torch.tensor(y)
 
 
 
@@ -218,17 +225,20 @@ def data_setup(filepath, apikey_filepath):
 @click.option('--avoid', default=True)
 def process_data(datapath, truecsv, avoid, avoidfile, featcsv, finalcsv):
     dataObj = CrystalDataset(datapath, truecsv, avoid, avoidfile, featcsv, finalcsv, None, True)
+    # print(list(range(len(dataObj))))
+    y = dataObj.get_all_y()
+    print(y)
     # print(dataObj[0])
     # dataObj.verify_structs()
     # dataObj.populate()
     # dataObj.building_blocks(
     # dataObj.compile()
-    temploader = DataLoader(dataObj, batch_size=15962)
-    for x, y in temploader:
-        m = x.mean(dim=0)
-        s = x.std(dim=0)
-        torch.save(m, './data/mean85.pt')
-        torch.save(s, './data/std85.pt')
+    # temploader = DataLoader(dataObj, batch_size=15962)
+    # for x, y in temploader:
+    #     m = x.mean(dim=0)
+    #     s = x.std(dim=0)
+    #     torch.save(m, './data/mean85.pt')
+    #     torch.save(s, './data/std85.pt')
 
 
 def verify_sendek():
