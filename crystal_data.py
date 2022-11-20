@@ -188,7 +188,7 @@ class CrystalDataset(Dataset):
         if self.transform:
             mat = (mat - self.transform['mean']) / self.transform['std']
 
-        return torch.nan_to_num(mat, nan=0.0).squeeze(0).squeeze(0), torch.tensor(y)
+        return torch.nan_to_num(mat, nan=0.0).squeeze(0).squeeze(0), torch.tensor(y) >= 0.5
 
 
 

@@ -63,7 +63,13 @@ class ProxyModel(pl.LightningModule):
         #     for m in model.modules
         # ]).sum()
         loss = self.criterion(out, true)
+
+        true = true >= 0.5
+        pred = out >= 0.5
+        acc = (pred == true).sum() / inp.shape[0]
+
         self.log('train_loss', loss)
+        self.log('train_acc', acc)
         
         return loss
 

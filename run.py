@@ -29,6 +29,7 @@ def proportional_split(dataset, split=None):
     x_train, x_test, y_train, y_test = train_test_split(idx, y,
                                                         train_size=split[0], test_size=split[1] + split[2],
                                                         shuffle=True, stratify=y)
+
     val_to_test = [split[1] / sum(split[1:]), split[2] / sum(split[1:])]
     x_val, x_test, y_val, y_test = train_test_split(x_test, y_test,
                                                         train_size=val_to_test[0], test_size=val_to_test[1],
@@ -50,10 +51,14 @@ def train(batch_size, lr, num_epochs, layers, split, logger):
 
 
     sets = proportional_split(dataset, split)
+    # sets = random_split(dataset, split)
     trainset, valset, testset = sets
 
-    # sets = random_split(dataset, split)
-    # trainset, valset, testset = sets
+    # tempload = DataLoader(trainset, batch_size=10000)
+    # for x, y in tempload:
+    #     print(y.mean())
+    #     print(y.std())
+    # raise Exception
 
     trainloader = DataLoader(trainset, batch_size=batch_size, shuffle=True)
     # raise Exception
@@ -61,8 +66,8 @@ def train(batch_size, lr, num_epochs, layers, split, logger):
 
     model = ProxyMLP(85, layers).to(device).to(torch.float32)
     model.apply(weights_init)
-    # criterion = nn.BCELoss()
-    criterion = nn.MSELoss()
+    criterion = nn.BCELoss()
+    # criterion = nn.MSELoss()
     # for x, y in trainloader:
     #     print(x.shape)
     #     print(y.shape)
@@ -89,14 +94,14 @@ def train(batch_size, lr, num_epochs, layers, split, logger):
 
 if __name__ == '__main__':
 
-    layer_search = [
+    # layer_search = [
         # [512, 512],
         # [1024, 1024],
-        # [512, 512, 256],
+        # [512, 512, 256]
         # [1024, 1024, 512],
         # [512, 512, 512, 256],
         # [512, 1024, 1024, 512]
-    ]
+    # ]
 
     layer_search = [
         [256, 256]
@@ -108,15 +113,15 @@ if __name__ == '__main__':
 
     for layer in layer_search:
         config = {
-            'lr': 1e-3,
-            'batch': 64,
+            'lr': 1e-2,
+            'batch': 128,
             'epochs': 50,
             'layers': layer,
             'split': [0.6, 0.2, 0.2],
         }
         name = [key + '-' + str(config[key]) for key in ['lr', 'batch']]
         # name = 'test'
-        name = 'MSE_CompOnly' + '_'.join(name) + '_layer-' + ''.join([str(l) for l in layer])
+        name = 'CompOnly' + '_'.join(name) + '_layer-' + ''.join([str(l) for l in layer])
         logger = WandbLogger(project='AL-Li', name=name)
         # logger = None
         train(
