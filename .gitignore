@@ -3,5 +3,12 @@ AL-Li/
 __pycache__/
 wandb/
 data/li-ssb/
+oracles/apikey.txt
+oracles/data/
+oracles/tmp/
 apikey.txt
 *.slurm
+*.dat
+*.traj
+*.log
+*.out

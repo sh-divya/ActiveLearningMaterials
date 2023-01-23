@@ -130,7 +130,7 @@ class CrystalDataset(Dataset):
         fobj = open(self.true_csv, 'a')
         fobj.write('\t'.join(['ID', 'LLB', 'SBI', 'AFC', 'LASD', 'LLSD', 'Psuperionic']) + '\n')
         skip_cifs = []
-        for cif in self.cifs[1000:]:
+        for cif in self.cifs[:]:
             struc = osp.join(self.data_path, cif)
             struc = Structure.from_file(struc)
             struc.add_oxidation_state_by_guess()
@@ -190,7 +190,13 @@ class CrystalDataset(Dataset):
 
         return torch.nan_to_num(mat, nan=0.0).squeeze(0).squeeze(0), torch.tensor(y) >= 0.5
 
+    def atom_info(self):
+        strucs = [Structure.from_file(osp.join(self.data_path, mp)) for mp in self.cifs[:10]]
+        tot_atoms = [len(s) for s in strucs]
+        num_atoms_type = []
 
+        print('Max Total', max(tot_atoms))
+        print('Min Total', min(tot_atoms))
 
 def download(queryObj, criteria, properties, save_dir):
     write_path = osp.join(save_dir)
@@ -226,12 +232,12 @@ def data_setup(filepath, apikey_filepath):
 def process_data(datapath, truecsv, avoid, avoidfile, featcsv, finalcsv):
     dataObj = CrystalDataset(datapath, truecsv, avoid, avoidfile, featcsv, finalcsv, None, True)
     # print(list(range(len(dataObj))))
-    y = dataObj.get_all_y()
-    print(y)
+    # y = dataObj.get_all_y()
+    # print(y)
     # print(dataObj[0])
     # dataObj.verify_structs()
     # dataObj.populate()
-    # dataObj.building_blocks(
+    dataObj.atom_info()
     # dataObj.compile()
     # temploader = DataLoader(dataObj, batch_size=15962)
     # for x, y in temploader:
