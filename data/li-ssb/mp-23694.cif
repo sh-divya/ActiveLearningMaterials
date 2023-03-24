@@ -1,0 +1,38 @@
+# generated using pymatgen
+data_LiBH
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   3.08293400
+_cell_length_b   5.90884800
+_cell_length_c   6.47653100
+_cell_angle_alpha   90.00000000
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   90.00000000
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   LiBH
+_chemical_formula_sum   'Li4 B4 H4'
+_cell_volume   117.98029949
+_cell_formula_units_Z   4
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.75000000  0.24761500  0.28980900  1
+  Li  Li1  1  0.25000000  0.25238500  0.78980900  1
+  Li  Li2  1  0.75000000  0.74761500  0.21019100  1
+  Li  Li3  1  0.25000000  0.75238500  0.71019100  1
+  B  B4  1  0.25000000  0.94838500  0.01221400  1
+  B  B5  1  0.25000000  0.44838500  0.48778600  1
+  B  B6  1  0.75000000  0.55161500  0.51221400  1
+  B  B7  1  0.75000000  0.05161500  0.98778600  1
+  H  H8  1  0.25000000  0.23313900  0.47014200  1
+  H  H9  1  0.25000000  0.73313900  0.02985800  1
+  H  H10  1  0.75000000  0.76686100  0.52985800  1
+  H  H11  1  0.75000000  0.26686100  0.97014200  1

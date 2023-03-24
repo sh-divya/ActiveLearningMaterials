@@ -1,0 +1,40 @@
+# generated using pymatgen
+data_SrLiLa3FeO8
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   7.01746624
+_cell_length_b   7.01746624
+_cell_length_c   5.37866800
+_cell_angle_alpha   90.00000000
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   134.90538896
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   SrLiLa3FeO8
+_chemical_formula_sum   'Sr1 Li1 La3 Fe1 O8'
+_cell_volume   187.60152353
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Sr  Sr0  1  0.85891900  0.14108100  0.50000000  1
+  Li  Li1  1  0.99419000  0.00581000  0.00000000  1
+  La  La2  1  0.64246200  0.35753800  0.00000000  1
+  La  La3  1  0.36015400  0.63984600  0.00000000  1
+  La  La4  1  0.13867600  0.86132400  0.50000000  1
+  Fe  Fe5  1  0.50252900  0.49747100  0.50000000  1
+  O  O6  1  0.81977500  0.18022500  0.00000000  1
+  O  O7  1  0.66732900  0.33267100  0.50000000  1
+  O  O8  1  0.18138400  0.81861600  0.00000000  1
+  O  O9  1  0.32252500  0.67747500  0.50000000  1
+  O  O10  1  0.26173300  0.25607700  0.74446800  1
+  O  O11  1  0.26173300  0.25607700  0.25553200  1
+  O  O12  1  0.74392300  0.73826700  0.25553200  1
+  O  O13  1  0.74392300  0.73826700  0.74446800  1

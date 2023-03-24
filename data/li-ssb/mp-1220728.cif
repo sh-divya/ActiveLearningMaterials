@@ -1,0 +1,34 @@
+# generated using pymatgen
+data_NaLi(AsS2)2
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   5.53769000
+_cell_length_b   5.67540180
+_cell_length_c   6.72991913
+_cell_angle_alpha   112.94369407
+_cell_angle_beta   111.17454233
+_cell_angle_gamma   89.85251529
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   NaLi(AsS2)2
+_chemical_formula_sum   'Na1 Li1 As2 S4'
+_cell_volume   179.25952496
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Na  Na0  1  0.47665700  0.21724500  0.95525500  1
+  Li  Li1  1  0.97695000  0.73967900  0.95863100  1
+  As  As2  1  0.15350200  0.48053600  0.38882700  1
+  As  As3  1  0.65115400  0.90443500  0.38510500  1
+  S  S4  1  0.50594700  0.73809800  0.00101700  1
+  S  S5  1  0.99776900  0.26825600  0.00536500  1
+  S  S6  1  0.25275100  0.90909600  0.44270300  1
+  S  S7  1  0.77507100  0.55181500  0.48141600  1

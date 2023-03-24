@@ -1,0 +1,30 @@
+# generated using pymatgen
+data_LiSc2Co
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   9.94172653
+_cell_length_b   9.94172653
+_cell_length_c   9.94172653
+_cell_angle_alpha   119.86962118
+_cell_angle_beta   116.05800526
+_cell_angle_gamma   93.59429372
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   LiSc2Co
+_chemical_formula_sum   'Li1 Sc2 Co1'
+_cell_volume   713.76332533
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.00000000  0.00000000  0.00000000  1
+  Sc  Sc1  1  0.69609300  0.00000000  0.69609300  1
+  Sc  Sc2  1  0.30390700  0.00000000  0.30390700  1
+  Co  Co3  1  0.50000000  0.00000000  0.50000000  1

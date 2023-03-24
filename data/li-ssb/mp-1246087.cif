@@ -1,0 +1,32 @@
+# generated using pymatgen
+data_LiGeN
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   3.01238531
+_cell_length_b   3.01243147
+_cell_length_c   9.41945924
+_cell_angle_alpha   90.00000000
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   119.99949299
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   LiGeN
+_chemical_formula_sum   'Li2 Ge2 N2'
+_cell_volume   74.02638113
+_cell_formula_units_Z   2
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.66667304  0.33334608  0.74339239  1
+  Li  Li1  1  0.33332696  0.66665392  0.24339239  1
+  Ge  Ge2  1  0.99999708  0.99999317  0.49802332  1
+  Ge  Ge3  1  0.00000292  0.00000683  0.99802332  1
+  N  N4  1  0.33332808  0.66665516  0.60322329  1
+  N  N5  1  0.66667192  0.33334484  0.10322329  1

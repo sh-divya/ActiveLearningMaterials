@@ -1,0 +1,33 @@
+# generated using pymatgen
+data_Li(TiTe2)2
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   7.98684066
+_cell_length_b   7.98684066
+_cell_length_c   6.67299828
+_cell_angle_alpha   65.50671459
+_cell_angle_beta   65.50671459
+_cell_angle_gamma   28.10899690
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   Li(TiTe2)2
+_chemical_formula_sum   'Li1 Ti2 Te4'
+_cell_volume   181.31495915
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.00000000  0.00000000  0.00000000  1
+  Ti  Ti1  1  0.75105800  0.75105800  0.23859600  1
+  Ti  Ti2  1  0.24894200  0.24894200  0.76140400  1
+  Te  Te3  1  0.12731800  0.12731800  0.21181300  1
+  Te  Te4  1  0.63077800  0.63077800  0.69722900  1
+  Te  Te5  1  0.87268200  0.87268200  0.78818700  1
+  Te  Te6  1  0.36922200  0.36922200  0.30277100  1

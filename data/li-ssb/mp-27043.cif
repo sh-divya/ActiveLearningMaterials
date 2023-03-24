@@ -1,0 +1,37 @@
+# generated using pymatgen
+data_LiCoP2O7
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   5.23697806
+_cell_length_b   5.23697806
+_cell_length_c   4.52687919
+_cell_angle_alpha   81.63824267
+_cell_angle_beta   81.63824267
+_cell_angle_gamma   103.01983560
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   LiCoP2O7
+_chemical_formula_sum   'Li1 Co1 P2 O7'
+_cell_volume   117.61386255
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.69356600  0.30643400  0.50000000  1
+  Co  Co1  1  0.06538800  0.93461200  0.50000000  1
+  P  P2  1  0.61191600  0.80897400  0.09064800  1
+  P  P3  1  0.19102600  0.38808400  0.90935200  1
+  O  O4  1  0.01029600  0.23844300  0.21245400  1
+  O  O5  1  0.06352500  0.58901400  0.74953100  1
+  O  O6  1  0.28965000  0.20776500  0.69837700  1
+  O  O7  1  0.41098600  0.93647500  0.25046900  1
+  O  O8  1  0.46535200  0.53464800  0.00000000  1
+  O  O9  1  0.76155700  0.98970400  0.78754600  1
+  O  O10  1  0.79223500  0.71035100  0.30162300  1

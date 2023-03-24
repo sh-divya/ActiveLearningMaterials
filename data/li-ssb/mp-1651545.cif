@@ -1,0 +1,52 @@
+# generated using pymatgen
+data_Li3CoSiBO7
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   5.02437957
+_cell_length_b   8.41161503
+_cell_length_c   6.27658339
+_cell_angle_alpha   90.02881825
+_cell_angle_beta   90.02987201
+_cell_angle_gamma   85.60379464
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   Li3CoSiBO7
+_chemical_formula_sum   'Li6 Co2 Si2 B2 O14'
+_cell_volume   264.48763616
+_cell_formula_units_Z   2
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.76569700  0.10543500  0.24994100  1
+  Li  Li1  1  0.23825000  0.89231200  0.75003100  1
+  Li  Li2  1  0.24866400  0.24658400  0.00312600  1
+  Li  Li3  1  0.24899400  0.24667800  0.49666800  1
+  Li  Li4  1  0.74666900  0.75081500  0.50149300  1
+  Li  Li5  1  0.74641600  0.75041000  0.99810400  1
+  Co  Co6  1  0.19579200  0.67880100  0.24991800  1
+  Co  Co7  1  0.80361400  0.32602400  0.74986100  1
+  Si  Si8  1  0.72105000  0.42734200  0.24983700  1
+  Si  Si9  1  0.27250300  0.57532500  0.74994100  1
+  B  B10  1  0.72967800  0.03961100  0.75008100  1
+  B  B11  1  0.28219700  0.95961700  0.25002800  1
+  O  O12  1  0.36707500  0.10772500  0.25004700  1
+  O  O13  1  0.63303600  0.89412600  0.74992600  1
+  O  O14  1  0.98990700  0.07763000  0.74991700  1
+  O  O15  1  0.02303300  0.91645500  0.25000400  1
+  O  O16  1  0.54580500  0.17812400  0.75060800  1
+  O  O17  1  0.46826600  0.82411400  0.24999900  1
+  O  O18  1  0.39545800  0.46633200  0.24997700  1
+  O  O19  1  0.59512600  0.53641500  0.75098400  1
+  O  O20  1  0.14060600  0.40178100  0.74961200  1
+  O  O21  1  0.85301600  0.59848100  0.24999900  1
+  O  O22  1  0.82664900  0.30493500  0.05631800  1
+  O  O23  1  0.82660300  0.30519000  0.44365100  1
+  O  O24  1  0.16818800  0.69490700  0.55394700  1
+  O  O25  1  0.16770700  0.69483200  0.94598200  1

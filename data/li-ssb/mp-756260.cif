@@ -1,0 +1,48 @@
+# generated using pymatgen
+data_Li3Fe2OF5
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   5.25764247
+_cell_length_b   5.25764247
+_cell_length_c   9.44360755
+_cell_angle_alpha   79.53584158
+_cell_angle_beta   79.53584158
+_cell_angle_gamma   109.15409144
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   Li3Fe2OF5
+_chemical_formula_sum   'Li6 Fe4 O2 F10'
+_cell_volume   234.17688695
+_cell_formula_units_Z   2
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.45888700  0.54111300  0.00000000  1
+  Li  Li1  1  0.87776800  0.46525700  0.15553600  1
+  Li  Li2  1  0.20608600  0.79391400  0.50000000  1
+  Li  Li3  1  0.78274700  0.87290000  0.35165500  1
+  Li  Li4  1  0.12710000  0.21725300  0.64834500  1
+  Li  Li5  1  0.53474300  0.12223200  0.84446400  1
+  Fe  Fe6  1  0.95342200  0.04657800  0.00000000  1
+  Fe  Fe7  1  0.70446100  0.29553900  0.50000000  1
+  Fe  Fe8  1  0.37652500  0.97007000  0.15251700  1
+  Fe  Fe9  1  0.02993000  0.62347500  0.84748300  1
+  O  O10  1  0.70456500  0.29543500  0.00000000  1
+  O  O11  1  0.20555400  0.79444600  0.00000000  1
+  F  F12  1  0.11184600  0.21177500  0.16737900  1
+  F  F13  1  0.47003600  0.52996400  0.50000000  1
+  F  F14  1  0.64218700  0.72294400  0.16320500  1
+  F  F15  1  0.02886200  0.66146200  0.33684500  1
+  F  F16  1  0.33853800  0.97113800  0.66315500  1
+  F  F17  1  0.54771600  0.09550600  0.33608300  1
+  F  F18  1  0.93877000  0.06123000  0.50000000  1
+  F  F19  1  0.78822500  0.88815400  0.83262100  1
+  F  F20  1  0.90449400  0.45228400  0.66391700  1
+  F  F21  1  0.27705600  0.35781300  0.83679500  1

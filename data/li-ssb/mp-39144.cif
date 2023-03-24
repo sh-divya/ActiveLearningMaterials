@@ -1,0 +1,36 @@
+# generated using pymatgen
+data_SrLiPrTeO6
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   5.65132603
+_cell_length_b   5.65132603
+_cell_length_c   5.70785016
+_cell_angle_alpha   59.99687657
+_cell_angle_beta   59.99687657
+_cell_angle_gamma   59.59997938
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   SrLiPrTeO6
+_chemical_formula_sum   'Sr1 Li1 Pr1 Te1 O6'
+_cell_volume   128.50136728
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Sr  Sr0  1  0.75063800  0.75063800  0.24477900  1
+  Li  Li1  1  0.99920200  0.99920200  0.50466500  1
+  Pr  Pr2  1  0.25131700  0.25131700  0.76370300  1
+  Te  Te3  1  0.50101300  0.50101300  0.99820400  1
+  O  O4  1  0.73664300  0.73664300  0.69144800  1
+  O  O5  1  0.68762300  0.21860600  0.80321300  1
+  O  O6  1  0.79458500  0.29441700  0.18207900  1
+  O  O7  1  0.29441700  0.79458500  0.18207900  1
+  O  O8  1  0.21860600  0.68762300  0.80321300  1
+  O  O9  1  0.26595700  0.26595700  0.32661400  1

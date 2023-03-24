@@ -1,0 +1,39 @@
+# generated using pymatgen
+data_LiScMo3O8
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   6.18910238
+_cell_length_b   6.18910238
+_cell_length_c   4.81239600
+_cell_angle_alpha   90.00000000
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   120.00000409
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   LiScMo3O8
+_chemical_formula_sum   'Li1 Sc1 Mo3 O8'
+_cell_volume   159.64205328
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.33333300  0.66666700  0.68055400  1
+  Sc  Sc1  1  0.00000000  0.00000000  0.75516900  1
+  Mo  Mo2  1  0.50279100  0.00558200  0.24744700  1
+  Mo  Mo3  1  0.99441800  0.49720900  0.24744700  1
+  Mo  Mo4  1  0.50279100  0.49720900  0.24744700  1
+  O  O5  1  0.33333300  0.66666700  0.03824500  1
+  O  O6  1  0.33348500  0.16674200  0.02876300  1
+  O  O7  1  0.83325800  0.66651500  0.02876300  1
+  O  O8  1  0.83325800  0.16674200  0.02876300  1
+  O  O9  1  0.66666700  0.33333300  0.47248600  1
+  O  O10  1  0.64948700  0.82474400  0.49230600  1
+  O  O11  1  0.17525600  0.35051300  0.49230600  1
+  O  O12  1  0.17525600  0.82474400  0.49230600  1

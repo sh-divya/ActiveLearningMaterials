@@ -1,0 +1,52 @@
+# generated using pymatgen
+data_LiMnCo3O8
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   5.74428136
+_cell_length_b   5.98320845
+_cell_length_c   9.90158851
+_cell_angle_alpha   75.14670061
+_cell_angle_beta   90.05055494
+_cell_angle_gamma   118.56538548
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   LiMnCo3O8
+_chemical_formula_sum   'Li2 Mn2 Co6 O16'
+_cell_volume   285.91396903
+_cell_formula_units_Z   2
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.74682700  0.49621200  0.25395100  1
+  Li  Li1  1  0.25165900  0.50455600  0.74501500  1
+  Mn  Mn2  1  0.49917200  0.00053200  0.49984600  1
+  Mn  Mn3  1  0.00098400  0.99969800  0.00007900  1
+  Co  Co4  1  0.99995700  0.00170200  0.50014800  1
+  Co  Co5  1  0.50058800  0.99895000  0.00015500  1
+  Co  Co6  1  0.74912000  0.00213700  0.24779600  1
+  Co  Co7  1  0.25110300  0.99786300  0.75237500  1
+  Co  Co8  1  0.25209300  0.00117800  0.24776300  1
+  Co  Co9  1  0.74753700  0.99800800  0.75239800  1
+  O  O10  1  0.09727500  0.19278200  0.13827700  1
+  O  O11  1  0.59441700  0.19020400  0.64189700  1
+  O  O12  1  0.90467400  0.80711700  0.86140700  1
+  O  O13  1  0.40420500  0.80949900  0.35875000  1
+  O  O14  1  0.09572300  0.19308800  0.64523600  1
+  O  O15  1  0.59635400  0.19195500  0.13834100  1
+  O  O16  1  0.90328500  0.80848200  0.35495600  1
+  O  O17  1  0.40446500  0.80631300  0.86179400  1
+  O  O18  1  0.83575400  0.20209300  0.37796700  1
+  O  O19  1  0.34593300  0.19383100  0.88384300  1
+  O  O20  1  0.35891100  0.19972500  0.37888000  1
+  O  O21  1  0.84912500  0.19376900  0.88393600  1
+  O  O22  1  0.63950000  0.80118100  0.62053300  1
+  O  O23  1  0.15229400  0.80508200  0.11646000  1
+  O  O24  1  0.16223900  0.79940500  0.62165800  1
+  O  O25  1  0.65680400  0.80464000  0.11654100  1

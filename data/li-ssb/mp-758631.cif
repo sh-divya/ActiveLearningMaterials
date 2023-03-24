@@ -1,0 +1,52 @@
+# generated using pymatgen
+data_Li2Fe2Si2O7
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   5.40811983
+_cell_length_b   5.40811983
+_cell_length_c   13.33232300
+_cell_angle_alpha   90.00000000
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   124.60520468
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   Li2Fe2Si2O7
+_chemical_formula_sum   'Li4 Fe4 Si4 O14'
+_cell_volume   320.95416135
+_cell_formula_units_Z   2
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.01474500  0.01474500  0.50000000  1
+  Li  Li1  1  0.01474500  0.01474500  0.00000000  1
+  Li  Li2  1  0.97794400  0.00140100  0.25000000  1
+  Li  Li3  1  0.00140100  0.97794400  0.75000000  1
+  Fe  Fe4  1  0.77289900  0.34422900  0.91383800  1
+  Fe  Fe5  1  0.77289900  0.34422900  0.58616200  1
+  Fe  Fe6  1  0.34422900  0.77289900  0.08616200  1
+  Fe  Fe7  1  0.34422900  0.77289900  0.41383800  1
+  Si  Si8  1  0.66313700  0.43501300  0.13945400  1
+  Si  Si9  1  0.66313700  0.43501300  0.36054600  1
+  Si  Si10  1  0.43501300  0.66313700  0.86054600  1
+  Si  Si11  1  0.43501300  0.66313700  0.63945400  1
+  O  O12  1  0.31416900  0.12932100  0.37875100  1
+  O  O13  1  0.31416900  0.12932100  0.12125000  1
+  O  O14  1  0.79572400  0.42843900  0.25000000  1
+  O  O15  1  0.74748900  0.67080800  0.63323000  1
+  O  O16  1  0.74748900  0.67080800  0.86677000  1
+  O  O17  1  0.90007500  0.44707900  0.44145000  1
+  O  O18  1  0.90007500  0.44707900  0.05855000  1
+  O  O19  1  0.12932100  0.31416900  0.62125000  1
+  O  O20  1  0.12932100  0.31416900  0.87875000  1
+  O  O21  1  0.42843900  0.79572400  0.75000000  1
+  O  O22  1  0.67080800  0.74748900  0.36677000  1
+  O  O23  1  0.67080800  0.74748900  0.13323000  1
+  O  O24  1  0.44707900  0.90007500  0.94145000  1
+  O  O25  1  0.44707900  0.90007500  0.55855000  1

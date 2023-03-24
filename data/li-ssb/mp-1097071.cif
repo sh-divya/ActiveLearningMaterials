@@ -1,0 +1,30 @@
+# generated using pymatgen
+data_LiY2Co
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   11.93573277
+_cell_length_b   11.93573277
+_cell_length_c   11.93573277
+_cell_angle_alpha   124.72992475
+_cell_angle_beta   118.89249260
+_cell_angle_gamma   86.96898575
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   LiY2Co
+_chemical_formula_sum   'Li1 Y2 Co1'
+_cell_volume   1163.60887526
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.00000000  0.00000000  0.00000000  1
+  Y  Y1  1  0.00000000  0.30060200  0.30060200  1
+  Y  Y2  1  0.00000000  0.69939800  0.69939800  1
+  Co  Co3  1  0.00000000  0.50000000  0.50000000  1

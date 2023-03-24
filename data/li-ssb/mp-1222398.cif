@@ -1,0 +1,46 @@
+# generated using pymatgen
+data_LiGa(GeSe3)2
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   7.33611605
+_cell_length_b   7.33611605
+_cell_length_c   12.65355823
+_cell_angle_alpha   82.04048088
+_cell_angle_beta   82.04048088
+_cell_angle_gamma   120.69687173
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   LiGa(GeSe3)2
+_chemical_formula_sum   'Li2 Ga2 Ge4 Se12'
+_cell_volume   562.16961386
+_cell_formula_units_Z   2
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.65178200  0.23593300  0.90878300  1
+  Li  Li1  1  0.23593300  0.65178200  0.40878300  1
+  Ga  Ga2  1  0.24795100  0.49787700  0.00038300  1
+  Ga  Ga3  1  0.49787700  0.24795100  0.50038300  1
+  Ge  Ge4  1  0.21778900  0.21171400  0.77660100  1
+  Ge  Ge5  1  0.74474600  0.24307500  0.22342900  1
+  Ge  Ge6  1  0.21171400  0.21778900  0.27660100  1
+  Ge  Ge7  1  0.24307500  0.74474600  0.72342900  1
+  Se  Se8  1  0.99194600  0.35620400  0.73836200  1
+  Se  Se9  1  0.84416000  0.97932300  0.25944600  1
+  Se  Se10  1  0.35620400  0.99194700  0.23836200  1
+  Se  Se11  1  0.97932300  0.84416000  0.75944600  1
+  Se  Se12  1  0.46497400  0.89435600  0.53906800  1
+  Se  Se13  1  0.18389000  0.25449500  0.46093000  1
+  Se  Se14  1  0.89435500  0.46497400  0.03906800  1
+  Se  Se15  1  0.25449500  0.18389000  0.96093000  1
+  Se  Se16  1  0.48054500  0.82335700  0.84649800  1
+  Se  Se17  1  0.41877800  0.57220500  0.15470100  1
+  Se  Se18  1  0.82335700  0.48054500  0.34649800  1
+  Se  Se19  1  0.57220500  0.41877800  0.65470100  1

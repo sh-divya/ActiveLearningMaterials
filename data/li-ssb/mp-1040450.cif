@@ -1,0 +1,38 @@
+# generated using pymatgen
+data_Li5P(S2Cl)2
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   6.05015523
+_cell_length_b   6.05015523
+_cell_length_c   7.21209000
+_cell_angle_alpha   90.00000000
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   120.28661440
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   Li5P(S2Cl)2
+_chemical_formula_sum   'Li5 P1 S4 Cl2'
+_cell_volume   227.96241658
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.91732800  0.30227200  0.24525400  1
+  Li  Li1  1  0.30227200  0.91732800  0.75474600  1
+  Li  Li2  1  0.91732800  0.30227200  0.75474600  1
+  Li  Li3  1  0.30227200  0.91732800  0.24525400  1
+  Li  Li4  1  0.62499300  0.62499300  0.50000000  1
+  P  P5  1  0.56118600  0.56118600  0.00000000  1
+  S  S6  1  0.60236600  0.92190600  0.00000000  1
+  S  S7  1  0.92190600  0.60236600  0.00000000  1
+  S  S8  1  0.36290300  0.36290300  0.23354500  1
+  S  S9  1  0.36290300  0.36290300  0.76645500  1
+  Cl  Cl10  1  0.03589200  0.68246400  0.50000000  1
+  Cl  Cl11  1  0.68246400  0.03589200  0.50000000  1

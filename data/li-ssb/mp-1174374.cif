@@ -1,0 +1,50 @@
+# generated using pymatgen
+data_Li7Co5O12
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   2.92427000
+_cell_length_b   6.40676880
+_cell_length_c   11.83521275
+_cell_angle_alpha   103.81969525
+_cell_angle_beta   92.03175824
+_cell_angle_gamma   102.78135620
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   Li7Co5O12
+_chemical_formula_sum   'Li7 Co5 O12'
+_cell_volume   209.06546275
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.66745100  0.83469100  0.91492600  1
+  Li  Li1  1  0.99235000  0.49996300  0.25323200  1
+  Li  Li2  1  0.33254900  0.16530900  0.08507400  1
+  Li  Li3  1  0.65938600  0.82648800  0.42031900  1
+  Li  Li4  1  0.34061400  0.17351200  0.57968100  1
+  Li  Li5  1  0.00765000  0.50003700  0.74676800  1
+  Li  Li6  1  0.00000000  0.50000000  0.50000000  1
+  Co  Co7  1  0.65899700  0.81552700  0.65954700  1
+  Co  Co8  1  0.34100300  0.18447300  0.34045300  1
+  Co  Co9  1  0.00000000  0.50000000  0.00000000  1
+  Co  Co10  1  0.67161900  0.83278800  0.16487100  1
+  Co  Co11  1  0.32838100  0.16721200  0.83512900  1
+  O  O12  1  0.15800400  0.85493900  0.78944400  1
+  O  O13  1  0.52099000  0.51450800  0.11130600  1
+  O  O14  1  0.82035500  0.18242400  0.95369300  1
+  O  O15  1  0.16449500  0.84383500  0.27923300  1
+  O  O16  1  0.81556400  0.16132500  0.44778400  1
+  O  O17  1  0.51030300  0.52517900  0.63348400  1
+  O  O18  1  0.17964500  0.81757600  0.04630700  1
+  O  O19  1  0.48969700  0.47482100  0.36651600  1
+  O  O20  1  0.84199600  0.14506100  0.21055600  1
+  O  O21  1  0.18443600  0.83867500  0.55221600  1
+  O  O22  1  0.83550500  0.15616500  0.72076700  1
+  O  O23  1  0.47901000  0.48549200  0.88869400  1

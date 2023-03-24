@@ -1,0 +1,50 @@
+# generated using pymatgen
+data_LiGeTe2
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   7.34283600
+_cell_length_b   9.25002748
+_cell_length_c   11.47994533
+_cell_angle_alpha   75.69308922
+_cell_angle_beta   77.10427083
+_cell_angle_gamma   70.62424740
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   LiGeTe2
+_chemical_formula_sum   'Li6 Ge6 Te12'
+_cell_volume   704.20562890
+_cell_formula_units_Z   6
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.99117000  0.65323000  0.81023500  1
+  Li  Li1  1  0.00883000  0.34677000  0.18976500  1
+  Li  Li2  1  0.52683200  0.67979100  0.32129200  1
+  Li  Li3  1  0.47316800  0.32020900  0.67870800  1
+  Li  Li4  1  0.50000000  0.00000000  0.00000000  1
+  Li  Li5  1  0.00000000  0.00000000  0.50000000  1
+  Ge  Ge6  1  0.06643800  0.61072800  0.44984300  1
+  Ge  Ge7  1  0.93356200  0.38927200  0.55015700  1
+  Ge  Ge8  1  0.96201600  0.96017100  0.20657200  1
+  Ge  Ge9  1  0.03798400  0.03982900  0.79342800  1
+  Ge  Ge10  1  0.04741500  0.74157200  0.09711200  1
+  Ge  Ge11  1  0.95258500  0.25842800  0.90288800  1
+  Te  Te12  1  0.75486700  0.66684000  0.07238200  1
+  Te  Te13  1  0.24513300  0.33316000  0.92761800  1
+  Te  Te14  1  0.69943000  0.20076900  0.10059300  1
+  Te  Te15  1  0.30057000  0.79923100  0.89940700  1
+  Te  Te16  1  0.27434200  0.52027900  0.24283500  1
+  Te  Te17  1  0.72565800  0.47972100  0.75716500  1
+  Te  Te18  1  0.26678400  0.66726500  0.58015000  1
+  Te  Te19  1  0.73321600  0.33273500  0.41985000  1
+  Te  Te20  1  0.75063700  0.85030100  0.40717200  1
+  Te  Te21  1  0.24936300  0.14969900  0.59282800  1
+  Te  Te22  1  0.25667500  0.01241700  0.25275900  1
+  Te  Te23  1  0.74332500  0.98758300  0.74724100  1

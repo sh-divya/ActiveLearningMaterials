@@ -1,0 +1,48 @@
+# generated using pymatgen
+data_Li2TiV2O6
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   2.97782505
+_cell_length_b   13.16509881
+_cell_length_c   6.03242679
+_cell_angle_alpha   76.89550784
+_cell_angle_beta   89.99929109
+_cell_angle_gamma   89.99760824
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   Li2TiV2O6
+_chemical_formula_sum   'Li4 Ti2 V4 O12'
+_cell_volume   230.33274203
+_cell_formula_units_Z   2
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.49991400  0.17540400  0.67890300  1
+  Li  Li1  1  0.99992600  0.67102000  0.17765500  1
+  Li  Li2  1  0.50004800  0.49587200  0.98930500  1
+  Li  Li3  1  0.00004000  0.99117100  0.48744700  1
+  Ti  Ti4  1  0.99996900  0.33695400  0.32850700  1
+  Ti  Ti5  1  0.49996200  0.82988200  0.83773600  1
+  V  V6  1  0.99996900  0.99427200  0.01366100  1
+  V  V7  1  0.50000800  0.17243600  0.15278400  1
+  V  V8  1  0.50000800  0.49494900  0.51906100  1
+  V  V9  1  0.00004700  0.67163900  0.64796300  1
+  O  O10  1  0.99997900  0.49018500  0.27615200  1
+  O  O11  1  0.49994100  0.98737500  0.77850500  1
+  O  O12  1  0.00003300  0.17932500  0.38746400  1
+  O  O13  1  0.50008100  0.67647900  0.89076500  1
+  O  O14  1  0.50000900  0.33600500  0.11725000  1
+  O  O15  1  0.99999400  0.83115500  0.61874000  1
+  O  O16  1  0.50004700  0.33536900  0.54803200  1
+  O  O17  1  0.00001900  0.83094800  0.04929000  1
+  O  O18  1  0.99996200  0.15624000  0.93798000  1
+  O  O19  1  0.50000100  0.65443000  0.43123400  1
+  O  O20  1  0.49999500  0.01002300  0.22924100  1
+  O  O21  1  0.00004400  0.51220200  0.73565600  1

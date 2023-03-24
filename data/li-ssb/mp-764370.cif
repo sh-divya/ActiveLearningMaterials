@@ -1,0 +1,41 @@
+# generated using pymatgen
+data_LiCoF3
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   5.13369723
+_cell_length_b   5.13369723
+_cell_length_c   7.54737900
+_cell_angle_alpha   90.00000000
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   119.99999014
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   LiCoF3
+_chemical_formula_sum   'Li3 Co3 F9'
+_cell_volume   172.26114842
+_cell_formula_units_Z   3
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.00000000  0.00000000  0.34519400  1
+  Li  Li1  1  0.33333300  0.66666700  0.26381500  1
+  Li  Li2  1  0.00000000  0.00000000  0.65883000  1
+  Co  Co3  1  0.33333300  0.66666700  0.67586400  1
+  Co  Co4  1  0.66666700  0.33333300  0.34530200  1
+  Co  Co5  1  0.00000000  0.00000000  0.99576400  1
+  F  F6  1  0.03115300  0.71307400  0.81893000  1
+  F  F7  1  0.28692600  0.31807900  0.81893000  1
+  F  F8  1  0.68192100  0.96884700  0.81893000  1
+  F  F9  1  0.31690200  0.30022300  0.19160500  1
+  F  F10  1  0.65805500  0.67453600  0.48769000  1
+  F  F11  1  0.32546400  0.98351800  0.48769000  1
+  F  F12  1  0.98332100  0.68309800  0.19160500  1
+  F  F13  1  0.69977700  0.01667900  0.19160500  1
+  F  F14  1  0.01648200  0.34194500  0.48769000  1

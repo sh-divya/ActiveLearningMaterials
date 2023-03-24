@@ -2,7 +2,7 @@ lightning_logs/
 AL-Li/
 __pycache__/
 wandb/
-data/li-ssb/
+proxies/ic/li-ssb/
 oracles/apikey.txt
 oracles/data/
 oracles/tmp/

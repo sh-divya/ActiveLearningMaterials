@@ -1,0 +1,38 @@
+# generated using pymatgen
+data_Li3Cr2CoO6
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   6.60542761
+_cell_length_b   6.60542761
+_cell_length_c   5.92981853
+_cell_angle_alpha   77.06770330
+_cell_angle_beta   77.06770330
+_cell_angle_gamma   25.92423186
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   Li3Cr2CoO6
+_chemical_formula_sum   'Li3 Cr2 Co1 O6'
+_cell_volume   110.08810593
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.16327100  0.16327100  0.17015400  1
+  Li  Li1  1  0.50000000  0.50000000  0.50000000  1
+  Li  Li2  1  0.83672900  0.83672900  0.82984600  1
+  Cr  Cr3  1  0.16624300  0.16624300  0.66834900  1
+  Cr  Cr4  1  0.83375700  0.83375700  0.33165100  1
+  Co  Co5  1  0.50000000  0.50000000  0.00000000  1
+  O  O6  1  0.66113100  0.66113100  0.90415000  1
+  O  O7  1  0.99499200  0.99499200  0.23677000  1
+  O  O8  1  0.32833900  0.32833900  0.56869900  1
+  O  O9  1  0.00500800  0.00500800  0.76323000  1
+  O  O10  1  0.33886900  0.33886900  0.09585000  1
+  O  O11  1  0.67166100  0.67166100  0.43130100  1

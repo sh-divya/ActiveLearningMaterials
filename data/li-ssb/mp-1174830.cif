@@ -1,0 +1,46 @@
+# generated using pymatgen
+data_Li6Mn3CoO10
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   2.99753100
+_cell_length_b   6.46047622
+_cell_length_c   9.91589143
+_cell_angle_alpha   79.23330371
+_cell_angle_beta   86.12973487
+_cell_angle_gamma   76.71025981
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   Li6Mn3CoO10
+_chemical_formula_sum   'Li6 Mn3 Co1 O10'
+_cell_volume   183.53307500
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.88647600  0.20536400  0.69252800  1
+  Li  Li1  1  0.10616400  0.80221500  0.30094200  1
+  Li  Li2  1  0.48545100  0.01267700  0.49835100  1
+  Li  Li3  1  0.70796800  0.58296000  0.10259600  1
+  Li  Li4  1  0.31557800  0.39358000  0.91172100  1
+  Li  Li5  1  0.38170500  0.21183900  0.19315200  1
+  Mn  Mn6  1  0.00288300  0.00660300  0.00746600  1
+  Mn  Mn7  1  0.19756800  0.59904600  0.59590200  1
+  Mn  Mn8  1  0.61546600  0.79434600  0.80365400  1
+  Co  Co9  1  0.79074400  0.39197200  0.38904800  1
+  O  O10  1  0.49060900  0.07663900  0.86800300  1
+  O  O11  1  0.63565600  0.67704300  0.44970400  1
+  O  O12  1  0.03020900  0.88515200  0.65414400  1
+  O  O13  1  0.22563800  0.49495200  0.26325700  1
+  O  O14  1  0.85370000  0.28139800  0.04470100  1
+  O  O15  1  0.36034700  0.31593700  0.54553000  1
+  O  O16  1  0.52171200  0.91384200  0.13060000  1
+  O  O17  1  0.94151700  0.12655400  0.35898300  1
+  O  O18  1  0.18012900  0.71560300  0.94671300  1
+  O  O19  1  0.77047900  0.51227900  0.74300600  1

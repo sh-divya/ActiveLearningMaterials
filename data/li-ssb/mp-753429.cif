@@ -1,0 +1,52 @@
+# generated using pymatgen
+data_Li4Bi2S7
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   12.55870200
+_cell_length_b   6.17140800
+_cell_length_c   8.83545821
+_cell_angle_alpha   56.42261334
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   90.00000000
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   Li4Bi2S7
+_chemical_formula_sum   'Li8 Bi4 S14'
+_cell_volume   570.52655329
+_cell_formula_units_Z   2
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.61211800  0.64157900  0.52425300  1
+  Li  Li1  1  0.83322700  0.28860400  0.87975100  1
+  Li  Li2  1  0.33322700  0.71139600  0.62024900  1
+  Li  Li3  1  0.11211800  0.35842100  0.97574700  1
+  Li  Li4  1  0.88788200  0.64157900  0.02425300  1
+  Li  Li5  1  0.66677300  0.28860400  0.37975100  1
+  Li  Li6  1  0.16677300  0.71139600  0.12024900  1
+  Li  Li7  1  0.38788200  0.35842100  0.47574700  1
+  Bi  Bi8  1  0.97335300  0.85020400  0.35981200  1
+  Bi  Bi9  1  0.47335300  0.14979600  0.14018800  1
+  Bi  Bi10  1  0.52664700  0.85020400  0.85981200  1
+  Bi  Bi11  1  0.02664700  0.14979600  0.64018800  1
+  S  S12  1  0.23589700  0.09730700  0.70526100  1
+  S  S13  1  0.22894300  0.70367700  0.38505000  1
+  S  S14  1  0.00000000  0.00000000  0.00000000  1
+  S  S15  1  0.48579300  0.31286400  0.76156000  1
+  S  S16  1  0.98579300  0.68713600  0.73844000  1
+  S  S17  1  0.73589700  0.90269300  0.79473900  1
+  S  S18  1  0.27105700  0.70367700  0.88505000  1
+  S  S19  1  0.50000000  0.00000000  0.50000000  1
+  S  S20  1  0.72894300  0.29632300  0.11495000  1
+  S  S21  1  0.26410300  0.09730700  0.20526100  1
+  S  S22  1  0.01420700  0.31286400  0.26156000  1
+  S  S23  1  0.51420700  0.68713600  0.23844000  1
+  S  S24  1  0.77105700  0.29632300  0.61495000  1
+  S  S25  1  0.76410300  0.90269300  0.29473900  1

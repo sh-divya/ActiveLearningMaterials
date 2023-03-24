@@ -1,0 +1,39 @@
+# generated using pymatgen
+data_LiInMo3O8
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   5.84760074
+_cell_length_b   5.84760074
+_cell_length_c   5.09097300
+_cell_angle_alpha   90.00000000
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   120.00000832
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   LiInMo3O8
+_chemical_formula_sum   'Li1 In1 Mo3 O8'
+_cell_volume   150.76023756
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.00000000  0.00000000  0.69874200  1
+  In  In1  1  0.66666700  0.33333300  0.72964700  1
+  Mo  Mo2  1  0.18650600  0.81349400  0.25218100  1
+  Mo  Mo3  1  0.62698900  0.81349400  0.25218100  1
+  Mo  Mo4  1  0.18650600  0.37301100  0.25218100  1
+  O  O5  1  0.00000000  0.00000000  0.06015600  1
+  O  O6  1  0.00027500  0.50013800  0.01425700  1
+  O  O7  1  0.49986200  0.99972500  0.01425700  1
+  O  O8  1  0.49986200  0.50013800  0.01425700  1
+  O  O9  1  0.33333300  0.66666700  0.53341000  1
+  O  O10  1  0.84133300  0.15866700  0.47691000  1
+  O  O11  1  0.84133300  0.68266600  0.47691000  1
+  O  O12  1  0.31733400  0.15866700  0.47691000  1

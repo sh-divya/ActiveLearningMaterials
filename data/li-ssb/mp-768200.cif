@@ -1,0 +1,50 @@
+# generated using pymatgen
+data_Li2HoPCO7
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   6.77472700
+_cell_length_b   4.92217400
+_cell_length_c   8.98939398
+_cell_angle_alpha   87.22597061
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   90.00000000
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   Li2HoPCO7
+_chemical_formula_sum   'Li4 Ho2 P2 C2 O14'
+_cell_volume   299.41252329
+_cell_formula_units_Z   2
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.98362800  0.79226100  0.79351600  1
+  Li  Li1  1  0.51637200  0.79226100  0.79351600  1
+  Li  Li2  1  0.48362800  0.20773900  0.20648400  1
+  Li  Li3  1  0.01637200  0.20773900  0.20648400  1
+  Ho  Ho4  1  0.25000000  0.25350300  0.64003900  1
+  Ho  Ho5  1  0.75000000  0.74649700  0.35996100  1
+  P  P6  1  0.75000000  0.27735400  0.59016500  1
+  P  P7  1  0.25000000  0.72264600  0.40983500  1
+  C  C8  1  0.25000000  0.26068300  0.94330100  1
+  C  C9  1  0.75000000  0.73931700  0.05669900  1
+  O  O10  1  0.75000000  0.72077800  0.91652800  1
+  O  O11  1  0.25000000  0.02689500  0.87881600  1
+  O  O12  1  0.25000000  0.47862600  0.85118300  1
+  O  O13  1  0.93516100  0.14629700  0.66315400  1
+  O  O14  1  0.56483900  0.14629700  0.66315400  1
+  O  O15  1  0.25000000  0.76442700  0.58274300  1
+  O  O16  1  0.75000000  0.59122800  0.60296300  1
+  O  O17  1  0.25000000  0.40877200  0.39703700  1
+  O  O18  1  0.75000000  0.23557300  0.41725700  1
+  O  O19  1  0.43516100  0.85370300  0.33684600  1
+  O  O20  1  0.06483900  0.85370300  0.33684600  1
+  O  O21  1  0.75000000  0.52137400  0.14881700  1
+  O  O22  1  0.75000000  0.97310500  0.12118400  1
+  O  O23  1  0.25000000  0.27922200  0.08347200  1

@@ -1,0 +1,41 @@
+# generated using pymatgen
+data_CsLiMg6O7
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   4.15242200
+_cell_length_b   4.15242200
+_cell_length_c   12.13125700
+_cell_angle_alpha   90.00000000
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   90.00000000
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   CsLiMg6O7
+_chemical_formula_sum   'Cs1 Li1 Mg6 O7'
+_cell_volume   209.17451465
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Cs  Cs0  1  0.50000000  0.50000000  0.95713400  1
+  Li  Li1  1  0.00000000  0.00000000  0.10042600  1
+  Mg  Mg2  1  0.00000000  0.00000000  0.49449900  1
+  Mg  Mg3  1  0.50000000  0.50000000  0.47646200  1
+  Mg  Mg4  1  0.00000000  0.50000000  0.27083400  1
+  Mg  Mg5  1  0.00000000  0.50000000  0.66316500  1
+  Mg  Mg6  1  0.50000000  0.00000000  0.27083400  1
+  Mg  Mg7  1  0.50000000  0.00000000  0.66316500  1
+  O  O8  1  0.00000000  0.00000000  0.67138100  1
+  O  O9  1  0.50000000  0.50000000  0.30972000  1
+  O  O10  1  0.50000000  0.50000000  0.67205700  1
+  O  O11  1  0.00000000  0.50000000  0.11317300  1
+  O  O12  1  0.00000000  0.50000000  0.48698800  1
+  O  O13  1  0.50000000  0.00000000  0.11317300  1
+  O  O14  1  0.50000000  0.00000000  0.48698800  1

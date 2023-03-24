@@ -1,0 +1,30 @@
+# generated using pymatgen
+data_LiCu2Au
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   10.02997843
+_cell_length_b   10.02997843
+_cell_length_c   10.02997843
+_cell_angle_alpha   121.38679957
+_cell_angle_beta   119.43202256
+_cell_angle_gamma   89.30076986
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   LiCu2Au
+_chemical_formula_sum   'Li1 Cu2 Au1'
+_cell_volume   708.75093914
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.00000000  0.00000000  0.00000000  1
+  Cu  Cu1  1  0.00000000  0.25238700  0.25238700  1
+  Cu  Cu2  1  0.00000000  0.74761300  0.74761300  1
+  Au  Au3  1  0.00000000  0.50000000  0.50000000  1

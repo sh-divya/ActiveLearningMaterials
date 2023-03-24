@@ -1,0 +1,52 @@
+# generated using pymatgen
+data_LiAlSi2H2O7
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   6.50949900
+_cell_length_b   6.75627251
+_cell_length_c   7.30026973
+_cell_angle_alpha   62.75705412
+_cell_angle_beta   76.78049815
+_cell_angle_gamma   73.74495679
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   LiAlSi2H2O7
+_chemical_formula_sum   'Li2 Al2 Si4 H4 O14'
+_cell_volume   272.13188089
+_cell_formula_units_Z   2
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.92998000  0.37973100  0.57334600  1
+  Li  Li1  1  0.43220900  0.48936100  0.62275600  1
+  Al  Al2  1  0.00611100  0.67919600  0.73809200  1
+  Al  Al3  1  0.55486500  0.96338100  0.03207400  1
+  Si  Si4  1  0.45639700  0.66660300  0.88040000  1
+  Si  Si5  1  0.17732100  0.12615100  0.86681300  1
+  Si  Si6  1  0.73085800  0.48447000  0.23186500  1
+  Si  Si7  1  0.04751700  0.08270800  0.30156700  1
+  H  H8  1  0.60946700  0.90281700  0.26027000  1
+  H  H9  1  0.68408100  0.77229500  0.57392300  1
+  H  H10  1  0.99936200  0.04714000  0.84948400  1
+  H  H11  1  0.30023300  0.15543600  0.41775000  1
+  O  O12  1  0.26306200  0.71589100  0.74813300  1
+  O  O13  1  0.14684600  0.20971400  0.40010700  1
+  O  O14  1  0.83764500  0.81577100  0.91397800  1
+  O  O15  1  0.97912400  0.85449600  0.47533500  1
+  O  O16  1  0.11913400  0.40064800  0.73340300  1
+  O  O17  1  0.41606500  0.98306200  0.80536700  1
+  O  O18  1  0.53638700  0.26675500  0.88222200  1
+  O  O19  1  0.84977800  0.26751700  0.17381700  1
+  O  O20  1  0.69330000  0.65859900  0.71856900  1
+  O  O21  1  0.47695100  0.37649700  0.02640300  1
+  O  O22  1  0.51510000  0.65127900  0.11066400  1
+  O  O23  1  0.68507700  0.41151100  0.47174800  1
+  O  O24  1  0.92011900  0.65587500  0.11697600  1
+  O  O25  1  0.21971100  0.03539600  0.11313900  1

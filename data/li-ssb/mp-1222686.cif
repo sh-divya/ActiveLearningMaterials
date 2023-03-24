@@ -1,0 +1,40 @@
+# generated using pymatgen
+data_LiCuRu2(RhO4)2
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   6.14588261
+_cell_length_b   6.14588261
+_cell_length_c   6.14588261
+_cell_angle_alpha   125.16103615
+_cell_angle_beta   118.74297299
+_cell_angle_gamma   86.74627335
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   LiCuRu2(RhO4)2
+_chemical_formula_sum   'Li1 Cu1 Ru2 Rh2 O8'
+_cell_volume   158.35618612
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.37991000  0.37991000  0.00000000  1
+  Cu  Cu1  1  0.13196300  0.63196300  0.50000000  1
+  Ru  Ru2  1  0.75002000  0.02724100  0.27722100  1
+  Ru  Ru3  1  0.75002000  0.47279900  0.72277900  1
+  Rh  Rh4  1  0.75160900  0.99893200  0.75267700  1
+  Rh  Rh5  1  0.24625500  0.99893200  0.24732300  1
+  O  O6  1  0.98279700  0.76630800  0.21648900  1
+  O  O7  1  0.54981800  0.76630800  0.78351100  1
+  O  O8  1  0.97838800  0.73917100  0.76078400  1
+  O  O9  1  0.97838800  0.21760400  0.23921600  1
+  O  O10  1  0.48201400  0.23087000  0.25114400  1
+  O  O11  1  0.97972700  0.23087000  0.74885600  1
+  O  O12  1  0.51954500  0.25018700  0.73064200  1
+  O  O13  1  0.51954500  0.78890300  0.26935800  1

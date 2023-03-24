@@ -1,0 +1,40 @@
+# generated using pymatgen
+data_LiCr4InS8
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   7.30975066
+_cell_length_b   7.30975066
+_cell_length_c   7.30975065
+_cell_angle_alpha   58.45928399
+_cell_angle_beta   58.45928399
+_cell_angle_gamma   58.45928187
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   LiCr4InS8
+_chemical_formula_sum   'Li1 Cr4 In1 S8'
+_cell_volume   266.44404038
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.37437400  0.37437400  0.37437400  1
+  Cr  Cr1  1  0.48813900  0.00388500  0.00388500  1
+  Cr  Cr2  1  0.00388500  0.00388500  0.48813900  1
+  Cr  Cr3  1  0.00388500  0.48813900  0.00388500  1
+  Cr  Cr4  1  0.62727700  0.62727700  0.62727700  1
+  In  In5  1  0.00330600  0.00330600  0.00330600  1
+  S  S6  1  0.23055000  0.74483300  0.74483300  1
+  S  S7  1  0.74483300  0.74483300  0.23055000  1
+  S  S8  1  0.74483300  0.23055000  0.74483300  1
+  S  S9  1  0.75913200  0.75913200  0.75913200  1
+  S  S10  1  0.77470300  0.25411400  0.25411400  1
+  S  S11  1  0.25411400  0.25411400  0.77470300  1
+  S  S12  1  0.25411400  0.77470300  0.25411400  1
+  S  S13  1  0.23685500  0.23685500  0.23685500  1

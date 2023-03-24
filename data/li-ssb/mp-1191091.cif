@@ -1,0 +1,48 @@
+# generated using pymatgen
+data_LiAlSi2O7
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   5.06587000
+_cell_length_b   7.68655531
+_cell_length_c   8.76953591
+_cell_angle_alpha   114.03946298
+_cell_angle_beta   90.55182810
+_cell_angle_gamma   89.90169626
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   LiAlSi2O7
+_chemical_formula_sum   'Li2 Al2 Si4 O14'
+_cell_volume   311.84433330
+_cell_formula_units_Z   2
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.34670700  0.12167000  0.29161600  1
+  Li  Li1  1  0.84468100  0.92855200  0.71662400  1
+  Al  Al2  1  0.85497200  0.93750900  0.37761400  1
+  Al  Al3  1  0.33387400  0.91104400  0.89316700  1
+  Si  Si4  1  0.83619100  0.09802700  0.10110600  1
+  Si  Si5  1  0.81381700  0.50817300  0.10590500  1
+  Si  Si6  1  0.30688100  0.49513700  0.88657600  1
+  Si  Si7  1  0.35452400  0.07389800  0.61470400  1
+  O  O8  1  0.71847800  0.05092200  0.25405100  1
+  O  O9  1  0.15276400  0.04770800  0.07760200  1
+  O  O10  1  0.78625000  0.32485100  0.15567900  1
+  O  O11  1  0.53193800  0.54275500  0.03204700  1
+  O  O12  1  0.89123100  0.69431300  0.26918200  1
+  O  O13  1  0.17080800  0.04143400  0.45021600  1
+  O  O14  1  0.44171400  0.47334600  0.45675400  1
+  O  O15  1  0.22122900  0.96945700  0.72621400  1
+  O  O16  1  0.67421400  0.97466400  0.92643300  1
+  O  O17  1  0.27571700  0.67088600  0.83283000  1
+  O  O18  1  0.03113500  0.44966500  0.95747500  1
+  O  O19  1  0.38739400  0.30235800  0.72449000  1
+  O  O20  1  0.65105200  0.98744400  0.55460100  1
+  O  O21  1  0.63002900  0.57108500  0.53391600  1

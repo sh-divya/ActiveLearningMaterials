@@ -1,0 +1,52 @@
+# generated using pymatgen
+data_Li6V(OF)3
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   5.21866000
+_cell_length_b   6.64960862
+_cell_length_c   7.87553509
+_cell_angle_alpha   89.86991482
+_cell_angle_beta   91.47715211
+_cell_angle_gamma   106.58086932
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   Li6V(OF)3
+_chemical_formula_sum   'Li12 V2 O6 F6'
+_cell_volume   261.84218338
+_cell_formula_units_Z   2
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.88445000  0.08653800  0.34078900  1
+  Li  Li1  1  0.75102700  0.66388600  0.22256200  1
+  Li  Li2  1  0.71422200  0.17332800  0.75743100  1
+  Li  Li3  1  0.07216500  0.45478400  0.13961900  1
+  Li  Li4  1  0.39539800  0.80293400  0.91097000  1
+  Li  Li5  1  0.44313200  0.32348100  0.41310300  1
+  Li  Li6  1  0.56606000  0.67797900  0.60681200  1
+  Li  Li7  1  0.61074200  0.19590300  0.10598800  1
+  Li  Li8  1  0.93193600  0.54396600  0.85289400  1
+  Li  Li9  1  0.27956600  0.34878100  0.76255900  1
+  Li  Li10  1  0.31477100  0.83327500  0.23260400  1
+  Li  Li11  1  0.10136900  0.90889700  0.65627600  1
+  V  V12  1  0.96861500  0.49383600  0.51038700  1
+  V  V13  1  0.97777900  0.99420900  0.01011900  1
+  O  O14  1  0.78420700  0.36782100  0.29786200  1
+  O  O15  1  0.96724300  0.27646400  0.94232100  1
+  O  O16  1  0.65395300  0.41616000  0.64549700  1
+  O  O17  1  0.66063300  0.92028500  0.13931300  1
+  O  O18  1  0.06147100  0.72665100  0.05046300  1
+  O  O19  1  0.21928100  0.64667400  0.69070600  1
+  F  F20  1  0.89677200  0.78706500  0.44892100  1
+  F  F21  1  0.23334900  0.11778500  0.22802600  1
+  F  F22  1  0.34430400  0.07606700  0.85085500  1
+  F  F23  1  0.33187100  0.57355800  0.34687200  1
+  F  F24  1  0.76394000  0.88250100  0.77924200  1
+  F  F25  1  0.07174100  0.20717400  0.55781200  1

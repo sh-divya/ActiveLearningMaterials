@@ -1,0 +1,50 @@
+# generated using pymatgen
+data_LiMnAlO3
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   5.78202356
+_cell_length_b   5.81761291
+_cell_length_c   9.98707354
+_cell_angle_alpha   106.22875049
+_cell_angle_beta   105.99194886
+_cell_angle_gamma   60.58441788
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   LiMnAlO3
+_chemical_formula_sum   'Li4 Mn4 Al4 O12'
+_cell_volume   277.10655459
+_cell_formula_units_Z   4
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.57877600  0.49362600  0.88236100  1
+  Li  Li1  1  0.07879500  0.99362400  0.38236600  1
+  Li  Li2  1  0.42122200  0.50637400  0.11763900  1
+  Li  Li3  1  0.92120500  0.00637400  0.61763400  1
+  Mn  Mn4  1  0.96660500  0.46818500  0.21784100  1
+  Mn  Mn5  1  0.03339900  0.53182400  0.78216900  1
+  Mn  Mn6  1  0.46683000  0.96813600  0.71788700  1
+  Mn  Mn7  1  0.53317100  0.03186700  0.28211400  1
+  Al  Al8  1  0.85391600  0.91780700  0.03576600  1
+  Al  Al9  1  0.35394600  0.41778200  0.53574300  1
+  Al  Al10  1  0.14608500  0.08219000  0.96423300  1
+  Al  Al11  1  0.64605300  0.58221800  0.46425500  1
+  O  O12  1  0.40734300  0.35043800  0.70499400  1
+  O  O13  1  0.90733800  0.85042500  0.20496300  1
+  O  O14  1  0.59265600  0.64956100  0.29500400  1
+  O  O15  1  0.09266200  0.14957300  0.79503500  1
+  O  O16  1  0.68052800  0.77183900  0.89399600  1
+  O  O17  1  0.18054000  0.27181600  0.39397000  1
+  O  O18  1  0.31947300  0.22815900  0.10600300  1
+  O  O19  1  0.81945800  0.72818500  0.60602900  1
+  O  O20  1  0.80852400  0.24418400  0.02469900  1
+  O  O21  1  0.30851700  0.74418900  0.52471700  1
+  O  O22  1  0.19147400  0.75581400  0.97529900  1
+  O  O23  1  0.69148300  0.25581100  0.47528200  1

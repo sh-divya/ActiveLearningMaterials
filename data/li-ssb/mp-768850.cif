@@ -1,0 +1,52 @@
+# generated using pymatgen
+data_Na5LiCo2P2(CO7)2
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   5.19966453
+_cell_length_b   6.65461430
+_cell_length_c   8.86202931
+_cell_angle_alpha   89.52054525
+_cell_angle_beta   88.35708096
+_cell_angle_gamma   90.06363756
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   Na5LiCo2P2(CO7)2
+_chemical_formula_sum   'Na5 Li1 Co2 P2 C2 O14'
+_cell_volume   306.50476228
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Na  Na0  1  0.76788100  0.23903000  0.08201000  1
+  Na  Na1  1  0.25586900  0.49279200  0.26926800  1
+  Na  Na2  1  0.74462900  0.99408100  0.73229200  1
+  Na  Na3  1  0.74660300  0.50819300  0.73065900  1
+  Na  Na4  1  0.22494800  0.75364300  0.91803300  1
+  Li  Li5  1  0.22959100  0.02027000  0.29051600  1
+  Co  Co6  1  0.22288200  0.24875500  0.65084100  1
+  Co  Co7  1  0.78139800  0.75576400  0.34483200  1
+  P  P8  1  0.71797600  0.24686400  0.41274500  1
+  P  P9  1  0.29491500  0.75577300  0.57980200  1
+  C  C10  1  0.70861800  0.75165300  0.06137900  1
+  C  C11  1  0.27998700  0.24183300  0.94338300  1
+  O  O12  1  0.29685500  0.22994400  0.08851300  1
+  O  O13  1  0.93701100  0.74585400  0.11824100  1
+  O  O14  1  0.51070200  0.76318500  0.15474900  1
+  O  O15  1  0.82566200  0.06972000  0.31576300  1
+  O  O16  1  0.77463100  0.44045800  0.31753700  1
+  O  O17  1  0.16278300  0.76648400  0.42565900  1
+  O  O18  1  0.41884800  0.22336500  0.43698000  1
+  O  O19  1  0.59313500  0.75746700  0.55308200  1
+  O  O20  1  0.84695000  0.25327500  0.56756100  1
+  O  O21  1  0.21894700  0.56283800  0.67230600  1
+  O  O22  1  0.21662800  0.93596100  0.68312900  1
+  O  O23  1  0.48470400  0.24681300  0.85449900  1
+  O  O24  1  0.05680400  0.24938000  0.87936500  1
+  O  O25  1  0.68104800  0.74660100  0.91685900  1

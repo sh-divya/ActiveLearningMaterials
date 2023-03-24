@@ -1,0 +1,30 @@
+# generated using pymatgen
+data_LiFePt2
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   10.25047790
+_cell_length_b   10.25047790
+_cell_length_c   10.25047790
+_cell_angle_alpha   124.61960906
+_cell_angle_beta   118.50350535
+_cell_angle_gamma   87.40143608
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   LiFePt2
+_chemical_formula_sum   'Li1 Fe1 Pt2'
+_cell_volume   739.97509545
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.00000000  0.00000000  0.00000000  1
+  Fe  Fe1  1  0.00000000  0.50000000  0.50000000  1
+  Pt  Pt2  1  0.00000000  0.26574900  0.26574900  1
+  Pt  Pt3  1  0.00000000  0.73425100  0.73425100  1

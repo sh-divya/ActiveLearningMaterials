@@ -1,0 +1,36 @@
+# generated using pymatgen
+data_LiBi3(BrO2)2
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   6.95047738
+_cell_length_b   6.95047738
+_cell_length_c   5.57656400
+_cell_angle_alpha   90.00000000
+_cell_angle_beta   90.00000000
+_cell_angle_gamma   132.76178108
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   LiBi3(BrO2)2
+_chemical_formula_sum   'Li1 Bi3 Br2 O4'
+_cell_volume   197.78813519
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.70170500  0.29829500  0.50000000  1
+  Bi  Bi1  1  0.15642700  0.84357300  0.00000000  1
+  Bi  Bi2  1  0.83618900  0.16381100  0.00000000  1
+  Bi  Bi3  1  0.33954300  0.66045700  0.50000000  1
+  Br  Br4  1  0.49384600  0.50615400  0.00000000  1
+  Br  Br5  1  0.98394900  0.01605100  0.50000000  1
+  O  O6  1  0.49389200  0.99972100  0.75233400  1
+  O  O7  1  0.00027900  0.50610800  0.24766600  1
+  O  O8  1  0.00027900  0.50610800  0.75233400  1
+  O  O9  1  0.49389200  0.99972100  0.24766600  1

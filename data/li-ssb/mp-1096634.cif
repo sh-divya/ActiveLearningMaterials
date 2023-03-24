@@ -1,0 +1,30 @@
+# generated using pymatgen
+data_Li2CdPt
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   9.79294397
+_cell_length_b   9.79294397
+_cell_length_c   9.79294397
+_cell_angle_alpha   121.64404795
+_cell_angle_beta   112.91087078
+_cell_angle_gamma   94.93702411
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   Li2CdPt
+_chemical_formula_sum   'Li2 Cd1 Pt1'
+_cell_volume   684.13051051
+_cell_formula_units_Z   1
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  Li  Li0  1  0.71145700  0.00000000  0.71145700  1
+  Li  Li1  1  0.28854300  0.00000000  0.28854300  1
+  Cd  Cd2  1  0.00000000  0.00000000  0.00000000  1
+  Pt  Pt3  1  0.50000000  0.00000000  0.50000000  1
