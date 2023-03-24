@@ -12,3 +12,4 @@ apikey.txt
 *.traj
 *.log
 *.out
+*.swp
