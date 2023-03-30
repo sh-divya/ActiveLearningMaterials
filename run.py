@@ -1,8 +1,8 @@
 import torch
 import random
 import torch.nn as nn
-from crystal_data import CrystalDataset
-from models import ProxyMLP, ProxyModel
+from proxies.crystal_data import ICDataset
+from proxies.models import ProxyMLP, ProxyModel
 from torch.utils.data import DataLoader, random_split, Subset
 from sklearn.model_selection import train_test_split
 import wandb as wb
@@ -53,17 +53,17 @@ def train(batch_size, lr, num_epochs, layers, split, logger):
     device = torch.device("cpu")
 
     standard = {
-        "mean": torch.load("./data/mean85.pt"),
-        "std": torch.load("./data/std85.pt"),
+        "mean": torch.load("./proxies/ic/mean85.pt"),
+        "std": torch.load("./proxies/ic/std85.pt"),
     }
 
-    dataset = CrystalDataset(
-        "./data/li-ssb",
-        "./data/lissb.csv",
+    dataset = ICDataset(
+        "./proxies/ic/li-ssb",
+        "./proxies/ic/lissb.csv",
         True,
-        "./data/skip.txt",
-        "./data/proxy.csv",
-        "./data/compile.csv",
+        "./proxies/ic/skip.txt",
+        "./proxies/ic/proxy.csv",
+        "./proxies/ic/compile.csv",
         transform=standard,
         subset=True,
     )
@@ -103,7 +103,7 @@ def train(batch_size, lr, num_epochs, layers, split, logger):
         min_epochs=20,
     )
     trainer.fit(model=model, train_dataloaders=trainloader, val_dataloaders=valloader)
-    # raise Exception
+    raise Exception
     logger.experiment.config["LR"] = lr
     logger.experiment.config["batch"] = batch_size
     logger.experiment.config["layers"] = layers
@@ -136,7 +136,7 @@ if __name__ == "__main__":
         config = {
             "lr": 1e-2,
             "batch": 128,
-            "epochs": 50,
+            "epochs": 2,
             "layers": layer,
             "split": [0.6, 0.2, 0.2],
         }
@@ -145,8 +145,8 @@ if __name__ == "__main__":
         name = (
             "CompOnly" + "_".join(name) + "_layer-" + "".join([str(l) for l in layer])
         )
-        logger = WandbLogger(project="AL-Li", name=name)
-        # logger = None
+        # logger = WandbLogger(project="AL-Li", name=name)
+        logger = None
         train(
             config["batch"],
             config["lr"],

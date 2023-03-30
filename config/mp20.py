@@ -9,7 +9,7 @@ base_config = {
     "batch_size": [64],
 }
 scalex = {
-    "mean": osp.join(base_config["root"], "x.mean"),
+    "mean": torch.load(osp.join(base_config["root"], "x.mean")),
     "std": osp.join(base_config["root"], "x.std"),
 }
 scaley = {
