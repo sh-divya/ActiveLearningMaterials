@@ -109,9 +109,8 @@ if __name__ == "__main__":
         "std": torch.load(osp.join(folder, "y.std")),
     }
     temp = CrystalFeat(
-        root=folder, target="formation_energy_per_atom", subset="train", write=False
-    )  # , scalex=xt, scaley=yt)
-    print(temp[10])
+        root=folder, target="formation_energy_per_atom", subset="train", write=False, scalex=xt, scaley=yt)
+    print(temp[10][0].shape)
     # loader = DataLoader(temp, batch_size=27136)
     # for x, y in loader:
     #     m = y.mean(dim=0)
