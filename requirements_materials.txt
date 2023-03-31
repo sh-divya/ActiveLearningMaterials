@@ -19,3 +19,4 @@ torchaudio
 torchmetrics
 torchvision
 wandb
+wheel
