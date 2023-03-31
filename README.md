@@ -4,9 +4,9 @@ This repository includes models and datasets to train and use as proxies as part
 
 The code runs on python=3.9, and the required packages can be installed using
 
-'''bash
+```bash
 pip install -r requirementsi\_materials.txt
-'''
+```
 
 ## Ionic Conductivity
 
