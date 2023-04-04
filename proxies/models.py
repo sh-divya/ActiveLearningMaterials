@@ -3,8 +3,8 @@ import torch.nn as nn
 import torch.optim as optim
 import pytorch_lightning as pl
 
+
 class ProxyMLP(nn.Module):
-    
     def __init__(self, in_feat, hidden_layers):
         super(ProxyMLP, self).__init__()
         self.nn_layers = []
@@ -36,56 +36,42 @@ class ProxyMLP(nn.Module):
                 # print(self.drop)
                 x = self.hidden_act(x)
                 x = self.drop(x)
-            
+
         return x
 
+
 class ProxyModel(pl.LightningModule):
-    def __init__(self, proxy, loss, lr, device):
+    def __init__(self, proxy, loss, acc, lr):
         super().__init__()
         self.model = proxy
         self.criterion = loss
+        self.accuracy = acc
         self.lr = lr
         self.loss = 0
-        # self.device = device
 
     def training_step(self, batch, batch_idx):
         x, y = batch
-        inp = x.to(torch.float32) # .to(self.device)
-        true = y.to(torch.float32) # .to(self.device)
-        out = self.model(inp)
-
-        # l1_weights = torch.Tensor([
-        #     m.weight.data.abs().sum()
-        #     for m in model.modules
-        # ]).sum()
-        # l1_biases = torch.Tensor([
-        #     m.bias.data.abs().sum()
-        #     for m in model.modules
-        # ]).sum()
+        inp = x.to(torch.float32)
+        true = y.to(torch.float32)
+        out = self.model(inp).squeeze(-1)
         loss = self.criterion(out, true)
+        acc = self.accuracy(out, true)
 
-        true = true >= 0.5
-        pred = out >= 0.5
-        acc = (pred == true).sum() / inp.shape[0]
+        self.log("train_loss", loss)
+        self.log("train_acc", acc)
 
-        self.log('train_loss', loss)
-        self.log('train_acc', acc)
-        
         return loss
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
         inp = x.to(torch.float32)
         true = y.to(torch.float32)
-        out = self.model(inp)
+        out = self.model(inp).squeeze(-1)
         loss = self.criterion(out, true)
+        acc = self.accuracy(out, true)
 
-        true = true >= 0.5
-        pred = out >= 0.5
-        acc = (pred == true).sum() / inp.shape[0]
-
-        self.log('val_loss', loss)
-        self.log('val_acc', acc)
+        self.log("val_loss", loss)
+        self.log("val_acc", acc)
 
         return loss
 
@@ -95,9 +81,8 @@ class ProxyModel(pl.LightningModule):
         true = y.to(torch.float32)
         out = self.model(inp)
         loss = self.criterion(out, true)
-        
+
         return loss
-        
 
     def configure_optimizers(self):
         optimizer = optim.Adam(self.parameters(), self.lr)
