@@ -1,4 +1,5 @@
 import os.path as osp
+
 import torch
 
 base_config = {
@@ -6,8 +7,7 @@ base_config = {
     "input_len": 96,
     "hidden_layers": [512, 512],
     "lr": 1e-2,
-    # "lr": [1e-2, 1e-3, 1e-4, 1e-5],
-    "batch_size": [32, 64, 128, 256],
+    "batch_size": 32,
 }
 scalex = {
     "mean": torch.load(osp.join(base_config["root"], "x.mean")),
@@ -23,7 +23,9 @@ config = {
     "model_config": base_config,
     "xscale": scalex,
     "yscale": scaley,
-    "tune_var": "batch_size",
+    "model_grid_search": {
+        "batch_size": [32, 64, 128],
+    },
     "target": "formation_energy_per_atom",
     "epochs": 4,
     "es_patience": 3,
