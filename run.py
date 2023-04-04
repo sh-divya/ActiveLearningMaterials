@@ -1,17 +1,20 @@
-import torch
+import copy
 import random
+import os.path as osp
+
+import torch
 import torch.nn as nn
-from proxies.crystal_data import ICDataset
-from proxies.models import ProxyMLP, ProxyModel
-from torch.utils.data import DataLoader, random_split, Subset
-from sklearn.model_selection import train_test_split
 import wandb as wb
 import numpy as np
-import os.path as osp
 from torch.nn.init import xavier_uniform_
+from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+
+from proxies.data import CrystalFeat
+from proxies.models import ProxyMLP, ProxyModel
+from config.mp20 import config
 
 SEED = 0
 torch.manual_seed(SEED)
@@ -24,134 +27,69 @@ def weights_init(m):
         xavier_uniform_(m.weight)
 
 
-def proportional_split(dataset, split=None):
-    idx = list(range(len(dataset)))
-    y = dataset.get_all_y()
-    x_train, x_test, y_train, y_test = train_test_split(
-        idx,
-        y,
-        train_size=split[0],
-        test_size=split[1] + split[2],
-        shuffle=True,
-        stratify=y,
-    )
-
-    val_to_test = [split[1] / sum(split[1:]), split[2] / sum(split[1:])]
-    x_val, x_test, y_val, y_test = train_test_split(
-        x_test,
-        y_test,
-        train_size=val_to_test[0],
-        test_size=val_to_test[1],
-        shuffle=True,
-        stratify=y_test,
-    )
-
-    return Subset(dataset, x_train), Subset(dataset, x_val), Subset(dataset, x_test)
-
-
-def train(batch_size, lr, num_epochs, layers, split, logger):
+def train(config, logger):
     device = torch.device("cpu")
+    model_config = config["model_config"]
 
-    standard = {
-        "mean": torch.load("./proxies/ic/mean85.pt"),
-        "std": torch.load("./proxies/ic/std85.pt"),
-    }
-
-    dataset = ICDataset(
-        "./proxies/ic/li-ssb",
-        "./proxies/ic/lissb.csv",
-        True,
-        "./proxies/ic/skip.txt",
-        "./proxies/ic/proxy.csv",
-        "./proxies/ic/compile.csv",
-        transform=standard,
-        subset=True,
+    trainset = CrystalFeat(
+        root=model_config["root"],
+        target="formation_energy_per_atom",
+        subset="train",
+        scalex=config["xscale"],
+        scaley=config["yscale"],
+    )
+    valset = CrystalFeat(
+        root=model_config["root"],
+        target=config["target"],
+        subset="val",
+        scalex=config["xscale"],
+        scaley=config["yscale"],
     )
 
-    sets = proportional_split(dataset, split)
-    # sets = random_split(dataset, split)
-    trainset, valset, testset = sets
+    trainloader = DataLoader(
+        trainset, batch_size=model_config["batch_size"], shuffle=True
+    )
+    valloader = DataLoader(valset, batch_size=model_config["batch_size"], shuffle=False)
 
-    # tempload = DataLoader(trainset, batch_size=10000)
-    # for x, y in tempload:
-    #     print(y.mean())
-    #     print(y.std())
-    # raise Exception
-
-    trainloader = DataLoader(trainset, batch_size=batch_size, shuffle=True)
-    # raise Exception
-    valloader = DataLoader(valset, batch_size=batch_size, shuffle=False)
-
-    model = ProxyMLP(85, layers).to(device).to(torch.float32)
+    model = (
+        ProxyMLP(model_config["input_len"], model_config["hidden_layers"])
+        .to(device)
+        .to(torch.float32)
+    )
     model.apply(weights_init)
-    criterion = nn.BCELoss()
-    # criterion = nn.MSELoss()
-    # for x, y in trainloader:
-    #     print(x.shape)
-    #     print(y.shape)
-    #     out = model(x.to(torch.float32))
-    #     error = criterion(out, y.to(torch.float32))
-    # raise Exception
+    criterion = nn.MSELoss()
+    accuracy = nn.L1Loss()
     early = EarlyStopping(monitor="val_acc", patience=3, mode="max")
 
-    model = ProxyModel(model, criterion, lr, device)
+    model = ProxyModel(model, criterion, accuracy, model_config["lr"])
     trainer = pl.Trainer(
-        max_epochs=num_epochs,
+        max_epochs=config["epochs"],
         logger=logger,
         log_every_n_steps=1,
         callbacks=early,
-        min_epochs=20,
+        min_epochs=1,
     )
     trainer.fit(model=model, train_dataloaders=trainloader, val_dataloaders=valloader)
-    raise Exception
-    logger.experiment.config["LR"] = lr
-    logger.experiment.config["batch"] = batch_size
-    logger.experiment.config["layers"] = layers
-    logger.experiment.finish()
+    if logger:
+        logger.experiment.config["LR"] = model_config["lr"]
+        logger.experiment.config["batch"] = model_config["batch_size"]
+        logger.experiment.config["layers"] = model_config["hidden_layers"]
+        logger.experiment.finish()
 
 
-# random
-# similar distribution on y across the sets
-# remove some elements
+def main(config):
+    model_config = copy.copy(config["model_config"])
+    tune_var = config["tune_var"]
+
+    for var in model_config[tune_var]:
+        config["model_config"][tune_var] = var
+        name = [
+            key + "-" + str(config["model_config"][key]) for key in ["lr", "batch_size"]
+        ]
+        # logger = None
+        logger = WandbLogger(project="Proxy-MP20", name="_".join(name))
+        train(config, logger=logger)
+
 
 if __name__ == "__main__":
-    # layer_search = [
-    # [512, 512],
-    # [1024, 1024],
-    # [512, 512, 256]
-    # [1024, 1024, 512],
-    # [512, 512, 512, 256],
-    # [512, 1024, 1024, 512]
-    # ]
-
-    layer_search = [
-        [256, 256]
-        # [128, 128],
-        # [128, 256, 128],
-        # [256, 256, 256],
-        # [128, 256, 256, 128]
-    ]
-
-    for layer in layer_search:
-        config = {
-            "lr": 1e-2,
-            "batch": 128,
-            "epochs": 2,
-            "layers": layer,
-            "split": [0.6, 0.2, 0.2],
-        }
-        name = [key + "-" + str(config[key]) for key in ["lr", "batch"]]
-        # name = 'test'
-        name = (
-            "CompOnly" + "_".join(name) + "_layer-" + "".join([str(l) for l in layer])
-        )
-        # logger = WandbLogger(project="AL-Li", name=name)
-        logger = None
-        train(
-            config["batch"],
-            config["lr"],
-            config["epochs"],
-            config["layers"],
-            config["split"],
-            logger,
-        )
+    main(config)
