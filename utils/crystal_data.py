@@ -231,7 +231,6 @@ class ICDataset(Dataset):
         # print('Min Element', min(num_atoms_type))
 
 
-
 @click.command()
 @click.option("--datapath", default="./data/li-ssb")
 @click.option("--truecsv", default="./data/lissb.csv")

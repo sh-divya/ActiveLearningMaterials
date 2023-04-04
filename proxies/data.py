@@ -42,8 +42,6 @@ class CrystalFeat(Dataset):
         return torch.nan_to_num(mat, nan=0.0), target
 
 
-
-
 if __name__ == "__main__":
     folder = "./perov"
     # write_data_csv(folder)
