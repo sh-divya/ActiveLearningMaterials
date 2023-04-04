@@ -57,14 +57,16 @@ def train(config, logger):
     model.apply(weights_init)
     criterion = nn.MSELoss()
     accuracy = nn.L1Loss()
-    early = EarlyStopping(monitor="val_acc", patience=3, mode="max")
+    ckpt = get_checkpoint_callback(
+        config["run_dir"], logger, monitor="val_acc", mode="max"
+    )
 
     model = ProxyModel(model, criterion, accuracy, model_config["lr"])
     trainer = pl.Trainer(
         max_epochs=config["epochs"],
         logger=logger,
         log_every_n_steps=1,
-        callbacks=early,
+        callbacks=[ckpt, early],
         min_epochs=1,
     )
     trainer.fit(model=model, train_dataloaders=trainloader, val_dataloaders=valloader)
