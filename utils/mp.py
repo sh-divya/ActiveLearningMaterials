@@ -1,6 +1,7 @@
 from pymatgen.ext.matproj import MPRester
 import os.path as osp
 
+
 def download(queryObj, criteria, properties, save_dir):
     write_path = osp.join(save_dir)
     for i, d in enumerate(

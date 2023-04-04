@@ -1,5 +1,6 @@
 black
 click
+flake8
 lightning
 lightning-cloud
 lightning-utilities
