@@ -26,6 +26,7 @@ config = {
     "tune_var": "batch_size",
     "target": "formation_energy_per_atom",
     "epochs": 4,
+    "es_patience": 3,
 }
 
 # layer_search = [

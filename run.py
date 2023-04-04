@@ -57,6 +57,7 @@ def train(config, logger):
     model.apply(weights_init)
     criterion = nn.MSELoss()
     accuracy = nn.L1Loss()
+    early = EarlyStopping(monitor="val_acc", patience=config["es_patience"], mode="max")
     ckpt = get_checkpoint_callback(
         config["run_dir"], logger, monitor="val_acc", mode="max"
     )
