@@ -49,7 +49,7 @@ def train(config, logger):
     trainloader = DataLoader(
         trainset, batch_size=model_config["batch_size"], shuffle=True
     )
-    # valloader = DataLoader(valset, batch_size=model_config["batch_size"], shuffle=False)
+    valloader = DataLoader(valset, batch_size=model_config["batch_size"], shuffle=False)
 
     model = (
         ProxyMLP(model_config["input_len"], model_config["hidden_layers"])
@@ -58,19 +58,18 @@ def train(config, logger):
     )
     model.apply(weights_init)
     criterion = nn.MSELoss()
+    accuracy = nn.L1Loss()
     early = EarlyStopping(monitor="val_acc", patience=3, mode="max")
 
-    model = ProxyModel(model, criterion, model_config["lr"], device)
+    model = ProxyModel(model, criterion, accuracy, model_config["lr"])
     trainer = pl.Trainer(
         max_epochs=config["epochs"],
         logger=logger,
         log_every_n_steps=1,
         callbacks=early,
-        min_epochs=5,
+        min_epochs=1,
     )
-    trainer.fit(
-        model=model, train_dataloaders=trainloader
-    )  # , val_dataloaders=valloader)
+    trainer.fit(model=model, train_dataloaders=trainloader, val_dataloaders=valloader)
     if logger:
         logger.experiment.config["LR"] = model_config["lr"]
         logger.experiment.config["batch"] = model_config["batch_size"]
@@ -87,9 +86,8 @@ def main(config):
         name = [
             key + "-" + str(config["model_config"][key]) for key in ["lr", "batch_size"]
         ]
-        name = "test"
-        logger = None
-        # logger = WandbLogger(project="Proxy-MP20", name=name)
+        # logger = None
+        logger = WandbLogger(project="Proxy-MP20", name="_".join(name))
         train(config, logger=logger)
 
 

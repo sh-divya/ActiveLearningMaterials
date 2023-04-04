@@ -13,13 +13,7 @@ class CrystalFeat(Dataset):
     def __init__(
         self, root, target, write=False, subset="train", scalex=False, scaley=False
     ):
-        self.data_path = osp.join(root, "data")
-        self.write_path = root
-        self.csv = {
-            "train": osp.join(self.data_path, "train.csv"),
-            "val": osp.join(self.data_path, "val.csv"),
-            "test": osp.join(self.data_path, "test.csv"),
-        }
+        self.csv_path = root
         self.subsets = {}
         self.cols_of_interest = [
             "material_id",
@@ -32,7 +26,7 @@ class CrystalFeat(Dataset):
         ]
         self.xtransform = scalex
         self.ytransform = scaley
-        self.data_df = pd.read_csv(osp.join(self.write_path, subset + "_data.csv"))
+        self.data_df = pd.read_csv(osp.join(self.csv_path, subset + "_data.csv"))
         self.y = self.data_df[target].values
         sub_cols = [
             col for col in self.data_df.columns if col not in self.cols_of_interest
@@ -53,8 +47,8 @@ class CrystalFeat(Dataset):
 
 
 def write_data_csv(root):
-    data_path = osp.join(root, 'data')
-    subsets = ['train', 'val', 'test']
+    data_path = osp.join(root, "data")
+    subsets = ["train", "val", "test"]
     proxy_features = {
         "Space Group": [],
         "a": [],
@@ -79,7 +73,7 @@ def write_data_csv(root):
     master_df = []
     sub_lens = []
     for sub in subsets:
-        id_cif_prop = pd.read_csv(osp.join(data_path, sub + '.csv'))
+        id_cif_prop = pd.read_csv(osp.join(data_path, sub + ".csv"))
         df_cols = id_cif_prop.columns
         sub_cols = [col for col in cols_of_interest if col in df_cols]
         sub_df = id_cif_prop[sub_cols]
@@ -113,14 +107,15 @@ def write_data_csv(root):
         if i == 0:
             low = 0
         else:
-            low = sub_lens[i - 1]
+            low = high
         high = l + low
-        df = master_df.loc[low: high, :]
+        df = master_df.iloc[low:high, :]
         df.to_csv(osp.join(root, subsets[i] + "_data.csv"))
 
+
 if __name__ == "__main__":
-    folder = "./mp20"
-    write_data_csv(folder)
+    folder = "./perov"
+    # write_data_csv(folder)
     # xt = {
     #     "mean": torch.load(osp.join(folder, "x.mean")),
     #     "std": torch.load(osp.join(folder, "x.std")),
@@ -129,15 +124,18 @@ if __name__ == "__main__":
     #     "mean": torch.load(osp.join(folder, "y.mean")),
     #     "std": torch.load(osp.join(folder, "y.std")),
     # }
-    # temp = CrystalFeat(
-    #     root=folder, target="formation_energy_per_atom", subset="train", write=False, scalex=xt, scaley=yt)
-    # print(temp[10][0].shape)
-    # loader = DataLoader(temp, batch_size=27136)
-    # for x, y in loader:
-    #     m = y.mean(dim=0)
-    #     s = y.std(dim=0)
-    #     print(m)
-    #     print(s)
-    #     torch.save(m, osp.join(folder, 'y.mean'))
-    #     torch.save(s, osp.join(folder, 'y.std'))
-    #     # temp.write_data_csv('test')
+    temp = CrystalFeat(
+        root=folder, target="heat_ref", subset="train"
+    )  # , scalex=xt, scaley=yt)
+    bs = len(temp)
+    print(temp[10][0].shape)
+    loader = DataLoader(temp, batch_size=bs)
+    for x, y in loader:
+        m1 = x.mean(dim=0)
+        s1 = x.std(dim=0)
+        torch.save(m1, osp.join(folder, "x.mean"))
+        torch.save(s1, osp.join(folder, "x.std"))
+        m2 = y.mean(dim=0)
+        s2 = y.std(dim=0)
+        torch.save(m2, osp.join(folder, "y.mean"))
+        torch.save(s2, osp.join(folder, "y.std"))
