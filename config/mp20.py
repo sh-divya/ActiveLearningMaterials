@@ -24,17 +24,18 @@ config = {
     "xscale": scalex,
     "yscale": scaley,
     "model_grid_search": {
-        "batch_size": [32, 64, 128],
+        # "batch_size": [32, 64, 128],
+        # "lr": [1e-2, 1e-3, 1e-4]
+        "hidden_layers":[
+            [256, 256],
+            [128, 128],
+            [128, 256, 128],
+            [256, 256, 256],
+            [128, 256, 256, 128]
+        ]
     },
     "target": "formation_energy_per_atom",
     "epochs": 4,
     "es_patience": 3,
 }
 
-# layer_search = [
-# [256, 256]
-# [128, 128],
-# [128, 256, 128],
-# [256, 256, 256],
-# [128, 256, 256, 128]
-# ]

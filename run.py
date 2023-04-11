@@ -121,7 +121,7 @@ if __name__ == "__main__":
             logger = WandbLogger(
                 project="Proxy-MP20",
                 name=(name),
-                entity="mila-ocp",
+                entity="crystal-gfns",
             )
         else:
             logger = None

@@ -75,7 +75,7 @@ def get_run_dir() -> Path:
                 [
                     float(p.name.split("-")[-1])
                     for p in dirpath.parent.glob(f"{dirpath.name}-*")
-                ]
+                ], default=0
             )
             + 1
         )
