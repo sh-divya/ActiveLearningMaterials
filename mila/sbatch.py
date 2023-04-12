@@ -67,16 +67,16 @@ def make_sbatch_params(params):
 def discover_minydra_defaults():
     """
     Returns a list containing:
-    * the path to the shared configs/sbatch/defaults.yaml file
-    * the path to configs/sbatch/$USER.yaml file if it exists
+    * the path to the shared config/sbatch/defaults.yaml file
+    * the path to config/sbatch/$USER.yaml file if it exists
 
 
     Returns:
         list[pathlib.Path]: Path to the shared defaults and optionnally
             to a user-specific one if it exists
     """
-    defaults = [ROOT / "configs" / "sbatch" / "defaults.yaml"]
-    user_config = ROOT / "configs" / "sbatch" / f"{os.environ['USER']}.yaml"
+    defaults = [ROOT / "config" / "sbatch" / "defaults.yaml"]
+    user_config = ROOT / "config" / "sbatch" / f"{os.environ['USER']}.yaml"
     if user_config.exists() and user_config.is_file():
         defaults.append(user_config)
     return MinyDict(
