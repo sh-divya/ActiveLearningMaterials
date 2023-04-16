@@ -66,9 +66,9 @@ def train(config, logger):
     model.apply(weights_init)
     criterion = nn.MSELoss()
     accuracy = nn.L1Loss()
-    early = EarlyStopping(monitor="val_acc", patience=config["es_patience"], mode="max")
+    early = EarlyStopping(monitor="val_acc", patience=config["es_patience"], mode="min")
     ckpt = get_checkpoint_callback(
-        config["run_dir"], logger, monitor="val_acc", mode="max"
+        config["run_dir"], logger, monitor="val_acc", mode="min"
     )
 
     model = ProxyModel(model, criterion, accuracy, model_config["lr"])
@@ -121,7 +121,7 @@ if __name__ == "__main__":
             logger = WandbLogger(
                 project="Proxy-MP20",
                 name=(name),
-                entity="crystal-gfns",
+                entity="mila-ocp",
             )
         else:
             logger = None

@@ -25,6 +25,7 @@ class ProxyMLP(nn.Module):
         self.final_act = nn.Tanh()
 
     def forward(self, x):
+        x = torch.cat(x, dim=-1)
         for l, layer in enumerate(self.nn_layers):
             x = layer(x)
             # print(layer)
@@ -39,6 +40,23 @@ class ProxyMLP(nn.Module):
         return x
 
 
+class ProxyEmbeddingModel(nn.Module):
+    def __init__(self, comp_emb_layers, sg_emb_size, lattice_emb_layers, prediction_layers):
+        self.comp_emb_mlp = mlp_from_layers(comp_emb_layers)
+        self.sg_emb = nn.Embedding(230, sg_emb_size)
+        self.lattice_emb_mlp = mlp_from_layers(lattice_emb_layers)
+        self.pred_inp_size = comp_emb_layers[-1] + sg_emb_size + lattice_emb_layers[-1]
+        self.prediction_head = ProxyMLP(self.pred_inp_size, prediction_layers)
+
+    def forward(self, x):
+        comp_x = self.comp_emb_mlp(x[0])
+        sg_x = self.sg_emb(x[1])
+        lattice_x = self.lattice_emb_mlp([2])
+
+        x = torch.cat([comp_x, sg_x, lattice_x], dim=-1)
+        return self.prediction_head(x)
+
+
 class ProxyModel(pl.LightningModule):
     def __init__(self, proxy, loss, acc, lr):
         super().__init__()
@@ -50,11 +68,9 @@ class ProxyModel(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         x, y = batch
-        inp = x.to(torch.float32)
-        true = y.to(torch.float32)
-        out = self.model(inp).squeeze(-1)
-        loss = self.criterion(out, true)
-        acc = self.accuracy(out, true)
+        out = self.model(x).squeeze(-1)
+        loss = self.criterion(out, y)
+        acc = self.accuracy(out, y)
 
         self.log("train_loss", loss)
         self.log("train_acc", acc)
@@ -63,11 +79,9 @@ class ProxyModel(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
-        inp = x.to(torch.float32)
-        true = y.to(torch.float32)
-        out = self.model(inp).squeeze(-1)
-        loss = self.criterion(out, true)
-        acc = self.accuracy(out, true)
+        out = self.model(x).squeeze(-1)
+        loss = self.criterion(out, y)
+        acc = self.accuracy(out, y)
 
         self.log("val_loss", loss)
         self.log("val_acc", acc)
@@ -76,13 +90,29 @@ class ProxyModel(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         x, y = batch
-        inp = x.to(torch.float32)
-        true = y.to(torch.float32)
-        out = self.model(inp)
-        loss = self.criterion(out, true)
+        out = self.model(x)
+        loss = self.criterion(out, y)
 
         return loss
 
     def configure_optimizers(self):
         optimizer = optim.Adam(self.parameters(), self.lr)
         return optimizer
+
+
+def mlp_from_layers(layers, act, norm):
+    nn_layers = []
+    for i in range(len(layers)):
+        if i == 0:
+            nn_layers.append(nn.Linear(in_feat, hidden_layers[i]))
+        else:
+            nn_layers.append(nn.Linear(hidden_layers[i - 1], hidden_layers[i]))
+        modules.append(self.nn_layers[-1])
+        nn_layers.append(nn.LeakyReLU(True) if activation is None else activation)
+        nn_layers.append
+        if norm:
+            nn_layers.append(nn.BatchNorm1d(hidden_layers[i]))
+    nn_layers.append(nn.Linear(hidden_layers[-1], 1))
+    nn_layers.append(nn.LeakyReLU(True) if activation is None else activation)
+    nn_layers = nn.ModuleList(self.nn_layers)
+    return nn_layers
