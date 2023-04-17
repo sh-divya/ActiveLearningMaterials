@@ -28,12 +28,9 @@ class ProxyMLP(nn.Module):
         x = torch.cat(x, dim=-1)
         for l, layer in enumerate(self.nn_layers):
             x = layer(x)
-            # print(layer)
             if l == len(self.nn_layers) - 1:
                 x = self.final_act(x)
             if l % 2 == 1:
-                # print(self.hidden_act)
-                # print(self.drop)
                 x = self.hidden_act(x)
                 x = self.drop(x)
 
@@ -41,7 +38,9 @@ class ProxyMLP(nn.Module):
 
 
 class ProxyEmbeddingModel(nn.Module):
-    def __init__(self, comp_emb_layers, sg_emb_size, lattice_emb_layers, prediction_layers):
+    def __init__(
+        self, comp_emb_layers, sg_emb_size, lattice_emb_layers, prediction_layers
+    ):
         self.comp_emb_mlp = mlp_from_layers(comp_emb_layers)
         self.sg_emb = nn.Embedding(230, sg_emb_size)
         self.lattice_emb_mlp = mlp_from_layers(lattice_emb_layers)
@@ -50,7 +49,8 @@ class ProxyEmbeddingModel(nn.Module):
 
     def forward(self, x):
         comp_x = self.comp_emb_mlp(x[0])
-        sg_x = self.sg_emb(x[1])
+        sg_x = nn.functional.one_hot(self.sg_emb(x[1]), num_classes=230)
+
         lattice_x = self.lattice_emb_mlp([2])
 
         x = torch.cat([comp_x, sg_x, lattice_x], dim=-1)
@@ -100,19 +100,15 @@ class ProxyModel(pl.LightningModule):
         return optimizer
 
 
-def mlp_from_layers(layers, act, norm):
+def mlp_from_layers(layers, act=None, norm=True):
     nn_layers = []
     for i in range(len(layers)):
-        if i == 0:
-            nn_layers.append(nn.Linear(in_feat, hidden_layers[i]))
-        else:
-            nn_layers.append(nn.Linear(hidden_layers[i - 1], hidden_layers[i]))
-        modules.append(self.nn_layers[-1])
-        nn_layers.append(nn.LeakyReLU(True) if activation is None else activation)
-        nn_layers.append
-        if norm:
-            nn_layers.append(nn.BatchNorm1d(hidden_layers[i]))
-    nn_layers.append(nn.Linear(hidden_layers[-1], 1))
-    nn_layers.append(nn.LeakyReLU(True) if activation is None else activation)
-    nn_layers = nn.ModuleList(self.nn_layers)
+        try:
+            nn_layers.append(nn.Linear(layers[i], layers[i + 1]))
+            if norm:
+                nn_layers.append(nn.BatchNorm1d(layers[i + 1]))
+            nn_layers.append(nn.LeakyReLU(True) if act is None else act)
+        except IndexError:
+            pass
+    nn_layers = nn.ModuleList(nn_layers)
     return nn_layers
