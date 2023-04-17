@@ -5,7 +5,7 @@ import pytorch_lightning as pl
 
 
 class ProxyMLP(nn.Module):
-    def __init__(self, in_feat, hidden_layers):
+    def __init__(self, in_feat, hidden_layers, cat=True):
         super(ProxyMLP, self).__init__()
         self.nn_layers = []
         self.modules = []
@@ -23,9 +23,11 @@ class ProxyMLP(nn.Module):
         self.hidden_act = nn.LeakyReLU(0.2)
         self.drop = nn.Dropout(p=0.5)
         self.final_act = nn.Tanh()
+        self.cat = cat
 
     def forward(self, x):
-        x = torch.cat(x, dim=-1)
+        if self.cat:
+            x = torch.cat(x, dim=-1)
         for l, layer in enumerate(self.nn_layers):
             x = layer(x)
             if l == len(self.nn_layers) - 1:
@@ -41,19 +43,21 @@ class ProxyEmbeddingModel(nn.Module):
     def __init__(
         self, comp_emb_layers, sg_emb_size, lattice_emb_layers, prediction_layers
     ):
+        super().__init__()
         self.comp_emb_mlp = mlp_from_layers(comp_emb_layers)
         self.sg_emb = nn.Embedding(230, sg_emb_size)
         self.lattice_emb_mlp = mlp_from_layers(lattice_emb_layers)
         self.pred_inp_size = comp_emb_layers[-1] + sg_emb_size + lattice_emb_layers[-1]
-        self.prediction_head = ProxyMLP(self.pred_inp_size, prediction_layers)
+        self.prediction_head = ProxyMLP(self.pred_inp_size, prediction_layers, False)
 
     def forward(self, x):
         comp_x = self.comp_emb_mlp(x[0])
-        sg_x = nn.functional.one_hot(self.sg_emb(x[1]), num_classes=230)
+        sg_x = x[1].long()
+        sg_x = self.sg_emb(sg_x).squeeze(1)
 
-        lattice_x = self.lattice_emb_mlp([2])
+        lattice_x = self.lattice_emb_mlp(x[2])
 
-        x = torch.cat([comp_x, sg_x, lattice_x], dim=-1)
+        x = torch.cat((comp_x, sg_x, lattice_x), dim=-1)
         return self.prediction_head(x)
 
 
@@ -110,5 +114,5 @@ def mlp_from_layers(layers, act=None, norm=True):
             nn_layers.append(nn.LeakyReLU(True) if act is None else act)
         except IndexError:
             pass
-    nn_layers = nn.ModuleList(nn_layers)
+    nn_layers = nn.Sequential(*nn_layers)
     return nn_layers
