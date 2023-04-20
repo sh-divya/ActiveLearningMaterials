@@ -6,9 +6,14 @@ from pathlib import Path
 from typing import Dict, List, Union
 from uuid import uuid4
 
-from yaml import dump
+
+import torch
+from yaml import dump, safe_load
+from utils.parser import parse_args_to_dict
+
 
 JOB_ID = os.environ.get("SLURM_JOB_ID")
+ROOT = Path(__file__).resolve().parent.parent  # repo root Path
 
 
 def resolve(path: Union[str, Path]) -> Path:
@@ -185,3 +190,61 @@ def merge_dicts(dict1: dict, dict2: dict) -> dict:
                 return_dict[k] = dict2[k]
 
     return return_dict
+
+
+def load_scales(config):
+    if "scales" not in config:
+        return config
+
+    scales = {s: {} for s in config["scales"]}
+
+    for scale, scale_conf in config["scales"].items():
+        if "load" in scale_conf:
+            src = config["src"].replace("$root", str(ROOT))
+            if src.startswith("/"):
+                src = resolve(src)
+            else:
+                src = ROOT / src
+            assert "mean" in scale_conf and "std" in scale_conf
+            if scale_conf["load"] == "torch":
+                scales[scale]["mean"] = torch.load(
+                    scale_conf["mean"].replace("$src", str(src))
+                )
+                scales[scale]["std"] = torch.load(
+                    scale_conf["std"].replace("$src", str(src))
+                )
+        else:
+            scales[scale] = scale_conf
+
+    config["scale"] = scales
+
+    return config
+
+
+def load_config() -> dict:
+    # 1. parse command-line args
+    cli_conf = parse_args_to_dict()
+    assert (
+        "config" in cli_conf
+    ), "Must specify config string as `--config={task}-{model}`"
+    # 2. load config files
+    task, model = cli_conf["config"].split("-")
+    config = merge_dicts(
+        safe_load((ROOT / "config" / "tasks" / f"{task}.yaml").read_text()),
+        safe_load((ROOT / "config" / "models" / f"{model}.yaml").read_text()),
+    )
+    # 3. merge with command-line args
+    config = merge_dicts(config, cli_conf)
+    if "run_dir" not in config:
+        # 3.0 get run dir path if none is specified
+        config["run_dir"] = get_run_dir()
+
+    # 3.1 resolve paths
+    config["run_dir"] = resolve(config["run_dir"])
+    # 3.2 make run directory
+    config["run_dir"].mkdir(parents=True, exist_ok=True)
+    config["run_dir"] = str(config["run_dir"])
+
+    if "scales" in config:
+        config = load_scales(config)
+    return config
