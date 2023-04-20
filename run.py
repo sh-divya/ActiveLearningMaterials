@@ -1,4 +1,5 @@
 import random
+import warnings
 
 import numpy as np
 import pytorch_lightning as pl
@@ -6,59 +7,21 @@ import torch
 import torch.nn as nn
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
-from torch.nn.init import xavier_uniform_
-from proxies.models import ProxyMLP, ProxyModule
-from utils.callbacks import get_checkpoint_callback
-from utils.misc import (
-    print_config,
-    load_config,
-)
-from utils.loaders import make_loaders
 
+from proxies.models import make_model
+from proxies.pl_modules import ProxyModule
+from utils.callbacks import get_checkpoint_callback
+from utils.loaders import make_loaders
+from utils.misc import (
+    load_config,
+    print_config,
+)
+
+warnings.filterwarnings("ignore", ".*does not have many workers.*")
 SEED = 0
 torch.manual_seed(SEED)
 random.seed(SEED)
 np.random.seed(SEED)
-
-
-def weights_init(m):
-    if isinstance(m, nn.Linear):
-        xavier_uniform_(m.weight)
-
-
-def train(config, logger):
-    loaders = make_loaders(config)
-
-    model = ProxyMLP(config["model"]["input_len"], config["model"]["hidden_layers"])
-    model.apply(weights_init)
-
-    criterion = nn.MSELoss()
-    accuracy = nn.L1Loss()
-    early = EarlyStopping(
-        monitor="val_acc", patience=config["optim"]["es_patience"], mode="max"
-    )
-    ckpt = get_checkpoint_callback(
-        config["run_dir"], logger, monitor="val_acc", mode="max"
-    )
-
-    module = ProxyModule(model, criterion, accuracy, config)
-    trainer = pl.Trainer(
-        max_epochs=config["optim"]["epochs"],
-        logger=logger,
-        log_every_n_steps=1,
-        callbacks=[ckpt, early],
-        min_epochs=1,
-    )
-    trainer.fit(
-        model=module,
-        train_dataloaders=loaders["train"],
-        val_dataloaders=loaders["val"],
-    )
-    if logger:
-        logger.experiment.config["lr"] = config["optim"]["lr"]
-        logger.experiment.config["batch"] = config["optim"]["batch_size"]
-        logger.experiment.config["layers"] = config["model"]["hidden_layers"]
-        logger.experiment.finish()
 
 
 if __name__ == "__main__":
@@ -100,4 +63,42 @@ if __name__ == "__main__":
             + " will not be saved, and no logger will be used"
         )
 
-    train(config, logger=logger)
+    # create dataloaders and model
+    loaders = make_loaders(config)
+    model = make_model(config)
+
+    # setup PL callbacks
+    early = EarlyStopping(
+        monitor="val_acc", patience=config["optim"]["es_patience"], mode="max"
+    )
+    ckpt = get_checkpoint_callback(
+        config["run_dir"], logger, monitor="val_acc", mode="max"
+    )
+
+    # Make module
+    criterion = nn.MSELoss()
+    accuracy = nn.L1Loss()
+    module = ProxyModule(model, criterion, accuracy, config)
+
+    # Make PL trainer
+    trainer = pl.Trainer(
+        max_epochs=config["optim"]["epochs"],
+        logger=logger,
+        log_every_n_steps=1,
+        callbacks=[ckpt, early],
+        min_epochs=1,
+    )
+
+    # Start training
+    trainer.fit(
+        model=module,
+        train_dataloaders=loaders["train"],
+        val_dataloaders=loaders["val"],
+    )
+
+    # End of training
+    if logger:
+        logger.experiment.config["lr"] = config["optim"]["lr"]
+        logger.experiment.config["batch"] = config["optim"]["batch_size"]
+        logger.experiment.config["layers"] = config["model"]["hidden_layers"]
+        logger.experiment.finish()
