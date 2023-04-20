@@ -77,6 +77,12 @@ def parse_args_to_dict() -> dict:
         default="mila-ocp",
         help="wandb entity where the project is",
     )
+    parser.add_argument(
+        "--wandb_note",
+        type=str,
+        default="",
+        help="wandb note for the run",
+    )
     # Parse args
     args, override_args = parser.parse_known_args()
     from utils.misc import merge_dicts

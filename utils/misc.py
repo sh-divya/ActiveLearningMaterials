@@ -237,10 +237,14 @@ def load_config() -> dict:
         "config" in cli_conf
     ), "Must specify config string as `--config={task}-{model}`"
     # 2. load config files
-    task, model = cli_conf["config"].split("-")
+    model, task = cli_conf["config"].split("-")
+    task_file = ROOT / "config" / "tasks" / f"{task}.yaml"
+    model_file = ROOT / "config" / "models" / f"{model}.yaml"
+    assert task_file.exists(), f"Task config file {str(task_file)} does not exist."
+    assert model_file.exists(), f"Model config file {str(model_file)} does not exist."
     config = merge_dicts(
-        safe_load((ROOT / "config" / "tasks" / f"{task}.yaml").read_text()),
-        safe_load((ROOT / "config" / "models" / f"{model}.yaml").read_text()),
+        safe_load(task_file.read_text()),
+        safe_load(model_file.read_text()),
     )
     # 3. merge with command-line args
     config = merge_dicts(config, cli_conf)

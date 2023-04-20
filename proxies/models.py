@@ -3,6 +3,10 @@ import torch.nn as nn
 import torch.optim as optim
 import pytorch_lightning as pl
 
+import warnings
+
+warnings.filterwarnings("ignore", ".*does not have many workers.*")
+
 
 class ProxyMLP(nn.Module):
     def __init__(self, in_feat, hidden_layers):
@@ -40,14 +44,16 @@ class ProxyMLP(nn.Module):
         return x
 
 
-class ProxyModel(pl.LightningModule):
-    def __init__(self, proxy, loss, acc, lr):
+class ProxyModule(pl.LightningModule):
+    def __init__(self, proxy, loss, acc, config):
         super().__init__()
         self.model = proxy
         self.criterion = loss
         self.accuracy = acc
-        self.lr = lr
+        self.lr = config["optim"]["lr"]
         self.loss = 0
+        self.config = config
+        self.save_hyperparameters(config)
 
     def training_step(self, batch, batch_idx):
         x, y = batch
