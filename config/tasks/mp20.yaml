@@ -1,0 +1,11 @@
+src: $root/proxies/mp20
+target: formation_energy_per_atom
+scales:
+  x:
+    load: torch
+    mean: $src/x.mean
+    std: $src/x.std
+  y:
+    load: torch
+    mean: $src/y.mean
+    std: $src/y.std

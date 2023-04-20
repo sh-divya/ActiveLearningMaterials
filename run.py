@@ -10,18 +10,15 @@ from pytorch_lightning.loggers import WandbLogger
 from torch.nn.init import xavier_uniform_
 from torch.utils.data import DataLoader
 
-from config.mp20 import config
 from proxies.data import CrystalFeat
 from proxies.models import ProxyMLP, ProxyModel
 from utils.callbacks import get_checkpoint_callback
 from utils.misc import (
     flatten_grid_search,
-    get_run_dir,
     merge_dicts,
     print_config,
-    resolve,
+    load_config,
 )
-from utils.parser import parse_args_to_dict
 
 SEED = 0
 torch.manual_seed(SEED)
@@ -90,13 +87,8 @@ def train(config, logger):
 if __name__ == "__main__":
     # parse command-line arguments as `--key=value` and merge with config
     # allows for nested dictionaries: `--key.subkey=value``
-    cli_conf = parse_args_to_dict()
-    config["run_dir"] = get_run_dir()
-    config = merge_dicts(config, cli_conf)
-    config["run_dir"] = resolve(config["run_dir"])
-    config["run_dir"].mkdir(parents=True, exist_ok=True)
-    config["run_dir"] = str(config["run_dir"])
-
+    # load initial config from `--config={task}-{model}`
+    config = load_config()
     print_config(config)
 
     model_config = copy.copy(config["model_config"])
@@ -119,9 +111,9 @@ if __name__ == "__main__":
 
         if not config.get("no_logger"):
             logger = WandbLogger(
-                project="Proxy-MP20",
-                name=(name),
-                entity="mila-ocp",
+                project=config["wandb_project"],
+                name=name,
+                entity=config["wandb_entity"],
             )
         else:
             logger = None
