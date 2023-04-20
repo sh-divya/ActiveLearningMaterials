@@ -98,8 +98,17 @@ def print_config(config: dict) -> None:
         config (dict): config dictionary to print
     """
     config = copy.deepcopy(config)
-    config.pop("xscale", None)
-    config.pop("yscale", None)
+    for scale, scale_dict in config.get("scales", {}).items():
+        if "mean" in scale_dict:
+            if isinstance(scale_dict["mean"], torch.Tensor):
+                config["scales"][scale]["mean"] = "Tensor with shape " + str(
+                    scale_dict["mean"].shape
+                )
+        if "std" in scale_dict:
+            if isinstance(scale_dict["std"], torch.Tensor):
+                config["scales"][scale]["std"] = "Tensor with shape " + str(
+                    scale_dict["std"].shape
+                )
     print(dump(config))
 
 
@@ -216,7 +225,7 @@ def load_scales(config):
         else:
             scales[scale] = scale_conf
 
-    config["scale"] = scales
+    config["scales"] = scales
 
     return config
 
@@ -242,7 +251,8 @@ def load_config() -> dict:
     # 3.1 resolve paths
     config["run_dir"] = resolve(config["run_dir"])
     # 3.2 make run directory
-    config["run_dir"].mkdir(parents=True, exist_ok=True)
+    if not config.get("debug"):
+        config["run_dir"].mkdir(parents=True, exist_ok=True)
     config["run_dir"] = str(config["run_dir"])
 
     if "scales" in config:

@@ -14,8 +14,6 @@ from proxies.data import CrystalFeat
 from proxies.models import ProxyMLP, ProxyModel
 from utils.callbacks import get_checkpoint_callback
 from utils.misc import (
-    flatten_grid_search,
-    merge_dicts,
     print_config,
     load_config,
 )
@@ -89,33 +87,37 @@ if __name__ == "__main__":
     # allows for nested dictionaries: `--key.subkey=value``
     # load initial config from `--config={task}-{model}`
     config = load_config()
-    print_config(config)
-
-    model_config = copy.copy(config["model_config"])
-    if config.get("model_grid_search"):
-        grid = flatten_grid_search(config["model_grid_search"])
-    else:
-        grid = [{}]
-
-    for m, model_grid_conf in enumerate(grid):
-        if len(grid) > 1:
-            print("\n" + "=" * 80)
-            print("=" * 80)
-            print_config(model_grid_conf)
-
-        config["model_config"] = merge_dicts(model_config, model_grid_conf)
-        name = "_".join(
-            [f"{key}-{config['model_config'][key]}" for key in ["lr", "batch_size"]]
-        )
-        # or "_".join([f"{k}-{v}" for k, v in model_grid_conf.items()])
-
-        if not config.get("no_logger"):
-            logger = WandbLogger(
-                project=config["wandb_project"],
-                name=name,
-                entity=config["wandb_entity"],
+    if not config.get("wandb_run_name"):
+        wandb_name_keys = {
+            "model": ["hidden_layers"],
+            "optim": ["lr", "batch_size"],
+        }
+        config["wandb_run_name"] = (
+            config["config"]
+            + "-"
+            + "-".join(
+                [
+                    f"{key}={config[level][key]}"
+                    for level in wandb_name_keys
+                    for key in wandb_name_keys[level]
+                    if key in config[level]
+                ]
             )
-        else:
-            logger = None
+        )
+        # mp20-mlp-hidden_layers=[512, 512]-lr=0.001-batch_size=32
 
-        train(config, logger=logger)
+    print_config(config)
+    if not config.get("debug"):
+        logger = WandbLogger(
+            project=config["wandb_project"],
+            name=config["wandb_run_name"],
+            entity=config["wandb_entity"],
+        )
+    else:
+        logger = None
+        print(
+            "\n🛑Debug mode: run dir was not created, checkpoints"
+            + " will not be saved, and no logger will be used"
+        )
+
+    # train(config, logger=logger)
