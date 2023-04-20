@@ -1,4 +1,3 @@
-import copy
 import random
 
 import numpy as np
@@ -8,15 +7,13 @@ import torch.nn as nn
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
 from torch.nn.init import xavier_uniform_
-from torch.utils.data import DataLoader
-
-from proxies.data import CrystalFeat
-from proxies.models import ProxyMLP, ProxyModel
+from proxies.models import ProxyMLP, ProxyModule
 from utils.callbacks import get_checkpoint_callback
 from utils.misc import (
     print_config,
     load_config,
 )
+from utils.loaders import make_loaders
 
 SEED = 0
 torch.manual_seed(SEED)
@@ -30,55 +27,37 @@ def weights_init(m):
 
 
 def train(config, logger):
-    device = torch.device("cpu")
-    model_config = config["model_config"]
+    loaders = make_loaders(config)
 
-    trainset = CrystalFeat(
-        root=model_config["root"],
-        target="formation_energy_per_atom",
-        subset="train",
-        scalex=config["xscale"],
-        scaley=config["yscale"],
-    )
-    valset = CrystalFeat(
-        root=model_config["root"],
-        target=config["target"],
-        subset="val",
-        scalex=config["xscale"],
-        scaley=config["yscale"],
-    )
-
-    trainloader = DataLoader(
-        trainset, batch_size=model_config["batch_size"], shuffle=True
-    )
-    valloader = DataLoader(valset, batch_size=model_config["batch_size"], shuffle=False)
-
-    model = (
-        ProxyMLP(model_config["input_len"], model_config["hidden_layers"])
-        .to(device)
-        .to(torch.float32)
-    )
+    model = ProxyMLP(config["model"]["input_len"], config["model"]["hidden_layers"])
     model.apply(weights_init)
+
     criterion = nn.MSELoss()
     accuracy = nn.L1Loss()
-    early = EarlyStopping(monitor="val_acc", patience=config["es_patience"], mode="max")
+    early = EarlyStopping(
+        monitor="val_acc", patience=config["optim"]["es_patience"], mode="max"
+    )
     ckpt = get_checkpoint_callback(
         config["run_dir"], logger, monitor="val_acc", mode="max"
     )
 
-    model = ProxyModel(model, criterion, accuracy, model_config["lr"])
+    module = ProxyModule(model, criterion, accuracy, config)
     trainer = pl.Trainer(
-        max_epochs=config["epochs"],
+        max_epochs=config["optim"]["epochs"],
         logger=logger,
         log_every_n_steps=1,
         callbacks=[ckpt, early],
         min_epochs=1,
     )
-    trainer.fit(model=model, train_dataloaders=trainloader, val_dataloaders=valloader)
+    trainer.fit(
+        model=module,
+        train_dataloaders=loaders["train"],
+        val_dataloaders=loaders["val"],
+    )
     if logger:
-        logger.experiment.config["LR"] = model_config["lr"]
-        logger.experiment.config["batch"] = model_config["batch_size"]
-        logger.experiment.config["layers"] = model_config["hidden_layers"]
+        logger.experiment.config["lr"] = config["optim"]["lr"]
+        logger.experiment.config["batch"] = config["optim"]["batch_size"]
+        logger.experiment.config["layers"] = config["model"]["hidden_layers"]
         logger.experiment.finish()
 
 
@@ -112,6 +91,7 @@ if __name__ == "__main__":
             project=config["wandb_project"],
             name=config["wandb_run_name"],
             entity=config["wandb_entity"],
+            notes=config["wandb_note"],
         )
     else:
         logger = None
@@ -120,4 +100,4 @@ if __name__ == "__main__":
             + " will not be saved, and no logger will be used"
         )
 
-    # train(config, logger=logger)
+    train(config, logger=logger)
