@@ -68,12 +68,18 @@ if __name__ == "__main__":
     model = make_model(config)
 
     # setup PL callbacks
-    early = EarlyStopping(
-        monitor="val_acc", patience=config["optim"]["es_patience"], mode="max"
-    )
-    ckpt = get_checkpoint_callback(
-        config["run_dir"], logger, monitor="val_acc", mode="max"
-    )
+    callbacks = []
+    callbacks += [
+        EarlyStopping(
+            monitor="val_acc", patience=config["optim"]["es_patience"], mode="max"
+        )
+    ]
+    if not config.get("debug"):
+        callbacks += [
+            get_checkpoint_callback(
+                config["run_dir"], logger, monitor="val_acc", mode="max"
+            )
+        ]
 
     # Make module
     criterion = nn.MSELoss()
@@ -85,7 +91,7 @@ if __name__ == "__main__":
         max_epochs=config["optim"]["epochs"],
         logger=logger,
         log_every_n_steps=1,
-        callbacks=[ckpt, early],
+        callbacks=callbacks,
         min_epochs=1,
     )
 
