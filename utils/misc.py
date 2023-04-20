@@ -109,7 +109,14 @@ def print_config(config: dict) -> None:
                 config["scales"][scale]["std"] = "Tensor with shape " + str(
                     scale_dict["std"].shape
                 )
+    print()
+    print("#" * 50)
+    print("#" * 50)
+    print()
     print(dump(config))
+    print("#" * 50)
+    print("#" * 50)
+    print()
 
 
 def flatten_grid_search(grid: Dict[str, List]) -> List[Dict]:
