@@ -1,5 +1,6 @@
 import random
 import warnings
+import sys
 
 import numpy as np
 import pytorch_lightning as pl
@@ -27,7 +28,14 @@ np.random.seed(SEED)
 if __name__ == "__main__":
     # parse command-line arguments as `--key=value` and merge with config
     # allows for nested dictionaries: `--key.subkey=value``
-    # load initial config from `--config={task}-{model}`
+    # load initial config from `--config={model}-{task}`
+
+    args = sys.argv[1:]
+    if all("config" not in arg for arg in args):
+        args.append("--debug")
+        args.append("--config=mlp-mp20")
+        sys.argv[1:] = args
+
     config = load_config()
     if not config.get("wandb_run_name"):
         wandb_name_keys = {

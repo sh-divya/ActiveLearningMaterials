@@ -1,0 +1,12 @@
+model:
+  hidden_layers: [512, 512]
+  comp_emb_layers: [32, 32]
+  sg_emb_size: 128
+  lattice_emb_layers: [32, 32]
+  advanced: True
+
+optim:
+  batch_size: 32
+  lr: 0.001
+  epochs: 10
+  es_patience: 3
