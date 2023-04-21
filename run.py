@@ -33,7 +33,7 @@ if __name__ == "__main__":
     args = sys.argv[1:]
     if all("config" not in arg for arg in args):
         args.append("--debug")
-        args.append("--config=mlp-mp20")
+        args.append("--config=physmlp-mp20")
         sys.argv[1:] = args
 
     config = load_config()
