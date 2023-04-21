@@ -13,8 +13,18 @@ def make_model(config):
         model = ProxyMLP(config["model"]["input_len"], config["model"]["hidden_layers"])
         model.apply(weights_init)
         return model
+    elif config["config"].startswith("phys-mlp-"):
+        model = ProxyEmbeddingModel(
+            comp_emb_layers=config["model"]["comp_emb_layers"],
+            sg_emb_size=config["model"]["sg_emb_size"],
+            lattice_emb_layers=config["model"]["lattice_emb_layers"],
+            prediction_layers=config["model"]["hidden_layers"],
+            advanced=config["model"]["advanced"],
+        )
+        return model
+    else: 
+        raise ValueError(f"Unknown model config: {config['config']}")
 
-    raise ValueError(f"Unknown model config: {config['config']}")
 
 def mlp_from_layers(layers, act=None, norm=True):
     nn_layers = []
@@ -28,6 +38,7 @@ def mlp_from_layers(layers, act=None, norm=True):
             pass
     nn_layers = nn.Sequential(*nn_layers)
     return nn_layers
+
 
 class ProxyMLP(nn.Module):
     def __init__(self, in_feat, hidden_layers, cat=True):
@@ -62,7 +73,7 @@ class ProxyMLP(nn.Module):
                 x = self.drop(x)
 
         return x
-
+    
 class ProxyEmbeddingModel(nn.Module):
     def __init__(
         self,
@@ -87,7 +98,7 @@ class ProxyEmbeddingModel(nn.Module):
                 properties_proj_size=32,
                 n_elements=90,
             )
-    
+
     def forward(self, x):
         if self.advanced:
             idx = torch.nonzero(x[0])
@@ -99,12 +110,17 @@ class ProxyEmbeddingModel(nn.Module):
             comp_x = torch.mean(comp_x, dim=0)
 
             idx = torch.nonzero(x[0])
-            z = torch.repeat_interleave(idx[:,1], (x[0][idx[:,0],idx[:,1]]).to(torch.int32), dim=0)
-            batch_mask = torch.repeat_interleave(torch.arange(len(x[0].shape[0])).to(x[0].device), x[0].sum(dim=1).to(torch.int32))
-            
+            z = torch.repeat_interleave(
+                idx[:, 1], (x[0][idx[:, 0], idx[:, 1]]).to(torch.int32), dim=0
+            )
+            batch_mask = torch.repeat_interleave(
+                torch.arange(len(x[0].shape[0])).to(x[0].device),
+                x[0].sum(dim=1).to(torch.int32),
+            )
+
             comp_emb = self.phys_emb(z)
             # TODO: aggregate by batch, using batch_mask
-            # Come back to correct format 
+            # Come back to correct format
 
         comp_x = self.comp_emb_mlp(x[0])
         sg_x = x[1].long()

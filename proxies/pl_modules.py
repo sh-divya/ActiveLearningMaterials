@@ -1,5 +1,5 @@
 import pytorch_lightning as pl
-import torch
+import torch.optim as optim
 
 
 class ProxyModule(pl.LightningModule):
@@ -15,11 +15,9 @@ class ProxyModule(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         x, y = batch
-        inp = x.to(torch.float32)
-        true = y.to(torch.float32)
-        out = self.model(inp).squeeze(-1)
-        loss = self.criterion(out, true)
-        acc = self.accuracy(out, true)
+        out = self.model(x).squeeze(-1)
+        loss = self.criterion(out, y)
+        acc = self.accuracy(out, y)
 
         self.log("train_loss", loss)
         self.log("train_acc", acc)
@@ -28,11 +26,9 @@ class ProxyModule(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
-        inp = x.to(torch.float32)
-        true = y.to(torch.float32)
-        out = self.model(inp).squeeze(-1)
-        loss = self.criterion(out, true)
-        acc = self.accuracy(out, true)
+        out = self.model(x).squeeze(-1)
+        loss = self.criterion(out, y)
+        acc = self.accuracy(out, y)
 
         self.log("val_loss", loss)
         self.log("val_acc", acc)
@@ -41,13 +37,11 @@ class ProxyModule(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         x, y = batch
-        inp = x.to(torch.float32)
-        true = y.to(torch.float32)
-        out = self.model(inp)
-        loss = self.criterion(out, true)
+        out = self.model(x)
+        loss = self.criterion(out, y)
 
         return loss
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), self.lr)
+        optimizer = optim.Adam(self.parameters(), self.lr)
         return optimizer
