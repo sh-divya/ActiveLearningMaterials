@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import pytorch_lightning as pl
+from phast.embedding import PhysEmbedding
 
 
 class ProxyMLP(nn.Module):
@@ -41,16 +42,47 @@ class ProxyMLP(nn.Module):
 
 class ProxyEmbeddingModel(nn.Module):
     def __init__(
-        self, comp_emb_layers, sg_emb_size, lattice_emb_layers, prediction_layers
+        self,
+        comp_emb_layers: list,
+        sg_emb_size: int,
+        lattice_emb_layers: list,
+        prediction_layers: list,
+        advanced: bool = True,
     ):
         super().__init__()
+        self.advanced = advanced
         self.comp_emb_mlp = mlp_from_layers(comp_emb_layers)
         self.sg_emb = nn.Embedding(230, sg_emb_size)
         self.lattice_emb_mlp = mlp_from_layers(lattice_emb_layers)
         self.pred_inp_size = comp_emb_layers[-1] + sg_emb_size + lattice_emb_layers[-1]
         self.prediction_head = ProxyMLP(self.pred_inp_size, prediction_layers, False)
+        if advanced:
+            self.phys_emb = PhysEmbedding(
+                z_emb_size=32,
+                period_emb_size=32,
+                group_emb_size=32,
+                properties_proj_size=32,
+                n_elements=90,
+            )
 
     def forward(self, x):
+        if self.advanced:
+            idx = torch.nonzero(x[0])
+            print(idx.shape)
+            print(x[0].shape)
+            print(x[0][idx].shape)
+            z = torch.repeat_interleave(idx.squeeze(), x[0][idx].squeeze(), dim=0)
+            comp_x = self.comp_emb(z)
+            comp_x = torch.mean(comp_x, dim=0)
+
+            idx = torch.nonzero(x[0])
+            z = torch.repeat_interleave(idx[:,1], (x[0][idx[:,0],idx[:,1]]).to(torch.int32), dim=0)
+            batch_mask = torch.repeat_interleave(torch.arange(len(x[0].shape[0])).to(x[0].device), x[0].sum(dim=1).to(torch.int32))
+            
+            comp_emb = self.phys_emb(z)
+            # TODO: aggregate by batch, using batch_mask
+            # Come back to correct format 
+
         comp_x = self.comp_emb_mlp(x[0])
         sg_x = x[1].long()
         sg_x = self.sg_emb(sg_x).squeeze(1)

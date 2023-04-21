@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 
 from config.mp20 import config
 from proxies.data import CrystalFeat
-from proxies.models import ProxyMLP, ProxyModel
+from proxies.models import ProxyMLP, ProxyModel, ProxyEmbeddingModel
 from utils.callbacks import get_checkpoint_callback
 from utils.misc import (
     flatten_grid_search,
@@ -59,10 +59,12 @@ def train(config, logger):
     valloader = DataLoader(valset, batch_size=model_config["batch_size"], shuffle=False)
 
     model = (
-        ProxyMLP(model_config["input_len"], model_config["hidden_layers"])
+        # ProxyMLP(model_config["input_len"], model_config["hidden_layers"])
+        ProxyEmbeddingModel(comp_emb_layers=[32], sg_emb_size=32, lattice_emb_layers=[32], prediction_layers=[1], advanced=True)
         .to(device)
         .to(torch.float32)
     )
+    
     model.apply(weights_init)
     criterion = nn.MSELoss()
     accuracy = nn.L1Loss()
@@ -96,6 +98,7 @@ if __name__ == "__main__":
     config["run_dir"] = resolve(config["run_dir"])
     config["run_dir"].mkdir(parents=True, exist_ok=True)
     config["run_dir"] = str(config["run_dir"])
+    config["no_logger"] = True
 
     print_config(config)
 
