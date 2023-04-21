@@ -1,9 +1,33 @@
-import torch
 import torch.nn as nn
-import torch.optim as optim
-import pytorch_lightning as pl
+import torch
 from phast.embedding import PhysEmbedding
 
+
+def weights_init(m):
+    if isinstance(m, nn.Linear):
+        nn.init.xavier_uniform_(m.weight)
+
+
+def make_model(config):
+    if config["config"].startswith("mlp-"):
+        model = ProxyMLP(config["model"]["input_len"], config["model"]["hidden_layers"])
+        model.apply(weights_init)
+        return model
+
+    raise ValueError(f"Unknown model config: {config['config']}")
+
+def mlp_from_layers(layers, act=None, norm=True):
+    nn_layers = []
+    for i in range(len(layers)):
+        try:
+            nn_layers.append(nn.Linear(layers[i], layers[i + 1]))
+            if norm:
+                nn_layers.append(nn.BatchNorm1d(layers[i + 1]))
+            nn_layers.append(nn.LeakyReLU(True) if act is None else act)
+        except IndexError:
+            pass
+    nn_layers = nn.Sequential(*nn_layers)
+    return nn_layers
 
 class ProxyMLP(nn.Module):
     def __init__(self, in_feat, hidden_layers, cat=True):
@@ -39,7 +63,6 @@ class ProxyMLP(nn.Module):
 
         return x
 
-
 class ProxyEmbeddingModel(nn.Module):
     def __init__(
         self,
@@ -64,7 +87,7 @@ class ProxyEmbeddingModel(nn.Module):
                 properties_proj_size=32,
                 n_elements=90,
             )
-
+    
     def forward(self, x):
         if self.advanced:
             idx = torch.nonzero(x[0])
@@ -91,60 +114,3 @@ class ProxyEmbeddingModel(nn.Module):
 
         x = torch.cat((comp_x, sg_x, lattice_x), dim=-1)
         return self.prediction_head(x)
-
-
-class ProxyModel(pl.LightningModule):
-    def __init__(self, proxy, loss, acc, lr):
-        super().__init__()
-        self.model = proxy
-        self.criterion = loss
-        self.accuracy = acc
-        self.lr = lr
-        self.loss = 0
-
-    def training_step(self, batch, batch_idx):
-        x, y = batch
-        out = self.model(x).squeeze(-1)
-        loss = self.criterion(out, y)
-        acc = self.accuracy(out, y)
-
-        self.log("train_loss", loss)
-        self.log("train_acc", acc)
-
-        return loss
-
-    def validation_step(self, batch, batch_idx):
-        x, y = batch
-        out = self.model(x).squeeze(-1)
-        loss = self.criterion(out, y)
-        acc = self.accuracy(out, y)
-
-        self.log("val_loss", loss)
-        self.log("val_acc", acc)
-
-        return loss
-
-    def test_step(self, batch, batch_idx):
-        x, y = batch
-        out = self.model(x)
-        loss = self.criterion(out, y)
-
-        return loss
-
-    def configure_optimizers(self):
-        optimizer = optim.Adam(self.parameters(), self.lr)
-        return optimizer
-
-
-def mlp_from_layers(layers, act=None, norm=True):
-    nn_layers = []
-    for i in range(len(layers)):
-        try:
-            nn_layers.append(nn.Linear(layers[i], layers[i + 1]))
-            if norm:
-                nn_layers.append(nn.BatchNorm1d(layers[i + 1]))
-            nn_layers.append(nn.LeakyReLU(True) if act is None else act)
-        except IndexError:
-            pass
-    nn_layers = nn.Sequential(*nn_layers)
-    return nn_layers
