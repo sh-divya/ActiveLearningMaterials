@@ -13,7 +13,7 @@ def make_model(config):
         model = ProxyMLP(config["model"]["input_len"], config["model"]["hidden_layers"])
         model.apply(weights_init)
         return model
-    elif config["config"].startswith("phys-mlp-"):
+    elif config["config"].startswith("physmlp-"):
         model = ProxyEmbeddingModel(
             comp_emb_layers=config["model"]["comp_emb_layers"],
             sg_emb_size=config["model"]["sg_emb_size"],
@@ -102,23 +102,15 @@ class ProxyEmbeddingModel(nn.Module):
     def forward(self, x):
         if self.advanced:
             idx = torch.nonzero(x[0])
-            print(idx.shape)
-            print(x[0].shape)
-            print(x[0][idx].shape)
-            z = torch.repeat_interleave(idx.squeeze(), x[0][idx].squeeze(), dim=0)
-            comp_x = self.comp_emb(z)
-            comp_x = torch.mean(comp_x, dim=0)
-
-            idx = torch.nonzero(x[0])
             z = torch.repeat_interleave(
                 idx[:, 1], (x[0][idx[:, 0], idx[:, 1]]).to(torch.int32), dim=0
             )
             batch_mask = torch.repeat_interleave(
-                torch.arange(len(x[0].shape[0])).to(x[0].device),
+                torch.arange(x[0].shape[0]).to(x[0].device),
                 x[0].sum(dim=1).to(torch.int32),
             )
 
-            comp_emb = self.phys_emb(z)
+            comp_emb = self.phys_emb(z.cpu())  # TODO: fix device pb
             # TODO: aggregate by batch, using batch_mask
             # Come back to correct format
 
