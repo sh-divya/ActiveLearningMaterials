@@ -23,6 +23,8 @@ SEED = 0
 torch.manual_seed(SEED)
 random.seed(SEED)
 np.random.seed(SEED)
+torch.cuda.manual_seed_all(SEED)
+torch.backends.cudnn.deterministic = True
 
 
 if __name__ == "__main__":
