@@ -1,0 +1,2 @@
+modules: anaconda/3
+env: crystal-proxys-env
