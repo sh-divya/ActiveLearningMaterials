@@ -9,7 +9,7 @@ class CrystalFeat(Dataset):
     def __init__(
         self, root, target, write=False, subset="train", scalex=False, scaley=False
     ):
-        self.csv_path = root
+        csv_path = root
         self.subsets = {}
         self.cols_of_interest = [
             "material_id",
@@ -22,28 +22,28 @@ class CrystalFeat(Dataset):
         ]
         self.xtransform = scalex
         self.ytransform = scaley
-        self.data_df = pd.read_csv(osp.join(self.csv_path, subset + "_data.csv"))
-        self.y = self.data_df[target].values
+        data_df = pd.read_csv(osp.join(csv_path, subset + "_data.csv"))
+        self.y = torch.tensor(data_df[target].values, dtype=torch.float32)
         sub_cols = [
-            col for col in self.data_df.columns if col not in self.cols_of_interest
+            col for col in data_df.columns if col not in self.cols_of_interest
         ]
-        self.x = self.data_df[sub_cols].values
-        self.sg = self.x[:, 1]
-        self.lattice = self.x[:, 2:8]
-        self.composition = self.x[:, 8:]
+        x = torch.tensor(data_df[sub_cols].values, dtype=float)
+        self.sg = torch.tensor(x[:,1], dtype=torch.int32)
+        self.lattice = torch.tensor(x[:, 2:8], dtype=torch.float32)
+        self.composition = torch.tensor(x[:, 8:], dtype=torch.int32)
 
     def __len__(self):
-        return self.x.shape[0]
+        return self.sg.shape[0]
 
     def __getitem__(self, idx):
-        sg = torch.Tensor([self.sg[idx]]).to(torch.float32)
-        lat = torch.from_numpy(self.lattice[idx]).to(torch.float32)
-        comp = torch.from_numpy(self.composition[idx]).to(torch.float32)
-        target = torch.Tensor([self.y[idx]]).to(torch.float32)
+        sg = self.sg[idx]
+        lat = self.lattice[idx]
+        comp = self.composition[idx]
+        target = self.y[idx]
         if self.xtransform:
-            lat = (lat - self.xtransform["mean"]) / self.xtransform["std"]
+            lat = ((lat - self.xtransform["mean"]) / self.xtransform["std"]).to(torch.float32)
         if self.ytransform:
-            target = (target - self.ytransform["mean"]) / self.ytransform["std"]
+            target = ((target - self.ytransform["mean"]) / self.ytransform["std"]).to(torch.float32)
         return (comp, sg, lat), target
 
 
