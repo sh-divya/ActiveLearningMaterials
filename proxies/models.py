@@ -118,10 +118,10 @@ class ProxyEmbeddingModel(nn.Module):
             comp_x = self.comp_emb_mlp(comp_x)
 
         # Process the space group
-        sg_x = self.sg_emb(sg_x.long()).squeeze(1)
+        sg_x = self.sg_emb(sg_x).squeeze(1)
 
         # Process the lattice
-        lat_x = self.lat_emb_mlp(lat_x.to(torch.float32))
+        lat_x = self.lat_emb_mlp(lat_x)
 
         # Concatenate and predict
         x = torch.cat((comp_x, sg_x, lat_x), dim=-1)
