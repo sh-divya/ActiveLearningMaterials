@@ -19,5 +19,6 @@ torch
 torchaudio
 torchmetrics
 torchvision
+torch_scatter
 wandb
 wheel
