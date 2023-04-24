@@ -1,9 +1,15 @@
 model:
   hidden_layers: [512, 512]
-  comp_emb_layers: [32, 32]
+  comp_emb_layers: [64, 64]
   sg_emb_size: 128
-  lattice_emb_layers: [6, 32]
-  advanced: True
+  lat_emb_layers: [6, 64]
+  comp_phys_embeds: 
+    use: True
+    z_emb_size: 32
+    period_emb_size: 16
+    group_emb_size: 16
+    properties_proj_size: 32
+    n_elements: 90
 
 optim:
   batch_size: 32
