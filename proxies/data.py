@@ -41,7 +41,7 @@ class CrystalFeat(Dataset):
         comp = torch.from_numpy(self.composition[idx]).to(torch.float32)
         target = torch.Tensor([self.y[idx]]).to(torch.float32)
         if self.xtransform:
-            mat = (lat - self.xtransform["mean"]) / self.xtransform["std"]
+            lat = (lat - self.xtransform["mean"]) / self.xtransform["std"]
         if self.ytransform:
             target = (target - self.ytransform["mean"]) / self.ytransform["std"]
         return (comp, sg, lat), target
