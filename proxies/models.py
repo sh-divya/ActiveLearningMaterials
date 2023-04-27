@@ -1,7 +1,18 @@
-import torch
 import torch.nn as nn
-import torch.optim as optim
-import pytorch_lightning as pl
+
+
+def weights_init(m):
+    if isinstance(m, nn.Linear):
+        nn.init.xavier_uniform_(m.weight)
+
+
+def make_model(config):
+    if config["config"].startswith("mlp-"):
+        model = ProxyMLP(config["model"]["input_len"], config["model"]["hidden_layers"])
+        model.apply(weights_init)
+        return model
+
+    raise ValueError(f"Unknown model config: {config['config']}")
 
 
 class ProxyMLP(nn.Module):
@@ -38,52 +49,3 @@ class ProxyMLP(nn.Module):
                 x = self.drop(x)
 
         return x
-
-
-class ProxyModel(pl.LightningModule):
-    def __init__(self, proxy, loss, acc, lr):
-        super().__init__()
-        self.model = proxy
-        self.criterion = loss
-        self.accuracy = acc
-        self.lr = lr
-        self.loss = 0
-
-    def training_step(self, batch, batch_idx):
-        x, y = batch
-        inp = x.to(torch.float32)
-        true = y.to(torch.float32)
-        out = self.model(inp).squeeze(-1)
-        loss = self.criterion(out, true)
-        acc = self.accuracy(out, true)
-
-        self.log("train_loss", loss)
-        self.log("train_acc", acc)
-
-        return loss
-
-    def validation_step(self, batch, batch_idx):
-        x, y = batch
-        inp = x.to(torch.float32)
-        true = y.to(torch.float32)
-        out = self.model(inp).squeeze(-1)
-        loss = self.criterion(out, true)
-        acc = self.accuracy(out, true)
-
-        self.log("val_loss", loss)
-        self.log("val_acc", acc)
-
-        return loss
-
-    def test_step(self, batch, batch_idx):
-        x, y = batch
-        inp = x.to(torch.float32)
-        true = y.to(torch.float32)
-        out = self.model(inp)
-        loss = self.criterion(out, true)
-
-        return loss
-
-    def configure_optimizers(self):
-        optimizer = optim.Adam(self.parameters(), self.lr)
-        return optimizer

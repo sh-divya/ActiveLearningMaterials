@@ -15,6 +15,7 @@ apikey.txt
 checkpoints/
 .vscode/
 .DS_Store
+data/
 
 # From https://github.com/github/gitignore/blob/main/Python.gitignore
 
