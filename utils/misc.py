@@ -6,9 +6,14 @@ from pathlib import Path
 from typing import Dict, List, Union
 from uuid import uuid4
 
-from yaml import dump
+
+import torch
+from yaml import dump, safe_load
+from utils.parser import parse_args_to_dict
+
 
 JOB_ID = os.environ.get("SLURM_JOB_ID")
+ROOT = Path(__file__).resolve().parent.parent  # repo root Path
 
 
 def resolve(path: Union[str, Path]) -> Path:
@@ -93,9 +98,25 @@ def print_config(config: dict) -> None:
         config (dict): config dictionary to print
     """
     config = copy.deepcopy(config)
-    config.pop("xscale", None)
-    config.pop("yscale", None)
+    for scale, scale_dict in config.get("scales", {}).items():
+        if "mean" in scale_dict:
+            if isinstance(scale_dict["mean"], torch.Tensor):
+                config["scales"][scale]["mean"] = "Tensor with shape " + str(
+                    scale_dict["mean"].shape
+                )
+        if "std" in scale_dict:
+            if isinstance(scale_dict["std"], torch.Tensor):
+                config["scales"][scale]["std"] = "Tensor with shape " + str(
+                    scale_dict["std"].shape
+                )
+    print()
+    print("#" * 50)
+    print("#" * 50)
+    print()
     print(dump(config))
+    print("#" * 50)
+    print("#" * 50)
+    print()
 
 
 def flatten_grid_search(grid: Dict[str, List]) -> List[Dict]:
@@ -185,3 +206,66 @@ def merge_dicts(dict1: dict, dict2: dict) -> dict:
                 return_dict[k] = dict2[k]
 
     return return_dict
+
+
+def load_scales(config):
+    if "scales" not in config:
+        return config
+
+    scales = {s: {} for s in config["scales"]}
+
+    for scale, scale_conf in config["scales"].items():
+        if "load" in scale_conf:
+            src = config["src"].replace("$root", str(ROOT))
+            if src.startswith("/"):
+                src = resolve(src)
+            else:
+                src = ROOT / src
+            assert "mean" in scale_conf and "std" in scale_conf
+            if scale_conf["load"] == "torch":
+                scales[scale]["mean"] = torch.load(
+                    scale_conf["mean"].replace("$src", str(src))
+                )
+                scales[scale]["std"] = torch.load(
+                    scale_conf["std"].replace("$src", str(src))
+                )
+        else:
+            scales[scale] = scale_conf
+
+    config["scales"] = scales
+
+    return config
+
+
+def load_config() -> dict:
+    # 1. parse command-line args
+    cli_conf = parse_args_to_dict()
+    assert (
+        "config" in cli_conf
+    ), "Must specify config string as `--config={task}-{model}`"
+    # 2. load config files
+    model, task = cli_conf["config"].split("-")
+    task_file = ROOT / "config" / "tasks" / f"{task}.yaml"
+    model_file = ROOT / "config" / "models" / f"{model}.yaml"
+    assert task_file.exists(), f"Task config file {str(task_file)} does not exist."
+    assert model_file.exists(), f"Model config file {str(model_file)} does not exist."
+    config = merge_dicts(
+        safe_load(task_file.read_text()),
+        safe_load(model_file.read_text()),
+    )
+    # 3. merge with command-line args
+    config = merge_dicts(config, cli_conf)
+    if "run_dir" not in config:
+        # 3.0 get run dir path if none is specified
+        config["run_dir"] = get_run_dir()
+
+    # 3.1 resolve paths
+    config["run_dir"] = resolve(config["run_dir"])
+    # 3.2 make run directory
+    if not config.get("debug"):
+        config["run_dir"].mkdir(parents=True, exist_ok=True)
+    config["run_dir"] = str(config["run_dir"])
+
+    if "scales" in config:
+        config = load_scales(config)
+    return config

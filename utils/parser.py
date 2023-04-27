@@ -47,8 +47,44 @@ def parse_args_to_dict() -> dict:
     Parse arbitrary command line arguments to a dictionary.
 
         Returns:
-            dict: _description_
+            dict: command-line args as dictionary
     """
     parser = ArgumentParser()
-    _, override_args = parser.parse_known_args()
-    return create_dict_from_args(override_args)
+    # Run config
+    parser.add_argument(
+        "--config",
+        type=str,
+        default=None,
+        help="String like {model}-{task} where {model}.yaml "
+        + "must exist in configs/models and {task}.yaml must exist in configs/tasks",
+    )
+    # Weights and Biases
+    parser.add_argument(
+        "--wandb_run_name",
+        type=str,
+        default=None,
+        help="Name for the wandb run. If not specified, it will be created by run.py",
+    )
+    parser.add_argument(
+        "--wandb_project",
+        type=str,
+        default="Proxy-MP20",
+        help="wandb project to log to",
+    )
+    parser.add_argument(
+        "--wandb_entity",
+        type=str,
+        default="mila-ocp",
+        help="wandb entity where the project is",
+    )
+    parser.add_argument(
+        "--wandb_note",
+        type=str,
+        default="",
+        help="wandb note for the run",
+    )
+    # Parse args
+    args, override_args = parser.parse_known_args()
+    from utils.misc import merge_dicts
+
+    return merge_dicts(dict(vars(args)), create_dict_from_args(override_args))
