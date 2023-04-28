@@ -1,10 +1,6 @@
-import random
 import warnings
-import sys
 
-import numpy as np
 import pytorch_lightning as pl
-import torch
 import torch.nn as nn
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
@@ -13,18 +9,9 @@ from proxies.models import make_model
 from proxies.pl_modules import ProxyModule
 from utils.callbacks import get_checkpoint_callback
 from utils.loaders import make_loaders
-from utils.misc import (
-    load_config,
-    print_config,
-)
+from utils.misc import load_config, print_config, set_seeds
 
 warnings.filterwarnings("ignore", ".*does not have many workers.*")
-SEED = 0
-torch.manual_seed(SEED)
-random.seed(SEED)
-np.random.seed(SEED)
-torch.cuda.manual_seed_all(SEED)
-torch.backends.cudnn.deterministic = True
 
 
 if __name__ == "__main__":
@@ -37,7 +24,7 @@ if __name__ == "__main__":
     # args.append("--debug")
     # args.append("--config=physmlp-mp20")
     # sys.argv[1:] = args
-
+    set_seeds(0)
     config = load_config()
     if not config.get("wandb_run_name"):
         wandb_name_keys = {

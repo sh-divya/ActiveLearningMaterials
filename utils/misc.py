@@ -1,16 +1,17 @@
 import copy
 import os
+import random
 from itertools import product
 from os.path import expandvars
 from pathlib import Path
 from typing import Dict, List, Union
 from uuid import uuid4
 
-
+import numpy as np
 import torch
 from yaml import dump, safe_load
-from utils.parser import parse_args_to_dict
 
+from utils.parser import parse_args_to_dict
 
 JOB_ID = os.environ.get("SLURM_JOB_ID")
 ROOT = Path(__file__).resolve().parent.parent  # repo root Path
@@ -282,3 +283,12 @@ def load_config() -> dict:
     if "scales" in config:
         config = load_scales(config)
     return config
+
+
+def set_seeds(seed=0):
+    seed = 0
+    torch.manual_seed(seed)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
