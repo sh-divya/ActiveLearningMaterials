@@ -37,4 +37,5 @@ def get_checkpoint_callback(
         monitor=monitor,
         mode=mode,
         verbose=True,
+        save_last=True,
     )
