@@ -13,7 +13,6 @@ def make_model(config):
     if config["config"].startswith("mlp-"):
         model = ProxyMLP(config["model"]["input_len"], config["model"]["hidden_layers"])
         model.apply(weights_init)
-        return model
     elif config["config"].startswith("physmlp-"):
         model = ProxyEmbeddingModel(
             comp_emb_layers=config["model"]["comp_emb_layers"],
@@ -22,9 +21,13 @@ def make_model(config):
             lat_emb_layers=config["model"]["lat_emb_layers"],
             prediction_layers=config["model"]["hidden_layers"],
         )
-        return model
     else:
         raise ValueError(f"Unknown model config: {config['config']}")
+
+    assert hasattr(model, "pred_inp_size"), "pred_inp_size is required for the GFN"
+    assert hasattr(model, "n_elements"), "n_elements is required for the GFN"
+
+    return model
 
 
 def mlp_from_layers(layers, act=None, norm=True):
@@ -80,16 +83,18 @@ class ProxyEmbeddingModel(nn.Module):
         sg_emb_size: int,
         lat_emb_layers: list,
         prediction_layers: list,
+        n_elements: int = 90,
     ):
         super().__init__()
         self.use_comp_phys_embeds = comp_phys_embeds["use"]
+        self.n_elements = n_elements
         if self.use_comp_phys_embeds:
             self.phys_emb = PhysEmbedding(
                 z_emb_size=comp_phys_embeds["z_emb_size"],
                 period_emb_size=comp_phys_embeds["period_emb_size"],
                 group_emb_size=comp_phys_embeds["group_emb_size"],
                 properties_proj_size=comp_phys_embeds["properties_proj_size"],
-                n_elements=90,
+                n_elements=n_elements,
                 final_proj_size=comp_emb_layers[-1],
             )
         else:
