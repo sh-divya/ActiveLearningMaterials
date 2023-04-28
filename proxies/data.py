@@ -24,13 +24,11 @@ class CrystalFeat(Dataset):
         self.ytransform = scaley
         data_df = pd.read_csv(osp.join(csv_path, subset + "_data.csv"))
         self.y = torch.tensor(data_df[target].values, dtype=torch.float32)
-        sub_cols = [
-            col for col in data_df.columns if col not in self.cols_of_interest
-        ]
+        sub_cols = [col for col in data_df.columns if col not in self.cols_of_interest]
         x = torch.tensor(data_df[sub_cols].values, dtype=float)
-        self.sg = torch.tensor(x[:,1], dtype=torch.int32)
-        self.lattice = torch.tensor(x[:, 2:8], dtype=torch.float32)
-        self.composition = torch.tensor(x[:, 8:], dtype=torch.int32)
+        self.sg = x[:, 1].to(torch.int32)
+        self.lattice = x[:, 2:8].float()
+        self.composition = x[:, 8:].to(torch.int32)
 
     def __len__(self):
         return self.sg.shape[0]
@@ -41,9 +39,13 @@ class CrystalFeat(Dataset):
         comp = self.composition[idx]
         target = self.y[idx]
         if self.xtransform:
-            lat = ((lat - self.xtransform["mean"]) / self.xtransform["std"]).to(torch.float32)
+            lat = ((lat - self.xtransform["mean"]) / self.xtransform["std"]).to(
+                torch.float32
+            )
         if self.ytransform:
-            target = ((target - self.ytransform["mean"]) / self.ytransform["std"]).to(torch.float32)
+            target = ((target - self.ytransform["mean"]) / self.ytransform["std"]).to(
+                torch.float32
+            )
         return (comp, sg, lat), target
 
 
