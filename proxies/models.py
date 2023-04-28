@@ -132,3 +132,66 @@ class ProxyEmbeddingModel(nn.Module):
         # Concatenate and predict
         x = torch.cat((comp_x, sg_x, lattice_x), dim=-1)
         return self.prediction_head(x)
+
+
+
+class ProxyGraphModel(nn.Module):
+    def __init__(
+        self,
+        comp_emb_layers: list,
+        sg_emb_size: int,
+        lattice_emb_layers: list,
+        prediction_layers: list,
+        advanced: bool = True,
+    ):
+        super().__init__()
+        # Encoding 
+        self.advanced = advanced
+        if advanced:
+            self.phys_emb = PhysEmbedding(
+                z_emb_size=32,
+                period_emb_size=32,
+                group_emb_size=32,
+                properties_proj_size=32,
+                n_elements=90,
+                final_proj_size=comp_emb_layers[-1]
+            )
+        else: 
+            self.comp_emb_mlp = mlp_from_layers(comp_emb_layers)
+        self.sg_emb = nn.Embedding(230, sg_emb_size)
+        self.lattice_emb_mlp = mlp_from_layers(lattice_emb_layers)
+        # Interaction blocks -- GNN model 
+        self.gnn = 
+        # Prediction
+        self.pred_inp_size = comp_emb_layers[-1] + sg_emb_size + lattice_emb_layers[-1]
+        self.prediction_head = ProxyMLP(self.pred_inp_size, prediction_layers, False)
+
+    def forward(self, x):
+        # Process the composition
+        if self.advanced:
+            idx = torch.nonzero(x[0])
+            # Transform atomic numbers to sparse indices
+            z = torch.repeat_interleave(
+                idx[:, 1], (x[0][idx[:, 0], idx[:, 1]]).to(torch.int32), dim=0
+            )
+            # Create sparse mask representing batch
+            batch_mask = torch.repeat_interleave(
+                torch.arange(x[0].shape[0]).to(x[0].device),
+                x[0].sum(dim=1).to(torch.int32),
+            )
+            # Sum pooling of embeddings
+            comp_x = self.phys_emb(z)
+            comp_x = scatter(comp_x, batch_mask, dim=0, reduce="add")
+        else:
+            comp_x = self.comp_emb_mlp(x[0])
+
+        # Process the space group
+        sg_x = x[1].long()
+        sg_x = self.sg_emb(sg_x).squeeze(1)
+
+        # Process the lattice
+        lattice_x = self.lattice_emb_mlp(x[2])
+
+        # Concatenate and predict
+        x = torch.cat((comp_x, sg_x, lattice_x), dim=-1)
+        return self.prediction_head(x)
