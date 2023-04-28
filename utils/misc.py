@@ -80,7 +80,8 @@ def get_run_dir() -> Path:
                 [
                     float(p.name.split("-")[-1])
                     for p in dirpath.parent.glob(f"{dirpath.name}-*")
-                ], default=0
+                ],
+                default=0,
             )
             + 1
         )
@@ -141,7 +142,7 @@ def flatten_grid_search(grid: Dict[str, List]) -> List[Dict]:
     return [dict(zip(keys, v)) for v in product(*values)]
 
 
-def merge_dicts(dict1: dict, dict2: dict) -> dict:
+def merge_dicts(dict1: dict, dict2: dict, resolve_lists=None) -> dict:
     """Recursively merge two dictionaries.
     Values in dict2 override values in dict1. If dict1 and dict2 contain a dictionary
     as a value, this will call itself recursively to merge these dictionaries.
@@ -175,14 +176,25 @@ def merge_dicts(dict1: dict, dict2: dict) -> dict:
 
     return_dict = copy.deepcopy(dict1)
 
+    assert resolve_lists in [None, "overwrite"]
+
     for k, v in dict2.items():
         if k not in dict1:
             return_dict[k] = v
         else:
             if isinstance(v, dict) and isinstance(dict1[k], dict):
-                return_dict[k] = merge_dicts(dict1[k], dict2[k])
+                return_dict[k] = merge_dicts(
+                    dict1[k], dict2[k], resolve_lists=resolve_lists
+                )
             elif isinstance(v, list) and isinstance(dict1[k], list):
                 if len(dict1[k]) != len(dict2[k]):
+                    if resolve_lists == "overwrite":
+                        print(
+                            f"Overwriting (not merging) list for key {k} because "
+                            + "of different list length"
+                        )
+                        return_dict[k] = v
+                        continue
                     raise ValueError(
                         f"List for key {k} has different length in dict1 and dict2."
                         + " Use an empty dict {} to pad for items in the shorter list."
@@ -193,7 +205,8 @@ def merge_dicts(dict1: dict, dict2: dict) -> dict:
                             f"Expecting dict for key {k} in dict2. ({dict1}, {dict2})"
                         )
                     return_dict[k] = [
-                        merge_dicts(d1, d2) for d1, d2 in zip(dict1[k], v)
+                        merge_dicts(d1, d2, resolve_lists=resolve_lists)
+                        for d1, d2 in zip(dict1[k], v)
                     ]
                 else:
                     if isinstance(dict2[k][0], dict):
@@ -254,7 +267,7 @@ def load_config() -> dict:
         safe_load(model_file.read_text()),
     )
     # 3. merge with command-line args
-    config = merge_dicts(config, cli_conf)
+    config = merge_dicts(config, cli_conf, resolve_lists="overwrite")
     if "run_dir" not in config:
         # 3.0 get run dir path if none is specified
         config["run_dir"] = get_run_dir()
