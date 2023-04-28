@@ -48,7 +48,7 @@ class ProxyMLP(nn.Module):
         self.hidden_act = nn.LeakyReLU(0.2)
         self.dropout = nn.Dropout(p=0.5)
         self.final_act = nn.Tanh()
-        # Model archi 
+        # Model archi
         self.nn_layers = nn.ModuleList()
         for i in range(len(hidden_layers)):
             if i == 0:
@@ -90,9 +90,9 @@ class ProxyEmbeddingModel(nn.Module):
                 group_emb_size=comp_phys_embeds["group_emb_size"],
                 properties_proj_size=comp_phys_embeds["properties_proj_size"],
                 n_elements=90,
-                final_proj_size=comp_emb_layers[-1]
+                final_proj_size=comp_emb_layers[-1],
             )
-        else: 
+        else:
             self.comp_emb_mlp = mlp_from_layers(comp_emb_layers)
         self.sg_emb = nn.Embedding(230, sg_emb_size)
         self.lat_emb_mlp = mlp_from_layers(lat_emb_layers)
@@ -101,6 +101,9 @@ class ProxyEmbeddingModel(nn.Module):
 
     def forward(self, x):
         comp_x, sg_x, lat_x = x
+        # comp_x -> batch_size x n_elements=89
+        # sg_x -> batch_size, int
+        # lat_x -> batch_size x 6
 
         # Process the composition
         if self.use_comp_phys_embeds:
