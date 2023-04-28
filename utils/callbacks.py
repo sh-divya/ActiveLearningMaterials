@@ -33,7 +33,7 @@ def get_checkpoint_callback(
 
     return ModelCheckpoint(
         dirpath=dirpath / f"checkpoints-{ckpt_dir}",
-        filename="{epoch}-{step}" + f"-{{{monitor}}}" if monitor else "",
+        filename="{epoch}-{step}" + f"-{{{monitor}:.4f}}" if monitor else "",
         monitor=monitor,
         mode=mode,
         verbose=True,
