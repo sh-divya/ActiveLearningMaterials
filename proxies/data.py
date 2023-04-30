@@ -49,6 +49,10 @@ class CrystalFeat(Dataset):
         return (comp, sg, lat), target
 
 
+class Matbench(Dataset):
+    pass
+
+
 if __name__ == "__main__":
     folder = "./carbon"
     # write_data_csv(folder)
