@@ -13,6 +13,7 @@ def make_model(config):
     if config["config"].startswith("mlp-"):
         model = ProxyMLP(config["model"]["input_len"], config["model"]["hidden_layers"])
         model.apply(weights_init)
+        return model
     elif config["config"].startswith("physmlp-"):
         model = ProxyEmbeddingModel(
             comp_emb_layers=config["model"]["comp_emb_layers"],
@@ -20,14 +21,11 @@ def make_model(config):
             sg_emb_size=config["model"]["sg_emb_size"],
             lat_emb_layers=config["model"]["lat_emb_layers"],
             prediction_layers=config["model"]["hidden_layers"],
+            alphabet=config["alphabet"],
         )
+        return model
     else:
         raise ValueError(f"Unknown model config: {config['config']}")
-
-    assert hasattr(model, "pred_inp_size"), "pred_inp_size is required for the GFN"
-    assert hasattr(model, "n_elements"), "n_elements is required for the GFN"
-
-    return model
 
 
 def mlp_from_layers(layers, act=None, norm=True):
@@ -63,7 +61,7 @@ class ProxyMLP(nn.Module):
 
     def forward(self, x):
         if self.concat:
-            x = torch.cat(x, dim=-1)
+            x = torch.cat([x[1], x[2], x[0]], dim=-1)
         for i, layer in enumerate(self.nn_layers):
             x = layer(x)
             if i == len(self.nn_layers) - 1:
@@ -83,18 +81,17 @@ class ProxyEmbeddingModel(nn.Module):
         sg_emb_size: int,
         lat_emb_layers: list,
         prediction_layers: list,
-        n_elements: int = 90,
+        alphabet: list = [],
     ):
         super().__init__()
         self.use_comp_phys_embeds = comp_phys_embeds["use"]
-        self.n_elements = n_elements
         if self.use_comp_phys_embeds:
             self.phys_emb = PhysEmbedding(
                 z_emb_size=comp_phys_embeds["z_emb_size"],
                 period_emb_size=comp_phys_embeds["period_emb_size"],
                 group_emb_size=comp_phys_embeds["group_emb_size"],
                 properties_proj_size=comp_phys_embeds["properties_proj_size"],
-                n_elements=n_elements,
+                n_elements=max(alphabet) + 1,
                 final_proj_size=comp_emb_layers[-1],
             )
         else:
@@ -103,6 +100,10 @@ class ProxyEmbeddingModel(nn.Module):
         self.lat_emb_mlp = mlp_from_layers(lat_emb_layers)
         self.pred_inp_size = comp_emb_layers[-1] + sg_emb_size + lat_emb_layers[-1]
         self.prediction_head = ProxyMLP(self.pred_inp_size, prediction_layers, False)
+        if not alphabet:
+            self.alphabet = torch.Tensor(list(range(comp_emb_layers[0])))
+        else:
+            self.alphabet = torch.Tensor(alphabet)
 
     def forward(self, x):
         comp_x, sg_x, lat_x = x
@@ -113,14 +114,17 @@ class ProxyEmbeddingModel(nn.Module):
         # Process the composition
         if self.use_comp_phys_embeds:
             idx = torch.nonzero(comp_x)
+
             z = torch.repeat_interleave(
-                idx[:, 1], (comp_x[idx[:, 0], idx[:, 1]]).to(torch.int32), dim=0
+                idx[:, 1],
+                (comp_x[idx[:, 0], idx[:, 1].to(torch.int32)]),
+                dim=0,
             )
             batch_mask = torch.repeat_interleave(
                 torch.arange(comp_x.shape[0]).to(comp_x.device),
                 comp_x.sum(dim=1).to(torch.int32),
             )
-            comp_x = self.phys_emb(z)
+            comp_x = self.phys_emb(self.alphabet[z].to(torch.int32))
             comp_x = scatter(comp_x, batch_mask, dim=0, reduce="add")
         else:
             comp_x = self.comp_emb_mlp(comp_x)
