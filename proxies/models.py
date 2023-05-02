@@ -101,9 +101,10 @@ class ProxyEmbeddingModel(nn.Module):
         self.pred_inp_size = comp_emb_layers[-1] + sg_emb_size + lat_emb_layers[-1]
         self.prediction_head = ProxyMLP(self.pred_inp_size, prediction_layers, False)
         if not alphabet:
-            self.alphabet = torch.Tensor(list(range(comp_emb_layers[0])))
+            self._alphabet = torch.Tensor(list(range(comp_emb_layers[0])))
         else:
-            self.alphabet = torch.Tensor(alphabet)
+            self._alphabet = torch.Tensor(alphabet)
+        self.register_buffer("alphabet", self._alphabet)
 
     def forward(self, x):
         comp_x, sg_x, lat_x = x
