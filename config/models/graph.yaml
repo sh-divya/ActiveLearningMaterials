@@ -1,10 +1,23 @@
 model:
   hidden_layers: [512, 512]
-  comp_emb_layers: [32, 32]
+  comp_emb_layers: [64, 64]
   sg_emb_size: 128
-  lattice_emb_layers: [6, 32]
+  lat_emb_layers: [6, 64]
   advanced: True
-  conv_layers: 64
+  comp_phys_embeds: 
+    use: True
+    z_emb_size: 32
+    period_emb_size: 16
+    group_emb_size: 16
+    properties_proj_size: 32
+    n_elements: 90
+  conv: 
+    layers: [64, 64]
+    type: 'gcn'
+    heads: 4
+    dropout: 0.5
+    concat: True
+    add_to_node: True
 
 optim:
   batch_size: 32

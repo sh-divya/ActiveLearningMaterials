@@ -32,11 +32,11 @@ if __name__ == "__main__":
     # allows for nested dictionaries: `--key.subkey=value``
     # load initial config from `--config={model}-{task}`
 
-    # args = sys.argv[1:]
-    # if all("config" not in arg for arg in args):
-    # args.append("--debug")
-    # args.append("--config=physmlp-mp20")
-    # sys.argv[1:] = args
+    args = sys.argv[1:]
+    if all("config" not in arg for arg in args):
+        args.append("--debug")
+        args.append("--config=graph-mp20")
+        sys.argv[1:] = args
 
     config = load_config()
     if not config.get("wandb_run_name"):
