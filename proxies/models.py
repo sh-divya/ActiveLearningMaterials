@@ -11,6 +11,7 @@ def weights_init(m):
     if isinstance(m, nn.Linear):
         nn.init.xavier_uniform_(m.weight)
 
+
 def make_model(config):
     if config["config"].startswith("mlp-"):
         model = ProxyMLP(config["model"]["input_len"], config["model"]["hidden_layers"])
@@ -51,6 +52,7 @@ def make_model(config):
     else:
         raise ValueError(f"Unknown model config: {config['config']}")
 
+
 def mlp_from_layers(layers, act=None, norm=True):
     nn_layers = []
     for i in range(len(layers)):
@@ -64,16 +66,34 @@ def mlp_from_layers(layers, act=None, norm=True):
     nn_layers = nn.Sequential(*nn_layers)
     return nn_layers
 
+
 class GNNBlock(nn.Module):
-    def __init__(self, conv_layers, conv_type="gat", heads=3, concat=True, dropout=0.0, norm=False, act=None):
+    def __init__(
+        self,
+        conv_layers,
+        conv_type="gat",
+        heads=3,
+        concat=True,
+        dropout=0.0,
+        norm=False,
+        act=None,
+    ):
         super(GNNBlock, self).__init__()
 
         gnn_layers = nn.ModuleList()
 
-        for i in range(len(conv_layers)-1):
+        for i in range(len(conv_layers) - 1):
             if conv_type == "gat":
-                gnn_layers.append(DenseGATConv(conv_layers[i], conv_layers[i + 1], head=heads, concat=concat, dropout=dropout))
-            else: 
+                gnn_layers.append(
+                    DenseGATConv(
+                        conv_layers[i],
+                        conv_layers[i + 1],
+                        head=heads,
+                        concat=concat,
+                        dropout=dropout,
+                    )
+                )
+            else:
                 gnn_layers.append(DenseGCNConv(conv_layers[i], conv_layers[i + 1]))
             # if norm:
             #     gnn_layers.append(GraphNorm(conv_layers[i + 1]))
@@ -81,14 +101,13 @@ class GNNBlock(nn.Module):
         self.gnn_layers = gnn_layers
 
     def forward(self, x, batch_mask):
-
         # Create a complete graph adjacency matrix for each batch: dim [B, N, N]
         count_atoms_per_graph = torch.unique(batch_mask, return_counts=True)[1]
         N_max = max(count_atoms_per_graph)
         batch_size = max(batch_mask).item() + 1
         adj = torch.zeros(batch_size, N_max, N_max)
         for i in range(batch_size):
-            adj[i, :count_atoms_per_graph[i], :count_atoms_per_graph[i]] = 1
+            adj[i, : count_atoms_per_graph[i], : count_atoms_per_graph[i]] = 1
             adj[i].fill_diagonal_(0)  # optional
         adj = adj.to(device=x.device)
         x = to_dense_batch(x, batch_mask)[0]
@@ -98,7 +117,8 @@ class GNNBlock(nn.Module):
             x = self.act(x)
         x = torch.sum(x, dim=1)
         return x
-    
+
+
 class ProxyMLP(nn.Module):
     def __init__(self, in_feat, hidden_layers, cat=True):
         super(ProxyMLP, self).__init__()
@@ -201,6 +221,7 @@ class ProxyEmbeddingModel(nn.Module):
         x = torch.cat((comp_x, sg_x, lat_x), dim=-1)
         return self.prediction_head(x)
 
+
 class ProxyGraphModel(nn.Module):
     def __init__(
         self,
@@ -222,9 +243,9 @@ class ProxyGraphModel(nn.Module):
                 group_emb_size=comp_phys_embeds["group_emb_size"],
                 properties_proj_size=comp_phys_embeds["properties_proj_size"],
                 n_elements=90,
-                final_proj_size=comp_emb_layers[-1]
+                final_proj_size=comp_emb_layers[-1],
             )
-        else: 
+        else:
             self.comp_emb_mlp = mlp_from_layers(comp_emb_layers)
         self.sg_emb = nn.Embedding(230, sg_emb_size)
         self.lat_emb_mlp = mlp_from_layers(lat_emb_layers)
@@ -237,17 +258,18 @@ class ProxyGraphModel(nn.Module):
         self.add_to_node = conv["add_to_node"]
         if self.add_to_node:
             conv["layers"][0] = self.pred_inp_size
-        self.conv = GNNBlock(conv["layers"], conv["type"], conv["heads"], conv["concat"], conv["dropout"])
+        self.conv = GNNBlock(
+            conv["layers"], conv["type"], conv["heads"], conv["concat"], conv["dropout"]
+        )
 
     def forward(self, x):
-
         # Process the space group
         sg_x = x[1].long()
         sg_x = self.sg_emb(sg_x).squeeze(1)
 
         # Process the lattice
         lat_x = self.lat_emb_mlp(x[2])
-        
+
         # Process the composition to create node attributes
         idx = torch.nonzero(x[0])
         # Transform atomic numbers to sparse indices
@@ -265,7 +287,7 @@ class ProxyGraphModel(nn.Module):
         # Add space group and lattice embeddings to node attributes
         if self.add_to_node:
             comp_x = torch.cat((comp_x, lat_x[batch_mask], sg_x[batch_mask]), dim=-1)
-                
+
         # Apply a GNN to the node attributes
         comp_x = self.conv(comp_x, batch_mask)
 
