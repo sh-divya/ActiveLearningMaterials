@@ -118,14 +118,14 @@ class ProxyEmbeddingModel(nn.Module):
 
             z = torch.repeat_interleave(
                 idx[:, 1],
-                (comp_x[idx[:, 0], idx[:, 1].to(torch.int32)]),
+                (comp_x[idx[:, 0], idx[:, 1].long()]),
                 dim=0,
             )
             batch_mask = torch.repeat_interleave(
                 torch.arange(comp_x.shape[0]).to(comp_x.device),
-                comp_x.sum(dim=1).to(torch.int32),
+                comp_x.sum(dim=1).long(),
             )
-            comp_x = self.phys_emb(self.alphabet[z].to(torch.int32))
+            comp_x = self.phys_emb(self.alphabet[z].long())
             comp_x = scatter(comp_x, batch_mask, dim=0, reduce="add")
         else:
             comp_x = self.comp_emb_mlp(comp_x)
