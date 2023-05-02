@@ -48,7 +48,7 @@ class ProxyMLP(nn.Module):
         self.concat = cat
         self.hidden_act = nn.LeakyReLU(0.2)
         self.dropout = nn.Dropout(p=0.5)
-        self.final_act = nn.Tanh()
+        self.final_act = nn.Identity()  # nn.Tanh()
         # Model archi
         self.nn_layers = nn.ModuleList()
         for i in range(len(hidden_layers)):
