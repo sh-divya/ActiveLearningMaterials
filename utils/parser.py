@@ -35,7 +35,13 @@ def create_dict_from_args(args: list, sep: str = "."):
     return_dict = {}
     for arg in args:
         arg = arg.strip("--")
-        keys_concat, val = arg.split("=") if "=" in arg else (arg, "True")
+        parts = arg.split("=") if "=" in arg else (arg, "True")
+        if len(parts) == 2:
+            keys_concat, val = parts
+        elif len(parts) > 2:
+            keys_concat, val = parts[0], "=".join(parts[1:])
+        else:
+            raise ValueError(f"Invalid argument {arg}")
         val = parse_value(val)
         key_sequence = keys_concat.split(sep)
         dict_set_recursively(return_dict, key_sequence, val)

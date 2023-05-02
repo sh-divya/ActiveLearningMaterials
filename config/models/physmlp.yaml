@@ -1,6 +1,6 @@
 model:
   hidden_layers: [512, 512]
-  comp_emb_layers: [64, 64]
+  comp_emb_layers: [89, 64]
   sg_emb_size: 128
   lat_emb_layers: [6, 64]
   comp_phys_embeds: 
