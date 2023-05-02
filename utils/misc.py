@@ -1,6 +1,7 @@
 import copy
 import os
 import random
+import sys
 from itertools import product
 from os.path import expandvars
 from pathlib import Path
@@ -115,7 +116,7 @@ def print_config(config: dict) -> None:
     print("#" * 50)
     print("#" * 50)
     print()
-    print(dump(config))
+    print(dump(config, default_flow_style=None))
     print("#" * 50)
     print("#" * 50)
     print()
@@ -254,6 +255,7 @@ def load_scales(config):
 def load_config() -> dict:
     # 1. parse command-line args
     cli_conf = parse_args_to_dict()
+    cli_conf["cmd"] = " ".join(sys.argv)
     assert (
         "config" in cli_conf
     ), "Must specify config string as `--config={task}-{model}`"
