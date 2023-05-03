@@ -38,17 +38,6 @@ def make_model(config):
             conv=config["model"]["conv"],
         )
         return model
-    elif config["config"].startswith("graph-"):
-        model = ProxyGraphModel(
-            comp_emb_layers=config["model"]["comp_emb_layers"],
-            comp_phys_embeds=config["model"]["comp_phys_embeds"],
-            sg_emb_size=config["model"]["sg_emb_size"],
-            lat_emb_layers=config["model"]["lat_emb_layers"],
-            prediction_layers=config["model"]["hidden_layers"],
-            advanced=config["model"]["advanced"],
-            conv=config["model"]["conv"],
-        )
-        return model
     else:
         raise ValueError(f"Unknown model config: {config['config']}")
 
@@ -193,10 +182,9 @@ class ProxyEmbeddingModel(nn.Module):
         # Process the composition
         if self.use_comp_phys_embeds:
             idx = torch.nonzero(comp_x)
-
             z = torch.repeat_interleave(
                 idx[:, 1],
-                (comp_x[idx[:, 0], idx[:, 1].to(torch.int32)]),
+                (comp_x[idx[:, 0], idx[:, 1]]),
                 dim=0,
             )
             batch_mask = torch.repeat_interleave(
