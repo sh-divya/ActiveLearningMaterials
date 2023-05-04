@@ -1,0 +1,131 @@
+# more epochs, larger batch size, explore faenet: larger model & skip-co & mlp_rij
+job:
+  mem: 48GB
+  cpus: 4
+  gres: gpu:1
+  partition: main
+
+default:
+  optim: 
+    epochs: 20
+
+runs:
+  - config: mlp-mp20
+    wandb_note: "MLP baseline"
+    model:
+      input_len: 96
+      hidden_layers: [512, 512]
+    optim:
+      batch_size: 32
+      lr: 0.001
+      es_patience: 3
+
+  - config: mlp-mp20
+    wandb_note: "MLP more layers"
+    model:
+      input_len: 96
+      hidden_layers: [512, 512, 512]
+    optim:
+      batch_size: 32
+      lr: 0.001
+      es_patience: 3
+
+  - config: mlp-mp20
+    wandb_note: "MLP more layers but less units"
+    model:
+      input_len: 96
+      hidden_layers: [256, 256, 256]
+    optim:
+      batch_size: 32
+      lr: 0.001
+      es_patience: 3
+
+  - config: mlp-mp20
+    wandb_note: "MLP smaller lr"
+    model:
+      input_len: 96
+      hidden_layers: [512, 512]
+    optim:
+      batch_size: 32
+      lr: 0.0005
+      es_patience: 3
+
+  - config: mlp-mp20
+    wandb_note: "MLP bigger batch"
+    model:
+      input_len: 96
+      hidden_layers: [512, 512]
+    optim:
+      batch_size: 64
+      lr: 0.001
+      es_patience: 3
+
+  - config: mlp-mp20
+    wandb_note: "MLP smaller hidden"
+    model:
+      input_len: 96
+      hidden_layers: [128, 128]
+    optim:
+      batch_size: 32
+      lr: 0.001
+      es_patience: 3
+
+  - config: mlp-mp20
+    wandb_note: "MLP hyperparam search"
+    model:
+      input_len: 96
+      hidden_layers: [128, 256, 512, 256, 128]
+    optim:
+      batch_size: 32
+      lr: 0.0008
+      es_patience: 3
+
+  - config: mlp-mp20
+    wandb_note: "MLP patience"
+    model:
+      input_len: 96
+      hidden_layers: [512, 512]
+    optim:
+      batch_size: 32
+      lr: 0.001
+      es_patience: 5
+
+  - config: mlp-mp20
+    wandb_note: "MLP batch"
+    model:
+      input_len: 96
+      hidden_layers: [512, 512]
+    optim:
+      batch_size: 64
+      lr: 0.001
+      es_patience: 3
+
+  - config: mlp-mp20
+    wandb_note: "MLP batch"
+    model:
+      input_len: 96
+      hidden_layers: [512, 512]
+    optim:
+      batch_size: 128
+      lr: 0.001
+      es_patience: 3
+
+  - config: mlp-mp20
+    wandb_note: "MLP batch"
+    model:
+      input_len: 96
+      hidden_layers: [512, 512]
+    optim:
+      batch_size: 256
+      lr: 0.0001
+      es_patience: 3
+
+  - config: mlp-mp20
+    wandb_note: "MLP batch"
+    model:
+      input_len: 96
+      hidden_layers: [512, 512]
+    optim:
+      batch_size: 256
+      lr: 0.0005
+      es_patience: 3
