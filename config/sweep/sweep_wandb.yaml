@@ -1,0 +1,29 @@
+program: run.py
+method: bayes
+metric:
+  goal: minimize
+  name: val/acc
+
+parameters:
+  model.hidden_channels:
+    values: [64, 128, 196, 256, 320, 384]
+  model.num_layers:
+    values: [2, 3, 4, 5]
+  optim.batch_size:
+    values: [32, 64, 128, 256]
+  optim.es_patience: 
+    values: [3,5,7]
+  optim.lr:
+    distribution: uniform
+    min: 0.0003
+    max: 0.003
+  optim.epochs:
+    values: [15, 20, 25, 30, 35]
+
+command:
+  - ${env}
+  - ${interpreter}
+  - ${program}
+  - "--config"
+  - "mlp-mp20"
+  - ${args}
