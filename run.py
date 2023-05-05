@@ -54,6 +54,7 @@ if __name__ == "__main__":
             name=config["wandb_run_name"],
             entity=config["wandb_entity"],
             notes=config["wandb_note"],
+            tag=config["wandb_tags"],
         )
     else:
         logger = None
