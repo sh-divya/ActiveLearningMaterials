@@ -1,19 +1,22 @@
 model:
-  hidden_layers: [512, 512]
-  comp_emb_layers: [64, 64]
+  num_layers: 2
+  hidden_channels: 512
+  comp_num_layers: 1
+  comp_hidden_channels: 64
   sg_emb_size: 128
-  lat_emb_layers: [6, 64]
-  advanced: True
-  comp_phys_embeds: 
+  lat_hidden_channels: 64
+  lat_num_layers: 1
+  comp_phys_embeds:
     use: True
     z_emb_size: 32
     period_emb_size: 16
     group_emb_size: 16
     properties_proj_size: 32
     n_elements: 90
-  conv: 
-    layers: [64, 64]
-    type: 'gcn'
+  conv:
+    num_layers: 2
+    hidden_channels: 64
+    type: "gcn"
     heads: 4
     dropout: 0.5
     concat: True

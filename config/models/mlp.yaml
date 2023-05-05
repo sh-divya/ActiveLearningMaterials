@@ -1,6 +1,7 @@
 model:
   input_len: 96
-  hidden_layers: [512, 512]
+  hidden_channels: 512
+  num_layers: 2
 
 optim:
   batch_size: 32

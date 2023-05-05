@@ -1,9 +1,12 @@
 model:
-  hidden_layers: [512, 512]
-  comp_emb_layers: [89, 64]
+  num_layers: 2
+  hidden_channels: 512
   sg_emb_size: 128
-  lat_emb_layers: [6, 64]
-  comp_phys_embeds: 
+  lat_hidden_channels: 64
+  lat_num_layers: 1
+  comp_num_layers: 1
+  comp_hidden_channels: 64
+  comp_phys_embeds:
     use: True
     z_emb_size: 32
     period_emb_size: 16
