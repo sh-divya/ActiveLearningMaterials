@@ -13,28 +13,45 @@ def weights_init(m):
 
 
 def make_model(config):
+    # MLP
     if config["config"].startswith("mlp-"):
-        model = ProxyMLP(config["model"]["input_len"], config["model"]["hidden_layers"])
+        model = ProxyMLP(
+            in_feat=config["model"]["input_len"],
+            num_layers=config["model"]["num_layers"],
+            hidden_channels=config["model"]["hidden_channels"],
+        )
         model.apply(weights_init)
         return model
+    # MLP with physical embeddings to model composition
     elif config["config"].startswith("physmlp-"):
         model = ProxyEmbeddingModel(
-            comp_emb_layers=config["model"]["comp_emb_layers"],
-            comp_phys_embeds=config["model"]["comp_phys_embeds"],
+            pred_num_layers=config["model"]["num_layers"],
+            pred_hidden_channels=config["model"]["hidden_channels"],
+            comp_size=config["comp_size"],
+            comp_num_layers=config["model"]["comp_num_layers"],
+            comp_hidden_channels=config["model"]["comp_hidden_channels"],
+            lat_size=config["lat_size"],
+            lat_num_layers=config["model"]["lat_num_layers"],
+            lat_hidden_channels=config["model"]["lat_hidden_channels"],
             sg_emb_size=config["model"]["sg_emb_size"],
-            lat_emb_layers=config["model"]["lat_emb_layers"],
-            prediction_layers=config["model"]["hidden_layers"],
+            comp_phys_embeds=config["model"]["comp_phys_embeds"],
             alphabet=config["alphabet"],
         )
         return model
+    # Graph model without 3D pos.
     elif config["config"].startswith("graph-"):
         model = ProxyGraphModel(
-            comp_emb_layers=config["model"]["comp_emb_layers"],
+            pred_num_layers=config["model"]["num_layers"],
+            pred_hidden_channels=config["model"]["hidden_channels"],
+            comp_size=config["comp_size"],
+            comp_num_layers=config["model"]["comp_num_layers"],
+            comp_hidden_channels=config["model"]["comp_hidden_channels"],
             comp_phys_embeds=config["model"]["comp_phys_embeds"],
+            lat_size=config["lat_size"],
+            lat_num_layers=config["model"]["lat_num_layers"],
+            lat_hidden_channels=config["model"]["lat_hidden_channels"],
             sg_emb_size=config["model"]["sg_emb_size"],
-            lat_emb_layers=config["model"]["lat_emb_layers"],
-            prediction_layers=config["model"]["hidden_layers"],
-            advanced=config["model"]["advanced"],
+            alphabet=config["alphabet"],
             conv=config["model"]["conv"],
         )
         return model
@@ -42,16 +59,16 @@ def make_model(config):
         raise ValueError(f"Unknown model config: {config['config']}")
 
 
-def mlp_from_layers(layers, act=None, norm=True):
+def mlp_from_layers(num_layers, hidden_channels, input_size=None, act=None, norm=True):
     nn_layers = []
-    for i in range(len(layers)):
-        try:
-            nn_layers.append(nn.Linear(layers[i], layers[i + 1]))
-            if norm:
-                nn_layers.append(nn.BatchNorm1d(layers[i + 1]))
-            nn_layers.append(nn.LeakyReLU(True) if act is None else act)
-        except IndexError:
-            pass
+    for i in range(num_layers):
+        if i == 0:
+            nn_layers.append(nn.Linear(input_size, hidden_channels))
+        else:
+            nn_layers.append(nn.Linear(hidden_channels, hidden_channels))
+        if norm:
+            nn_layers.append(nn.BatchNorm1d(hidden_channels))
+        nn_layers.append(nn.LeakyReLU(True) if act is None else act)
     nn_layers = nn.Sequential(*nn_layers)
     return nn_layers
 
@@ -59,7 +76,9 @@ def mlp_from_layers(layers, act=None, norm=True):
 class GNNBlock(nn.Module):
     def __init__(
         self,
-        conv_layers,
+        input_dim,
+        conv_num_layers,
+        conv_hidden_channels,
         conv_type="gat",
         heads=3,
         concat=True,
@@ -71,19 +90,21 @@ class GNNBlock(nn.Module):
 
         gnn_layers = nn.ModuleList()
 
-        for i in range(len(conv_layers) - 1):
+        for i in range(conv_num_layers):
+            if i > 0:
+                input_dim = conv_hidden_channels
             if conv_type == "gat":
                 gnn_layers.append(
                     DenseGATConv(
-                        conv_layers[i],
-                        conv_layers[i + 1],
+                        input_dim,
+                        conv_hidden_channels,
                         head=heads,
                         concat=concat,
                         dropout=dropout,
                     )
                 )
             else:
-                gnn_layers.append(DenseGCNConv(conv_layers[i], conv_layers[i + 1]))
+                gnn_layers.append(DenseGCNConv(input_dim, conv_hidden_channels))
             # if norm:
             #     gnn_layers.append(GraphNorm(conv_layers[i + 1]))
         self.act = nn.LeakyReLU(True) if act is None else act
@@ -109,7 +130,7 @@ class GNNBlock(nn.Module):
 
 
 class ProxyMLP(nn.Module):
-    def __init__(self, in_feat, hidden_layers, cat=True):
+    def __init__(self, in_feat, num_layers, hidden_channels, cat=True):
         super(ProxyMLP, self).__init__()
         self.concat = cat
         self.hidden_act = nn.LeakyReLU(0.2)
@@ -117,13 +138,15 @@ class ProxyMLP(nn.Module):
         self.final_act = nn.Identity()  # nn.Tanh()
         # Model archi
         self.nn_layers = nn.ModuleList()
-        for i in range(len(hidden_layers)):
+        for i in range(num_layers - 1):
             if i == 0:
-                self.nn_layers.append(nn.Linear(in_feat, hidden_layers[i]))
+                self.nn_layers.append(nn.Linear(in_feat, hidden_channels))
             else:
-                self.nn_layers.append(nn.Linear(hidden_layers[i - 1], hidden_layers[i]))
-            self.nn_layers.append(nn.BatchNorm1d(hidden_layers[i]))
-        self.nn_layers.append(nn.Linear(hidden_layers[-1], 1))
+                self.nn_layers.append(nn.Linear(hidden_channels, hidden_channels))
+            self.nn_layers.append(nn.BatchNorm1d(hidden_channels))
+        if num_layers < 1:
+            hidden_channels = in_feat
+        self.nn_layers.append(nn.Linear(hidden_channels, 1))
 
     def forward(self, x):
         if self.concat:
@@ -143,11 +166,16 @@ class ProxyMLP(nn.Module):
 class ProxyEmbeddingModel(nn.Module):
     def __init__(
         self,
-        comp_emb_layers: list,
-        comp_phys_embeds: dict,
+        pred_num_layers: int,
+        pred_hidden_channels: int,
+        comp_size: int,
+        comp_num_layers: int,
+        comp_hidden_channels: int,
+        comp_phys_embeds: int,
+        lat_size: int,
+        lat_num_layers: int,
+        lat_hidden_channels: int,
         sg_emb_size: int,
-        lat_emb_layers: list,
-        prediction_layers: list,
         alphabet: list = [],
     ):
         super().__init__()
@@ -159,16 +187,22 @@ class ProxyEmbeddingModel(nn.Module):
                 group_emb_size=comp_phys_embeds["group_emb_size"],
                 properties_proj_size=comp_phys_embeds["properties_proj_size"],
                 n_elements=max(alphabet) + 1,
-                final_proj_size=comp_emb_layers[-1],
+                final_proj_size=comp_hidden_channels,
             )
         else:
-            self.comp_emb_mlp = mlp_from_layers(comp_emb_layers)
+            self.comp_emb_mlp = mlp_from_layers(
+                comp_num_layers, comp_hidden_channels, comp_size
+            )
         self.sg_emb = nn.Embedding(230, sg_emb_size)
-        self.lat_emb_mlp = mlp_from_layers(lat_emb_layers)
-        self.pred_inp_size = comp_emb_layers[-1] + sg_emb_size + lat_emb_layers[-1]
-        self.prediction_head = ProxyMLP(self.pred_inp_size, prediction_layers, False)
+        self.lat_emb_mlp = mlp_from_layers(
+            lat_num_layers, lat_hidden_channels, lat_size
+        )
+        self.pred_inp_size = comp_hidden_channels + sg_emb_size + lat_hidden_channels
+        self.prediction_head = ProxyMLP(
+            self.pred_inp_size, pred_num_layers, pred_hidden_channels, False
+        )
         if not alphabet:
-            self._alphabet = torch.Tensor(list(range(comp_emb_layers[0])))
+            self._alphabet = torch.Tensor(list(range(comp_size)))
         else:
             self._alphabet = torch.Tensor(alphabet)
         self.register_buffer("alphabet", self._alphabet)
@@ -191,8 +225,8 @@ class ProxyEmbeddingModel(nn.Module):
                 torch.arange(comp_x.shape[0]).to(comp_x.device),
                 comp_x.sum(dim=1).to(torch.int32),
             )
-            # comp_x = self.phys_emb(self.alphabet[z].to(torch.int32))
-            comp_x = self.phys_emb(z)
+            comp_x = self.phys_emb(self.alphabet[z].to(torch.int32))
+            # comp_x = self.phys_emb(z)
             comp_x = scatter(comp_x, batch_mask, dim=0, reduce="mean")
         else:
             comp_x = self.comp_emb_mlp(comp_x)
@@ -213,12 +247,17 @@ class ProxyEmbeddingModel(nn.Module):
 class ProxyGraphModel(nn.Module):
     def __init__(
         self,
-        comp_emb_layers: list,
-        comp_phys_embeds: dict,
+        pred_num_layers: int,
+        pred_hidden_channels: int,
+        comp_num_layers: int,
+        comp_size: int,
+        comp_hidden_channels: int,
         sg_emb_size: int,
-        lat_emb_layers: list,
-        prediction_layers: list,
-        advanced: bool,
+        lat_size: int,
+        lat_hidden_channels: int,
+        lat_num_layers: int,
+        comp_phys_embeds: int,
+        alphabet: list,
         conv: dict,
     ):
         super().__init__()
@@ -230,25 +269,50 @@ class ProxyGraphModel(nn.Module):
                 period_emb_size=comp_phys_embeds["period_emb_size"],
                 group_emb_size=comp_phys_embeds["group_emb_size"],
                 properties_proj_size=comp_phys_embeds["properties_proj_size"],
-                n_elements=90,
-                final_proj_size=comp_emb_layers[-1],
+                n_elements=max(alphabet) + 1,
+                final_proj_size=comp_hidden_channels,
             )
         else:
-            self.comp_emb_mlp = mlp_from_layers(comp_emb_layers)
+            self.comp_emb_mlp = mlp_from_layers(
+                comp_num_layers, comp_hidden_channels, comp_size
+            )
         self.sg_emb = nn.Embedding(230, sg_emb_size)
-        self.lat_emb_mlp = mlp_from_layers(lat_emb_layers)
-        self.pred_inp_size = comp_emb_layers[-1] + sg_emb_size + lat_emb_layers[-1]
-        self.prediction_head = ProxyMLP(self.pred_inp_size, prediction_layers, False)
+        self.lat_emb_mlp = mlp_from_layers(
+            lat_num_layers, lat_hidden_channels, lat_size
+        )
         # Prediction
-        self.pred_inp_size = comp_emb_layers[-1] + sg_emb_size + lat_emb_layers[-1]
-        self.prediction_head = ProxyMLP(self.pred_inp_size, prediction_layers, False)
+        self.pred_inp_size = comp_hidden_channels + sg_emb_size + lat_hidden_channels
+        self.prediction_head = ProxyMLP(
+            self.pred_inp_size, pred_num_layers, pred_hidden_channels, False
+        )
         # Interaction blocks (GNN)
         self.add_to_node = conv["add_to_node"]
         if self.add_to_node:
-            conv["layers"][0] = self.pred_inp_size
-        self.conv = GNNBlock(
-            conv["layers"], conv["type"], conv["heads"], conv["concat"], conv["dropout"]
-        )
+            self.conv = GNNBlock(
+                self.pred_inp_size,
+                conv["num_layers"],
+                conv["hidden_channels"],
+                conv["type"],
+                conv["heads"],
+                conv["concat"],
+                conv["dropout"],
+            )
+        else:
+            self.conv = GNNBlock(
+                comp_hidden_channels,
+                conv["num_layers"],
+                conv["hidden_channels"],
+                conv["type"],
+                conv["heads"],
+                conv["concat"],
+                conv["dropout"],
+            )
+        # Deal with atomic numbers
+        if not alphabet:
+            self._alphabet = torch.Tensor(list(range(comp_size)))
+        else:
+            self._alphabet = torch.Tensor(alphabet)
+        self.register_buffer("alphabet", self._alphabet)
 
     def forward(self, x):
         # Process the space group
@@ -270,7 +334,8 @@ class ProxyGraphModel(nn.Module):
             x[0].sum(dim=1).to(torch.int32),
         )
         # Derive physics aware embeddings
-        comp_x = self.phys_emb(z)
+        # comp_x = self.phys_emb(z)
+        comp_x = self.phys_emb(self.alphabet[z].to(torch.int32))
 
         # Add space group and lattice embeddings to node attributes
         if self.add_to_node:
