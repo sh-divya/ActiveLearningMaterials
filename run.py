@@ -23,7 +23,7 @@ if __name__ == "__main__":
     args = sys.argv[1:]
     if all("config" not in arg for arg in args):
         args.append("--debug")
-        args.append("--config=physmlp-mp20")
+        args.append("--config=graph-mp20")
         sys.argv[1:] = args
 
     set_seeds(0)
@@ -54,7 +54,7 @@ if __name__ == "__main__":
             name=config["wandb_run_name"],
             entity=config["wandb_entity"],
             notes=config["wandb_note"],
-            tag=config["wandb_tags"],
+            tags=config["wandb_tags"],
         )
     else:
         logger = None
