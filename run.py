@@ -104,7 +104,4 @@ if __name__ == "__main__":
 
     # End of training
     if logger:
-        logger.experiment.config["lr"] = config["optim"]["lr"]
-        logger.experiment.config["batch"] = config["optim"]["batch_size"]
-        logger.experiment.config["layers"] = config["model"]["hidden_layers"]
         logger.experiment.finish()
