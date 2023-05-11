@@ -21,7 +21,6 @@ parameters:
     values: [32, 64, 128, 196]
   model.comp_phys_embeds.use:
     values: [True, False]
-    probabilities: [0.8, 0.25]
   model.comp_phys_embeds.z_emb_size:
     values: [16, 32, 64, 128]
   model.comp_phys_embeds.period_emb_size:

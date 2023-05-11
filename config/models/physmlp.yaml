@@ -19,3 +19,7 @@ optim:
   lr: 0.001
   epochs: 10
   es_patience: 3
+  scheduler:
+    name: ""
+    step_size: 1000
+    gamma: 0.5
