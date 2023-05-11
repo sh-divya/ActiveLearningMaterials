@@ -25,7 +25,6 @@ if __name__ == "__main__":
     if all("config" not in arg for arg in args):
         # args.append("--debug")
         args.append("--config=graph-mp20")
-        args.append("--optim.epochs=10")
         sys.argv[1:] = args
 
     set_seeds(0)
@@ -73,20 +72,19 @@ if __name__ == "__main__":
     callbacks = []
     callbacks += [
         EarlyStopping(
-            monitor="val_acc", patience=config["optim"]["es_patience"], mode="min"
+            monitor="val_mae", patience=config["optim"]["es_patience"], mode="min"
         )
     ]
     if not config.get("debug"):
         callbacks += [
             get_checkpoint_callback(
-                config["run_dir"], logger, monitor="val_acc", mode=callbacks[0].mode
+                config["run_dir"], logger, monitor="val_mae", mode=callbacks[0].mode
             )
         ]
 
     # Make module
     criterion = nn.MSELoss()
-    accuracy = nn.L1Loss()
-    module = ProxyModule(model, criterion, accuracy, config)
+    module = ProxyModule(model, criterion, config)
 
     # Make PL trainer
     trainer = pl.Trainer(
