@@ -1,5 +1,6 @@
 import warnings
 import sys
+import time
 
 import pytorch_lightning as pl
 import torch.nn as nn
@@ -22,8 +23,9 @@ if __name__ == "__main__":
 
     args = sys.argv[1:]
     if all("config" not in arg for arg in args):
-        args.append("--debug")
+        # args.append("--debug")
         args.append("--config=graph-mp20")
+        args.append("--optim.epochs=10")
         sys.argv[1:] = args
 
     set_seeds(0)
@@ -96,12 +98,21 @@ if __name__ == "__main__":
     )
 
     # Start training
+    s = time.time()
     trainer.fit(
         model=module,
         train_dataloaders=loaders["train"],
         val_dataloaders=loaders["val"],
     )
+    t = time.time() - s
+
+    # Inference time
+    inf_s = time.time()
+    trainer.test(module, loaders["val"], ckpt_path="best", verbose=False)
+    inf_t = time.time() - inf_s
 
     # End of training
     if logger:
+        logger.experiment.log({"trainer-time": t})
+        logger.experiment.log({"inference-time": inf_t})
         logger.experiment.finish()
