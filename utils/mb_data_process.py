@@ -1,14 +1,25 @@
 import os
+import sys
 import json
 from pathlib import Path
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+BASE_PATH = Path(__file__).parent.parent
+proxy_path = BASE_PATH / "proxies"
+script_path = BASE_PATH / "scripts"
+sys.path.append(str(proxy_path))
+sys.path.append(str(script_path))
+
 from cdvae_csv import feature_per_struc, FEATURE_KEYS
+from data import CrystalFeat
+from data_dist import plots_from_df
 
 import click
 import scipy as sp
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.metrics import pairwise_distances
 from pymatgen.core.structure import Structure
 from verstack.stratified_continuous_split import scsplit
 
@@ -42,30 +53,41 @@ def write_dataset_csv(read_path, write_base):
 @click.option("--base_path", default="./proxies")
 @click.option("--data_select", default="01")
 @click.option("--strategy", default="stratify")
-def split(base_path, data_select, strategy):
+@click.option("--write_path", default=None)
+def split(base_path, data_select, strategy, write_path):
     db_target = {"matbench_mp_e_form": "Eform", "matbench_mp_gap": "Band Gap"}
     base_path = Path(base_path)
     data_types = {k: np.int32 for k in FEATURE_KEYS}
     data_types = {k: np.float32 for k in ["a", "b", "c", "alpha", "beta", "gamma"]}
+
     for d in data_select:
         db = list(db_target.keys())[int(d)]
         target = db_target[db]
         read_path = base_path / db / "data" / (db + ".csv")
         df = pd.read_csv(read_path, dtype=data_types, index_col=0)
+        if not write_path:
+            write_path = Path(base_path / db)
+        else:
+            write_path = Path(write_path)
         if strategy == "stratify":
             train, val, test = proportional(df, target)
-            train.to_csv(base_path / db / "train.csv")
-            val.to_csv(base_path / db / "val.csv")
-            test.to_csv(base_path / db / "test.csv")
+            train.to_csv(write_path / "train_data.csv")
+            val.to_csv(write_path / "val_data.csv")
+            test.to_csv(write_path / "test_data.csv")
+            fig, ax = plt.subplots(2, 4, figsize=(15, 6))
+            for s, n in zip((train, val, test), ("train", "val", "test")):
+                lines, labels = plots_from_df(s, target, ax, n)
         elif strategy == "ood":
-            temp = ood(df, target)
-            print(temp)
-
-
-def divergence(ptarget, qtarget, bins):
-    p = pd.cut(ptarget, bins=bins).value_counts(normalize=True)
-    q = pd.cut(qtarget, bins=bins).value_counts(normalize=True)
-    return sp.stats.entropy(p, q)
+            train, test = ood(df, target)
+            train.to_csv(write_path / "train_data.csv")
+            test.to_csv(write_path / "test_data.csv")
+            fig, ax = plt.subplots(2, 4, figsize=(15, 6))
+            for s, n in zip((train, test), ("train", "test")):
+                lines, labels = plots_from_df(s, target, ax, n)
+        fig.legend(lines, labels, loc="upper right")
+        fig.tight_layout()
+        fig.savefig(write_path / (f"{d}_{strategy}.png"))
+        plt.close()
 
 
 def proportional(df, target):
@@ -80,13 +102,66 @@ def proportional(df, target):
     return train, val, test
 
 
+def split_from_swaps(train, test, target, n_swaps=100, swaps_per_iter=5, history=20):
+    """
+    Function adapted from
+    https://github.com/Confusezius/Characterizing_Generalization_in_DeepMetricLearning
+    """
+    train_hist, test_hist = [], []
+    feat_cols = train.columns != target
+
+    for i in range(n_swaps):
+        trainmean = train.loc[:, feat_cols].mean().values.reshape(1, -1)
+        testmean = test.loc[:, feat_cols].mean().values.reshape(1, -1)
+        dists_train_trainmean = pairwise_distances(
+            train.loc[:, feat_cols], trainmean, metric="euclidean"
+        )
+        dists_train_testmean = pairwise_distances(
+            train.loc[:, feat_cols], testmean, metric="euclidean"
+        )
+        dists_test_trainmean = pairwise_distances(
+            test.loc[:, feat_cols], trainmean, metric="euclidean"
+        )
+        dists_test_testmean = pairwise_distances(
+            test.loc[:, feat_cols], testmean, metric="euclidean"
+        )
+
+        train_swaps = np.argsort(
+            (dists_train_testmean - dists_train_trainmean).reshape(1, -1)
+        ).squeeze(0)
+        test_swaps = np.argsort(
+            (dists_test_trainmean - dists_test_testmean).reshape(1, -1)
+        ).squeeze(0)
+
+        for j in range(swaps_per_iter):
+            swapped_train, swapped_test = False, False
+            for train_swap_temp, test_swap_temp in zip(train_swaps[j:], test_swaps[j:]):
+                if train_swap_temp not in train_hist[-history:] and not swapped_train:
+                    train_hist.append(train_swap_temp)
+                    train_swap = train_swap_temp
+                    swapped_train = True
+                if test_swap_temp not in test_hist[-history:] and not swapped_test:
+                    test_hist.append(test_swap_temp)
+                    test_swap = test_swap_temp
+                    swapped_test = True
+                if swapped_train and swapped_test:
+                    break
+
+            train.iloc[train_swap, :], test.iloc[test_swap, :] = (
+                test.iloc[test_swap, :],
+                train.iloc[train_swap, :],
+            )
+    return train, test
+
+
 def ood(df, target):
     min_t, max_t = df[target].min(), df[target].max()
     step = (max_t - min_t) / 200
     bins = np.linspace(min_t - step, max_t + step, 200)
     id_train, id_test = scsplit(df, stratify=df[target], test_size=0.2, continuous=True)
-    div = divergence(id_train[target], id_test[target], bins)
-    return div
+    od_train, od_test = split_from_swaps(id_train, id_test, target, 1000, 50, 20)
+
+    return od_train, od_test
 
 
 if __name__ == "__main__":

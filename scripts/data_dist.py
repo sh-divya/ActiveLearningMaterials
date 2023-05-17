@@ -5,7 +5,25 @@ from pathlib import Path
 import pandas as pd
 import matplotlib.pyplot as plt
 
-if __name__ == "__main__":
+FEATS = ["Space Group", "a", "b", "c", "alpha", "beta", "gamma"]
+
+
+def plots_from_df(dataf, target, ax, split):
+    params = FEATS + [target]
+    for i, p in enumerate(params):
+        curr_ax = ax[i // 4][i % 4]
+        df = dataf[p]
+        curr_ax.hist(
+            df, bins=200, histtype="stepfilled", label=split, alpha=0.5, density=True
+        )
+        curr_ax.set_xlabel(p)
+
+    lines, labels = curr_ax.get_legend_handles_labels()
+
+    return lines, labels
+
+
+def all_plots():
     data_splits = ["train_data.csv", "val_data.csv", "test_data.csv"]
     data_dir = {
         "carbon": "energy_per_atom",
@@ -15,29 +33,18 @@ if __name__ == "__main__":
         "perov": "heat_all",
     }
 
-    feats = ["Space Group", "a", "b", "c", "alpha", "beta", "gamma"]
     for d, t in data_dir.items():
-        dir_path = Path(osp.join("./proxies", d))
-        params = [t] + feats
         fig, ax = plt.subplots(2, 4, figsize=(15, 6))
-        for i, p in enumerate(params):
-            curr_ax = ax[i // 4][i % 4]
-            for split in data_splits:
-                csv_path = dir_path / split
-                df = pd.read_csv(csv_path)[p]
-                # df = df.loc[df != 0]
-                curr_ax.hist(
-                    df,
-                    bins=200,
-                    histtype="stepfilled",
-                    label=split.split(".")[0].split("_")[0],
-                    alpha=0.5,
-                    density=True,
-                )
-            curr_ax.set_xlabel(p)
-        fig.suptitle(d)
-        lines, labels = curr_ax.get_legend_handles_labels()
+        dir_path = Path(osp.join("./proxies", d))
+        for split in data_splits:
+            csv_path = dir_path / split
+            df = pd.read_csv(csv_path)
+            lines, labels = plots_from_df(df, t, ax, split.split("_")[0])
         fig.legend(lines, labels, loc="upper right")
         fig.tight_layout()
         fig.savefig(Path("../plots") / (f"{d}.png"))
         plt.close()
+
+
+if __name__ == "__main__":
+    all_plots()
