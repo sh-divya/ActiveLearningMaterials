@@ -16,10 +16,10 @@ scipy
 setuptools
 sympy
 torch
-torchaudio
 torchmetrics
 torchvision
 torch_scatter
 wandb
 wheel
 phast
+verstack
