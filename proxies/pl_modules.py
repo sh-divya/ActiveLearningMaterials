@@ -1,11 +1,11 @@
 import pytorch_lightning as pl
 import torch.optim as optim
-import time
 from torchmetrics import MeanAbsoluteError, MeanSquaredError
+from torch_simple_timing import Timer
 
 
 class ProxyModule(pl.LightningModule):
-    def __init__(self, proxy, loss, config):
+    def __init__(self, proxy, loss, config, gpu):
         super().__init__()
         self.model = proxy
         self.criterion = loss
@@ -18,6 +18,7 @@ class ProxyModule(pl.LightningModule):
         self.best_mse = 10e6
         self.save_hyperparameters(config)
         self.active_logger = config.get("debug") is None
+        self.timer = Timer(gpu=gpu)
 
     def training_step(self, batch, batch_idx):
         x, y = batch
@@ -65,11 +66,13 @@ class ProxyModule(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         x, _ = batch
-        s = time.time()
-        _ = self.model(x).squeeze(-1)
-        sample_inf_time = (time.time() - s) / batch[0][0].shape[0]
+        with self.timer.clock("forward-pass"):
+            self.model(x).squeeze(-1)
 
-        self.log("sample_inf_time", sample_inf_time, on_epoch=True)
+    def test_epoch_end(self, outputs):
+        stats = self.timer.stats()
+        print(self.timer.display(stats=stats, precision=4))
+        # self.logger.experiment.summary.update(stats)
 
     def configure_optimizers(self):
         optimizer = optim.Adam(self.parameters(), self.lr)
