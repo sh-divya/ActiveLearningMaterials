@@ -8,4 +8,4 @@
 module load anaconda/3
 conda activate crystals
 cd ~/ocp/ActiveLearningMaterials
-wandb agent --count 20 mila-ocp/ActiveLearningMaterials/couy0jvg  # sweep_id
+wandb agent --count 75 mila-ocp/ActiveLearningMaterials/wx89sw03  # sweep_id
