@@ -1,6 +1,7 @@
 import warnings
 import sys
 import time
+import torch
 
 import pytorch_lightning as pl
 import torch.nn as nn
@@ -25,7 +26,7 @@ if __name__ == "__main__":
     if all("config" not in arg for arg in args):
         # args.append("--debug")
         args.append("--config=mlp-mp20")
-        args.append("--optim.epochs=3")
+        args.append("--optim.epochs=1")
         #args.append("--optim.scheduler.name=ReduceLROnPlateau")
         # args.append("--optim.scheduler.name=StepLR")
         sys.argv[1:] = args
@@ -34,7 +35,7 @@ if __name__ == "__main__":
     config = load_config()
     if not config.get("wandb_run_name"):
         config["wandb_run_name"] = config["run_dir"].split("/")[-1]
-        
+
     print_config(config)
     if not config.get("debug"):
         logger = WandbLogger(
@@ -70,8 +71,9 @@ if __name__ == "__main__":
         ]
 
     # Make module
+    gpu = torch.device("cuda" if torch.cuda.is_available() else "cpu") == "cuda"
     criterion = nn.MSELoss()
-    module = ProxyModule(model, criterion, config)
+    module = ProxyModule(model, criterion, config, gpu)
 
     # Make PL trainer
     trainer = pl.Trainer(

@@ -25,3 +25,4 @@ wheel
 phast
 torch_geometric
 minydra
+torch_simple_timing
