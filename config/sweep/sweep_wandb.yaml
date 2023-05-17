@@ -2,7 +2,7 @@ program: run.py
 method: bayes
 metric:
   goal: minimize
-  name: val/acc
+  name: val_mae
 
 parameters:
   model.hidden_channels:
@@ -14,11 +14,14 @@ parameters:
   optim.es_patience: 
     values: [3,5,7]
   optim.lr:
-    distribution: uniform
+    distribution: log_uniform_values
     min: 0.0003
     max: 0.003
   optim.epochs:
-    values: [15, 20, 25, 30, 35]
+    values: [20, 25, 30, 40, 50]
+  optim.scheduler.name:
+    values: ["StepLR", "ReduceLROnPlateau", ""] 
+
 
 command:
   - ${env}

@@ -1,0 +1,119 @@
+# more epochs, larger batch size, explore faenet: larger model & skip-co & mlp_rij
+job:
+  mem: 32GB
+  cpus: 4
+  gres: gpu:1
+  partition: long
+
+default:
+  optim: 
+    epochs: 5
+
+runs:
+  - config: graph-mp20
+    wandb_note: "Graph baseline"
+    model:
+      num_layers: 2
+      hidden_channels: 512
+      comp_num_layers: 1
+      comp_hidden_channels: 64
+      sg_emb_size: 128
+      lat_hidden_channels: 64
+      lat_num_layers: 1
+      comp_phys_embeds:
+        use: False
+        z_emb_size: 32
+        period_emb_size: 16
+        group_emb_size: 16
+        properties_proj_size: 32
+        n_elements: 90
+      conv:
+        num_layers: 2
+        hidden_channels: 64
+        type: "gcn"
+        heads: 4
+        dropout: 0.5
+        concat: True
+        add_to_node: True
+    optim:
+      batch_size: 32
+      lr: 0.001
+      epochs: 10
+      es_patience: 3
+
+  - config: graph-mp20
+    wandb_note: "Graph baseline"
+    model:
+      num_layers: 2
+      hidden_channels: 512
+      comp_num_layers: 1
+      comp_hidden_channels: 64
+      sg_emb_size: 128
+      lat_hidden_channels: 64
+      lat_num_layers: 1
+      comp_phys_embeds:
+        use: True
+        z_emb_size: 32
+        period_emb_size: 16
+        group_emb_size: 16
+        properties_proj_size: 32
+        n_elements: 90
+      conv:
+        num_layers: 3
+        hidden_channels: 64
+        type: "gat"
+        heads: 3
+        dropout: 0.2
+        concat: True
+        add_to_node: True
+    optim:
+      batch_size: 32
+      lr: 0.001
+      epochs: 10
+      es_patience: 3
+      scheduler:
+        name: "ReduceLROnPlateau"
+        step_size: 2000
+        decay_factor: 0.5
+
+  - config: physmlp-mp20
+    wandb_note: "PhysMLP baseline"
+    model:
+      num_layers: 2
+      hidden_channels: 512
+      sg_emb_size: 128
+      lat_hidden_channels: 64
+      lat_num_layers: 1
+      comp_num_layers: 1
+      comp_hidden_channels: 64
+      comp_phys_embeds:
+        use: True
+        z_emb_size: 32
+        period_emb_size: 16
+        group_emb_size: 16
+        properties_proj_size: 32
+        n_elements: 90
+    optim:
+      batch_size: 32
+      lr: 0.001
+      es_patience: 3
+      scheduler:
+        name: ""
+        step_size: 2000
+        decay_factor: 0.5
+
+  - config: mlp-mp20
+    wandb_note: "MLP baseline"
+    model:
+      input_len: 96
+      hidden_channels: 512
+      num_layers: 2
+    optim:
+      batch_size: 32
+      lr: 0.001
+      epochs: 10
+      es_patience: 3
+      scheduler:
+        name: "StepLR"
+        step_size: 2000
+        decay_factor: 0.5

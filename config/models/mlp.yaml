@@ -10,5 +10,5 @@ optim:
   es_patience: 3
   scheduler:
     name: ""  # StepLR, ReduceLROnPlateau
-    step_size: 2000
+    step_size: 5000
     decay_factor: 0.5
