@@ -24,30 +24,17 @@ if __name__ == "__main__":
     args = sys.argv[1:]
     if all("config" not in arg for arg in args):
         # args.append("--debug")
-        args.append("--config=graph-mp20")
+        args.append("--config=mlp-mp20")
+        args.append("--optim.epochs=3")
+        #args.append("--optim.scheduler.name=ReduceLROnPlateau")
+        # args.append("--optim.scheduler.name=StepLR")
         sys.argv[1:] = args
 
     set_seeds(0)
     config = load_config()
     if not config.get("wandb_run_name"):
-        wandb_name_keys = {
-            "model": ["hidden_layers"],
-            "optim": ["lr", "batch_size"],
-        }
-        config["wandb_run_name"] = (
-            config["config"]
-            + "-"
-            + "-".join(
-                [
-                    f"{key}={config[level][key]}"
-                    for level in wandb_name_keys
-                    for key in wandb_name_keys[level]
-                    if key in config[level]
-                ]
-            )
-        )
-        # mp20-mlp-hidden_layers=[512, 512]-lr=0.001-batch_size=32
-
+        config["wandb_run_name"] = config["run_dir"].split("/")[-1]
+        
     print_config(config)
     if not config.get("debug"):
         logger = WandbLogger(
@@ -111,6 +98,6 @@ if __name__ == "__main__":
 
     # End of training
     if logger:
-        logger.experiment.log({"trainer-time": t})
-        logger.experiment.log({"inference-time": inf_t})
+        logger.experiment.summary["trainer-time"] = t
+        logger.experiment.summary["inference-time"] = inf_t
         logger.experiment.finish()
