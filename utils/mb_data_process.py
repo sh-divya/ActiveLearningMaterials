@@ -14,14 +14,31 @@ from cdvae_csv import feature_per_struc, FEATURE_KEYS
 from data import CrystalFeat
 from data_dist import plots_from_df
 
+import torch
 import click
 import scipy as sp
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from torch.utils.data import Dataset
 from sklearn.metrics import pairwise_distances
 from pymatgen.core.structure import Structure
+from otdd.pytorch.distance import DatasetDistance
 from verstack.stratified_continuous_split import scsplit
+
+
+class DFdataset(Dataset):
+    def __init__(self, dataframe, target):
+        feat_cols = dataframe.columns != target
+        self.x = torch.tensor(dataframe.loc[:, feat_cols].values)
+        dataframe["binned"] = pd.cut(dataframe[target], 200)
+        self.targets = torch.tensor(dataframe.loc[:, "binned"].values)
+
+    def __len__(self):
+        return len(self.targets)
+
+    def __getitem__(self, index):
+        return self.x[index], self.targets[index]
 
 
 @click.command()
@@ -54,7 +71,8 @@ def write_dataset_csv(read_path, write_base):
 @click.option("--data_select", default="01")
 @click.option("--strategy", default="stratify")
 @click.option("--write_path", default=None)
-def split(base_path, data_select, strategy, write_path):
+@click.option("--verbose", is_flag=True, default=False)
+def split(base_path, data_select, strategy, write_path, verbose):
     db_target = {"matbench_mp_e_form": "Eform", "matbench_mp_gap": "Band Gap"}
     base_path = Path(base_path)
     data_types = {k: np.int32 for k in FEATURE_KEYS}
@@ -70,7 +88,7 @@ def split(base_path, data_select, strategy, write_path):
         else:
             write_path = Path(write_path)
         if strategy == "stratify":
-            train, val, test = proportional(df, target)
+            train, val, test = proportional(df, target, verbose)
             train.to_csv(write_path / "train_data.csv")
             val.to_csv(write_path / "val_data.csv")
             test.to_csv(write_path / "test_data.csv")
@@ -78,11 +96,15 @@ def split(base_path, data_select, strategy, write_path):
             for s, n in zip((train, val, test), ("train", "val", "test")):
                 lines, labels = plots_from_df(s, target, ax, n)
         elif strategy == "ood":
-            train, test = ood(df, target)
+            train, id_val, od_val, test = ood(df, target, verbose)
             train.to_csv(write_path / "train_data.csv")
+            id_val.to_csv(write_path / "idval_data.csv")
+            od_val.to_csv(write_path / "odval_data.csv")
             test.to_csv(write_path / "test_data.csv")
             fig, ax = plt.subplots(2, 4, figsize=(15, 6))
-            for s, n in zip((train, test), ("train", "test")):
+            for s, n in zip(
+                (train, id_val, od_val, test), ("train", "id_val", "od_val", "test")
+            ):
                 lines, labels = plots_from_df(s, target, ax, n)
         fig.legend(lines, labels, loc="upper right")
         fig.tight_layout()
@@ -90,7 +112,7 @@ def split(base_path, data_select, strategy, write_path):
         plt.close()
 
 
-def proportional(df, target):
+def proportional(df, target, verbose):
     train_val, test = scsplit(df, stratify=df[target], test_size=0.2, continuous=True)
     train, val = scsplit(
         train_val.reset_index(drop=True),
@@ -98,8 +120,99 @@ def proportional(df, target):
         test_size=0.25,
         continuous=True,
     )
+    if verbose:
+        trainds = DFdataset(train, target)
+        valds = DFdataset(val, target)
+        testds = DFdataset(test, target)
+        print(trainds[0])
+        print("Strategy: Stratifed split b/w Train, val and test")
+        print("Split ratio: Train=0.6, Val=0.2, Test=0.2")
+        d = DatasetDistance(
+            trainds,
+            valds,
+            ignore_source_labels=False,
+            ignore_target_labels=False,
+            inner_ot_method="exact",
+            debiased_loss=True,
+            p=2,
+            entreg=1e-1,
+            device="cpu",
+        )
+        dist = d.distance(maxsamples=1000)
+        print("Train-Val OTDD:{dist}")
+        d = DatasetDistance(
+            trainds,
+            testds,
+            inner_ot_method="exact",
+            debiased_loss=True,
+            p=2,
+            entreg=1e-1,
+            device="cpu",
+        )
+        dist = d.distance(maxsamples=1000)
+        print("Train-Test OTDD:{dist}")
 
     return train, val, test
+
+
+def ood(df, target, verbose):
+    id_train, id_test = scsplit(df, stratify=df[target], test_size=0.3, continuous=True)
+    train, od_test = split_from_swaps(id_train, id_test, target, 1000, 100, 100)
+    train, id_val = scsplit(
+        train.reset_index(drop=True),
+        stratify=train.reset_index(drop=True)[target],
+        test_size=0.14,
+        continuous=True,
+    )
+    od_test, od_val = scsplit(
+        od_test.reset_index(drop=True),
+        stratify=od_test.reset_index(drop=True)[target],
+        test_size=0.33,
+        continuous=True,
+    )
+
+    if verbose:
+        trainds = DFdataset(train, target)
+        id_valds = DFdataset(id_val, target)
+        od_valds = DFdataset(od_val, target)
+        testds = DFdataset(od_test, target)
+        print("Strategy: OOD split b/w Train, val and test")
+        print("Split ratio: Train=0.6, Val=0.2, Test=0.2")
+        d = DatasetDistance(
+            trainds,
+            id_valds,
+            inner_ot_method="exact",
+            debiased_loss=True,
+            p=2,
+            entreg=1e-1,
+            device="cpu",
+        )
+        dist = d.distance()
+        print("Train-Val-ID OTDD:{dist}")
+        d = DatasetDistance(
+            trainds,
+            od_valds,
+            inner_ot_method="exact",
+            debiased_loss=True,
+            p=2,
+            entreg=1e-1,
+            device="cpu",
+        )
+        dist = d.distance(maxsamples=1000)
+        print("Train-Val-OD OTDD:{dist}")
+        d = DatasetDistance(
+            trainds,
+            testds,
+            inner_ot_method="exact",
+            debiased_loss=True,
+            p=2,
+            entreg=1e-1,
+            device="cpu",
+        )
+        dist = d.distance(maxsamples=1000)
+        print("Train-Test OTDD:{dist}")
+
+    return train, id_val, od_val, od_test
 
 
 def split_from_swaps(train, test, target, n_swaps=100, swaps_per_iter=5, history=20):
@@ -152,16 +265,6 @@ def split_from_swaps(train, test, target, n_swaps=100, swaps_per_iter=5, history
                 train.iloc[train_swap, :],
             )
     return train, test
-
-
-def ood(df, target):
-    min_t, max_t = df[target].min(), df[target].max()
-    step = (max_t - min_t) / 200
-    bins = np.linspace(min_t - step, max_t + step, 200)
-    id_train, id_test = scsplit(df, stratify=df[target], test_size=0.2, continuous=True)
-    od_train, od_test = split_from_swaps(id_train, id_test, target, 1000, 50, 20)
-
-    return od_train, od_test
 
 
 if __name__ == "__main__":
