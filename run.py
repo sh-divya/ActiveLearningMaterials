@@ -25,9 +25,8 @@ if __name__ == "__main__":
     if all("config" not in arg for arg in args):
         # args.append("--debug")
         args.append("--config=mlp-mp20")
-        args.append("--optim.epochs=3")
-        # args.append("--optim.scheduler.name=ReduceLROnPlateau")
         # args.append("--optim.scheduler.name=StepLR")
+        warnings.warn("No config file specified, using default !")
         sys.argv[1:] = args
 
     set_seeds(0)
