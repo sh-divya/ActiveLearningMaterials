@@ -12,10 +12,7 @@ import numpy as np
 import torch
 from yaml import dump, safe_load
 
-from utils.parser import parse_args_to_dict
-
-JOB_ID = os.environ.get("SLURM_JOB_ID")
-ROOT = Path(__file__).resolve().parent.parent  # repo root Path
+from dave.utils.parser import parse_args_to_dict
 
 
 def resolve(path: Union[str, Path]) -> Path:
@@ -32,7 +29,8 @@ def resolve(path: Union[str, Path]) -> Path:
     return Path(expandvars(path)).expanduser().resolve()
 
 
-ROOT = resolve(__file__).parent.parent  # repo root Path
+JOB_ID = os.environ.get("SLURM_JOB_ID")
+ROOT = resolve(__file__).parent.parent.parent  # repo root Path
 
 
 def is_mila() -> bool:

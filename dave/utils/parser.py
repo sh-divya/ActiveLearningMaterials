@@ -97,6 +97,6 @@ def parse_args_to_dict() -> dict:
     )
     # Parse args
     args, override_args = parser.parse_known_args()
-    from utils.misc import merge_dicts
+    from dave.utils.misc import merge_dicts
 
     return merge_dicts(dict(vars(args)), create_dict_from_args(override_args))

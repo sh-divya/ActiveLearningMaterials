@@ -1,8 +1,8 @@
 import torch
 import random
 import torch.nn as nn
-from proxies.crystal_data import ICDataset
-from proxies.models import ProxyMLP, ProxyModel
+from dave.proxies.crystal_data import ICDataset
+from dave.proxies.models import ProxyMLP, ProxyModel
 from torch.utils.data import DataLoader, random_split, Subset
 from sklearn.model_selection import train_test_split
 import wandb as wb

@@ -7,11 +7,11 @@ import torch.nn as nn
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
 
-from proxies.models import make_model
-from proxies.pl_modules import ProxyModule
-from utils.callbacks import get_checkpoint_callback
-from utils.loaders import make_loaders
-from utils.misc import load_config, print_config, set_seeds
+from dave.proxies.models import make_model
+from dave.proxies.pl_modules import ProxyModule
+from dave.utils.callbacks import get_checkpoint_callback
+from dave.utils.loaders import make_loaders
+from dave.utils.misc import load_config, print_config, set_seeds
 
 warnings.filterwarnings("ignore", ".*does not have many workers.*")
 
