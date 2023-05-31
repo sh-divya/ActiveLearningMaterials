@@ -22,10 +22,10 @@ cpus: 4 # slurm PER-TASK memory
 mem: 32GB # slurm TOTAL memory
 partition: long # slurm partition
 time: "" # slurm job exec time as HH:MM:SS
-job_name: crystals-proxy # slurm job name
+job_name: dave-proxy # slurm job name
 code_loc: null # code location. Defaults to the current repository path
 
-output: $SCRATCH/crystals-proxys/runs/%j/output-%t.txt # slurm output file per task (%t)
+output: $SCRATCH/dave/runs/%j/output-%t.txt # slurm output file per task (%t)
 
 continue_from_dir: null
 restart_from_dir: null
