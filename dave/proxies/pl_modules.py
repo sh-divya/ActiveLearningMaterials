@@ -61,7 +61,7 @@ class ProxyModule(pl.LightningModule):
             self.logger.experiment.summary["Best MAE"] = self.best_mae
             self.logger.experiment.summary["Best MSE"] = self.best_mse
         else:
-            print("Best MAE: ", self.best_mae)
+            print(f"\nBest MAE: {self.best_mae}\n")
 
     def test_step(self, batch, batch_idx):
         x, _ = batch
