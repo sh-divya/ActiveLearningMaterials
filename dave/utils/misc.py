@@ -292,3 +292,95 @@ def set_seeds(seed=0):
     np.random.seed(seed)
     torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.deterministic = True
+
+
+def find_ckpt(ckpt_path: dict) -> Path:
+    """
+    Finds a checkpoint in a dictionary of paths, based on the current cluster name.
+    E.g.: ckpt_path = {"mila": "/path/to/ckpt.ckpt"}
+
+    Args:
+        ckpt_path (dict): Where to look for the checkpoints.
+            Maps cluster names to paths.
+
+    Raises:
+        ValueError: The current location is not in the checkpoint path dict.
+        ValueError: The checkpoint path does not exist.
+        ValueError: The checkpoint path is a directory and contains no .ckpt file.
+        ValueError: The checkpoint path is a directory and contains >1 .ckpt files.
+
+    Returns:
+        Path: _description_
+    """
+    loc = os.environ.get(
+        "SLURM_CLUSTER_NAME", os.environ.get("SLURM_JOB_ID", os.environ["USER"])
+    )
+    if all(s.isdigit() for s in loc):
+        loc = "mila"
+    if loc not in ckpt_path:
+        raise ValueError(f"DAV proxy checkpoint path not found for location {loc}.")
+    path = resolve(ckpt_path[loc])
+    if not path.exists():
+        raise ValueError(f"DAV proxy checkpoint not found at {str(path)}.")
+    if path.is_file():
+        return path
+    ckpts = list(path.glob("*.ckpt"))
+    if len(ckpts) == 0:
+        raise ValueError(f"No DAV proxy checkpoint found at {str(path)}.")
+    if len(ckpts) > 1:
+        raise ValueError(
+            f"Multiple DAV proxy checkpoints found at {str(path)}. "
+            "Please specify the checkpoint explicitly."
+        )
+    return ckpts[0]
+
+
+def prepare_for_gfn(ckpt_path_dict, rescale_outputs, verbose=True):
+    """
+    Loads a checkpoint and prepares it for use in the GFlowNet.
+
+    Args:
+        ckpt_path_dict (dict): Dictionary mapping cluster names to checkpoint paths.
+        rescale_outputs (bool): Whether to rescale the inputs and outputs of the model.
+            Inputs would be standardized and output would be rescaled to the original
+            scale.
+        verbose (bool, optional): . Defaults to True.
+
+    Returns:
+        _type_: _description_
+    """
+    from proxies.models import make_model
+    from utils.loaders import make_loaders
+
+    if verbose:
+        print("  Making model...")
+    # load the checkpoint
+    ckpt_path = find_ckpt(ckpt_path_dict)
+    ckpt = torch.load(str(ckpt_path), map_location="cpu")
+    # extract config
+    model_config = ckpt["hyper_parameters"]
+    scales = model_config.get("scales")
+    if rescale_outputs:
+        assert scales is not None
+        assert all(t in scales for t in ["x", "y"])
+        assert all(u in scales[t] for t in ["x", "y"] for u in ["mean", "std"])
+    # make model from ckpt config
+    model = make_model(model_config)
+    proxy_loaders = make_loaders(model_config)
+    # load state dict and remove potential leading `model.` in the keys
+    if verbose:
+        print("  Loading proxy checkpoint...")
+    model.load_state_dict(
+        {
+            k[6:] if k.startswith("model.") else k: v
+            for k, v in ckpt["state_dict"].items()
+        }
+    )
+    assert hasattr(model, "pred_inp_size")
+    model.n_elements = 89  # TEMPORARY for release `v0-dev-embeddings`
+    assert hasattr(model, "n_elements")
+    model.eval()
+    if verbose:
+        print("Proxy ready.")
+
+    return model, proxy_loaders, scales
