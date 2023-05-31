@@ -47,7 +47,7 @@ if __name__ == "__main__":
         logger = None
         print(
             "\n🛑Debug mode: run dir was not created, checkpoints"
-            + " will not be saved, and no logger will be used"
+            + " will not be saved, and no logger will be used\n"
         )
 
     # create dataloaders and model
