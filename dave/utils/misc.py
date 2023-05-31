@@ -294,10 +294,20 @@ def set_seeds(seed=0):
     torch.backends.cudnn.deterministic = True
 
 
-def find_ckpt(ckpt_path: dict) -> Path:
+def find_ckpt(ckpt_path: dict, release: str) -> Path:
     """
-    Finds a checkpoint in a dictionary of paths, based on the current cluster name.
-    E.g.: ckpt_path = {"mila": "/path/to/ckpt.ckpt"}
+    Finds a checkpoint in a dictionary of paths, based on the current cluster name
+    and release.
+    If the path is a file, use it directly.
+    Otherwise, look for a single checkpoint file in a ${release}/ sub-fodler.
+    E.g.:
+        ckpt_path = {"mila": "/path/to/ckpt_dir"}
+        release = v2.3_graph_phys
+        find_ckpt(ckpt_path, release) -> /path/to/ckpt_dir/v2.3_graph_phys/name.ckpt
+
+        ckpt_path = {"mila": "/path/to/ckpt_dir/file.ckpt"}
+        release = v2.3_graph_phys
+        find_ckpt(ckpt_path, release) -> /path/to/ckpt_dir/file.ckpt
 
     Args:
         ckpt_path (dict): Where to look for the checkpoints.
@@ -310,7 +320,7 @@ def find_ckpt(ckpt_path: dict) -> Path:
         ValueError: The checkpoint path is a directory and contains >1 .ckpt files.
 
     Returns:
-        Path: _description_
+        Path: Path to the checkpoint for that release on this host.
     """
     loc = os.environ.get(
         "SLURM_CLUSTER_NAME", os.environ.get("SLURM_JOB_ID", os.environ["USER"])
@@ -324,6 +334,7 @@ def find_ckpt(ckpt_path: dict) -> Path:
         raise ValueError(f"DAV proxy checkpoint not found at {str(path)}.")
     if path.is_file():
         return path
+    path = path / release
     ckpts = list(path.glob("*.ckpt"))
     if len(ckpts) == 0:
         raise ValueError(f"No DAV proxy checkpoint found at {str(path)}.")
