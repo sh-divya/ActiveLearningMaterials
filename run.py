@@ -1,9 +1,6 @@
-import random
 import warnings
 
-import numpy as np
 import pytorch_lightning as pl
-import torch
 import torch.nn as nn
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
@@ -12,22 +9,22 @@ from proxies.models import make_model
 from proxies.pl_modules import ProxyModule
 from utils.callbacks import get_checkpoint_callback
 from utils.loaders import make_loaders
-from utils.misc import (
-    load_config,
-    print_config,
-)
+from utils.misc import load_config, print_config, set_seeds
 
 warnings.filterwarnings("ignore", ".*does not have many workers.*")
-SEED = 0
-torch.manual_seed(SEED)
-random.seed(SEED)
-np.random.seed(SEED)
 
 
 if __name__ == "__main__":
     # parse command-line arguments as `--key=value` and merge with config
     # allows for nested dictionaries: `--key.subkey=value``
-    # load initial config from `--config={task}-{model}`
+    # load initial config from `--config={model}-{task}`
+
+    # args = sys.argv[1:]
+    # if all("config" not in arg for arg in args):
+    # args.append("--debug")
+    # args.append("--config=physmlp-mp20")
+    # sys.argv[1:] = args
+    set_seeds(0)
     config = load_config()
     if not config.get("wandb_run_name"):
         wandb_name_keys = {
@@ -71,13 +68,13 @@ if __name__ == "__main__":
     callbacks = []
     callbacks += [
         EarlyStopping(
-            monitor="val_acc", patience=config["optim"]["es_patience"], mode="max"
+            monitor="val_acc", patience=config["optim"]["es_patience"], mode="min"
         )
     ]
     if not config.get("debug"):
         callbacks += [
             get_checkpoint_callback(
-                config["run_dir"], logger, monitor="val_acc", mode="max"
+                config["run_dir"], logger, monitor="val_acc", mode=callbacks[0].mode
             )
         ]
 

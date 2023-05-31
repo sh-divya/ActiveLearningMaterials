@@ -9,7 +9,7 @@ class CrystalFeat(Dataset):
     def __init__(
         self, root, target, write=False, subset="train", scalex=False, scaley=False
     ):
-        self.csv_path = root
+        csv_path = root
         self.subsets = {}
         self.cols_of_interest = [
             "material_id",
@@ -22,28 +22,35 @@ class CrystalFeat(Dataset):
         ]
         self.xtransform = scalex
         self.ytransform = scaley
-        self.data_df = pd.read_csv(osp.join(self.csv_path, subset + "_data.csv"))
-        self.y = self.data_df[target].values
-        sub_cols = [
-            col for col in self.data_df.columns if col not in self.cols_of_interest
-        ]
-        self.x = self.data_df[sub_cols].values
+        data_df = pd.read_csv(osp.join(csv_path, subset + "_data.csv"))
+        self.y = torch.tensor(data_df[target].values, dtype=torch.float32)
+        sub_cols = [col for col in data_df.columns if col not in self.cols_of_interest]
+        x = torch.tensor(data_df[sub_cols].values, dtype=float)
+        self.sg = x[:, 1].to(torch.int32)
+        self.lattice = x[:, 2:8].float()
+        self.composition = x[:, 8:].to(torch.int32)
 
     def __len__(self):
-        return self.x.shape[0]
+        return self.sg.shape[0]
 
     def __getitem__(self, idx):
-        mat = torch.from_numpy(self.x[idx, 1:])
-        target = torch.tensor((self.y[idx]))
+        sg = self.sg[idx]
+        lat = self.lattice[idx]
+        comp = self.composition[idx]
+        target = self.y[idx]
         if self.xtransform:
-            mat = (mat - self.xtransform["mean"]) / self.xtransform["std"]
+            lat = ((lat - self.xtransform["mean"]) / self.xtransform["std"]).to(
+                torch.float32
+            )
         if self.ytransform:
-            target = (target - self.ytransform["mean"]) / self.ytransform["std"]
-        return torch.nan_to_num(mat, nan=0.0), target
+            target = ((target - self.ytransform["mean"]) / self.ytransform["std"]).to(
+                torch.float32
+            )
+        return (comp, sg, lat), target
 
 
 if __name__ == "__main__":
-    folder = "./perov"
+    folder = "./carbon"
     # write_data_csv(folder)
     # xt = {
     #     "mean": torch.load(osp.join(folder, "x.mean")),
@@ -54,17 +61,18 @@ if __name__ == "__main__":
     #     "std": torch.load(osp.join(folder, "y.std")),
     # }
     temp = CrystalFeat(
-        root=folder, target="heat_ref", subset="train"
+        root=folder, target="energy_per_atom", subset="train"
     )  # , scalex=xt, scaley=yt)
     bs = len(temp)
-    print(temp[10][0].shape)
-    loader = DataLoader(temp, batch_size=bs)
+    print(temp[10][0])
+    loader = DataLoader(temp, batch_size=100)
     for x, y in loader:
-        m1 = x.mean(dim=0)
-        s1 = x.std(dim=0)
+        # m1 = x[-1].mean(dim=0)
+        # s1 = x[-1].std(dim=0)
         torch.save(m1, osp.join(folder, "x.mean"))
         torch.save(s1, osp.join(folder, "x.std"))
-        m2 = y.mean(dim=0)
-        s2 = y.std(dim=0)
-        torch.save(m2, osp.join(folder, "y.mean"))
-        torch.save(s2, osp.join(folder, "y.std"))
+
+        # m2 = y.mean(dim=0)
+        # s2 = y.std(dim=0)
+        # torch.save(m2, osp.join(folder, "y.mean"))
+        # torch.save(s2, osp.join(folder, "y.std"))
