@@ -46,7 +46,7 @@ def is_mila() -> bool:
 def get_run_dir() -> Path:
     """
     Get the run directory.
-    On Mila, it is $SCRATCH/crystals-proxys/runs/SLURM_JOB_ID.
+    On Mila, it is $SCRATCH/dave/runs/SLURM_JOB_ID.
     Otherwise, they are in a random sub-directory of checkpoints/
 
     If the directory already exists, a new one is created with a suffix "-1", "-2", etc.
@@ -55,21 +55,21 @@ def get_run_dir() -> Path:
     .. code-block:: python
         d = get_run_dir()
         d.mkdir()
-        print(d) # /home/mila/schmidtv/crystals-proxys/runs/3037262
+        print(d) # /home/mila/schmidtv/dave/runs/3037262
 
         d = get_run_dir()
         d.mkdir()
-        print(d) # /home/mila/schmidtv/crystals-proxys/runs/3037262-1
+        print(d) # /home/mila/schmidtv/dave/runs/3037262-1
 
         d = get_run_dir()
         d.mkdir()
-        print(d) # /home/mila/schmidtv/crystals-proxys/runs/3037262-2
+        print(d) # /home/mila/schmidtv/dave/runs/3037262-2
 
     Returns:
         Path: new (unique) run dir for this execution
     """
     if is_mila() and JOB_ID is not None:
-        dirpath = resolve(f"$SCRATCH/crystals-proxys/runs/{JOB_ID}")
+        dirpath = resolve(f"$SCRATCH/dave/runs/{JOB_ID}")
     else:
         u = str(uuid4()).split("-")[0]
         dirpath = ROOT / "checkpoints" / u

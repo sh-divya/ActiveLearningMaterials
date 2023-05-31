@@ -74,7 +74,7 @@ def parse_args_to_dict() -> dict:
     parser.add_argument(
         "--wandb_project",
         type=str,
-        default="Proxy-MP20",
+        default="Dave-MP20",
         help="wandb project to log to",
     )
     parser.add_argument(
