@@ -19,7 +19,7 @@ def util_strings(jobs, yaml_comments=False):
     s += "\n  • WandB query for dashboard:\n    (" + "|".join(jobs) + ")"
     s += (
         "\n  • Delete experiment run dirs:\n    $ "
-        + 'exp_run_dirs="$SCRATCH/crystals-proxys/runs"; for jid in '
+        + 'exp_run_dirs="$SCRATCH/dave/runs"; for jid in '
         + " ".join(jobs)
         + '; do rm -rf "$exp_run_dirs/$jid" && echo "Deleted $exp_run_dirs/$jid"; done;'
     )
