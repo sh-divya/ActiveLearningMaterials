@@ -22,3 +22,12 @@ to match cdvae pipleline.
 The CDVAE [paper](https://arxiv.org/abs/2110.06197) and repository provides 3 datasets that we will use as baselines for GFlowNet training. The dataset code is under proxies/data.py and can be trained using run.py.
 
 The 'config' folder will contain configurations/hyperparameter dictionaries to search over or use and train.
+
+## Wandb sweeps
+
+1. **Create a yaml file** (’sweep_wandb.yml’) following the instructions given in https://docs.wandb.ai/guides/sweeps/configuration. It contains the parameters we shall sweep over. 
+2. **Initiate a wandb sweep** (manually from terminal) with the command: 
+`wandb sweep path_to_file/sweep_wandb.yml --name=’test’`. Store the **sweep_id**
+3. **Launch a sweep agent** using a slurm script with
+`sbatch sweep_mlp.sh` which contains `wandb agent --count 5 mila-ocp/ocp/sweep_id`. The count specificies the number of hyperparam settings to test. To launch several agents (i.e. gpus), use `sbtach --array=0-5`.
+4. **Visualise** the results in sweeps section of wandb, under the ActiveLearningMaterials repo. 
