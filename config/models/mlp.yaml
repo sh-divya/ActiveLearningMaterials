@@ -1,9 +1,14 @@
 model:
   input_len: 96
-  hidden_layers: [512, 512]
+  hidden_channels: 512
+  num_layers: 2
 
 optim:
   batch_size: 32
   lr: 0.001
   epochs: 10
   es_patience: 3
+  scheduler:
+    name: ""  # StepLR, ReduceLROnPlateau
+    step_size: 5000
+    decay_factor: 0.5

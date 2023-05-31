@@ -1,0 +1,66 @@
+program: run.py
+method: bayes
+metric:
+  goal: minimize
+  name: val_mae
+
+parameters:
+  model.hidden_channels:
+    values: [64, 128, 196, 256, 320]
+  model.num_layers:
+    values: [2, 3, 4, 5]
+  model.sg_emb_size:
+    values: [64, 128, 196, 256]
+  model.lat_hidden_channels:
+    values: [32, 64, 128, 196]
+  model.lat_num_layers:
+    values: [1, 2, 3]
+  model.comp_num_layers:
+    values: [1, 2, 3]
+  model.comp_hidden_channels:
+    values: [32, 64, 128, 196]
+  model.comp_phys_embeds.use:
+    values: [True, False]
+  model.comp_phys_embeds.z_emb_size:
+    values: [16, 32, 64, 128]
+  model.comp_phys_embeds.period_emb_size:
+    values: [8, 16, 32, 64]
+  model.comp_phys_embeds.group_emb_size:
+    values: [8, 16, 32, 64]
+  model.comp_phys_embeds.properties_proj_size:
+    values: [16, 32, 64, 128]
+  model.conv.num_layers:
+    values: [2, 3, 4, 5]
+  model.conv.hidden_channels:
+    values: [32, 64, 128, 196]
+  model.conv.type:
+    values: ["gcn", "gat"]
+  model.conv.heads:
+    values: [1, 2, 4, 8]
+  model.conv.dropout:
+    values: [0.0, 0.25, 0.5]
+  model.conv.concat:
+    values: [True, False]
+  model.conv.add_to_node:
+    values: [True, False]
+
+  optim.batch_size:
+    values: [16, 32, 64, 128, 256]
+  optim.es_patience: 
+    values: [3,5,7]
+  optim.lr:
+    distribution: log_uniform_values
+    min: 0.0003
+    max: 0.003
+  optim.epochs:
+    values: [20, 25, 30, 40]
+  optim.scheduler.name:
+    values: ["StepLR", "ReduceLROnPlateau", ""] 
+
+command:
+  - ${env}
+  - ${interpreter}
+  - ${program}
+  - "--config"
+  - "graph-mp20"
+  - ${args}
