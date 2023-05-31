@@ -346,7 +346,7 @@ def find_ckpt(ckpt_path: dict, release: str) -> Path:
     return ckpts[0]
 
 
-def prepare_for_gfn(ckpt_path_dict, rescale_outputs, verbose=True):
+def prepare_for_gfn(ckpt_path_dict, release, rescale_outputs, verbose=True):
     """
     Loads a checkpoint and prepares it for use in the GFlowNet.
 
@@ -360,13 +360,13 @@ def prepare_for_gfn(ckpt_path_dict, rescale_outputs, verbose=True):
     Returns:
         _type_: _description_
     """
-    from proxies.models import make_model
-    from utils.loaders import make_loaders
+    from dave.proxies.models import make_model
+    from dave.utils.loaders import make_loaders
 
     if verbose:
         print("  Making model...")
     # load the checkpoint
-    ckpt_path = find_ckpt(ckpt_path_dict)
+    ckpt_path = find_ckpt(ckpt_path_dict, release)
     ckpt = torch.load(str(ckpt_path), map_location="cpu")
     # extract config
     model_config = ckpt["hyper_parameters"]
