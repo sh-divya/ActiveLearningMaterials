@@ -1,0 +1,17 @@
+job:
+  mem: 32GB
+  cpus: 4
+  gres: gpu:1
+  partition: long
+
+default: 
+  comp_size: 89
+  wandb_tags: baselines
+
+runs:
+  - config: graph-mp20
+    wandb_note: "Graph baseline"
+  - config: mlp-mp20
+    wandb_note: "MLP baseline"
+  - config: physmlp-mp20
+    wandb_note: "PhysMLP baseline"
