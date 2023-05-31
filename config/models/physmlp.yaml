@@ -1,25 +1,25 @@
 model:
-  num_layers: 2
-  hidden_channels: 512
-  sg_emb_size: 128
-  lat_hidden_channels: 64
-  lat_num_layers: 1
-  comp_num_layers: 1
-  comp_hidden_channels: 64
-  comp_phys_embeds:
-    use: True
-    z_emb_size: 32
-    period_emb_size: 16
-    group_emb_size: 16
-    properties_proj_size: 32
-    n_elements: 90
+	num_layers: 5
+	hidden_channels: 384
+	sg_emb_size: 128
+	lat_hidden_channels: 32
+	lat_num_layers: 3
+	comp_num_layers: 2
+	comp_hidden_channels: 128
+	comp_phys_embeds:
+		use: True
+		z_emb_size: 64
+		period_emb_size: 8
+		group_emb_size: 16
+		properties_proj_size: 16
+		n_elements: 90
 
 optim:
-  batch_size: 32
-  lr: 0.001
-  epochs: 10
-  es_patience: 3
-  scheduler:
-    name: ""  # StepLR, ReduceLROnPlateau
-    step_size: 5000
-    decay_factor: 0.5
+	batch_size: 196
+	lr: 0.0014
+	epochs: 40
+	es_patience: 7
+	scheduler:
+		name: ""  # StepLR, ReduceLROnPlateau
+		step_size: 5000
+		decay_factor: 0.5

@@ -1,32 +1,32 @@
 model:
-  num_layers: 2
-  hidden_channels: 512
+  num_layers: 4
+  hidden_channels: 320
   comp_num_layers: 1
   comp_hidden_channels: 64
-  sg_emb_size: 128
-  lat_hidden_channels: 64
-  lat_num_layers: 1
+  sg_emb_size: 196
+  lat_hidden_channels: 196
+  lat_num_layers: 3
   comp_phys_embeds:
     use: True
     z_emb_size: 32
-    period_emb_size: 16
-    group_emb_size: 16
+    period_emb_size: 8
+    group_emb_size: 64
     properties_proj_size: 32
     n_elements: 90
   conv:
-    num_layers: 2
+    num_layers: 4
     hidden_channels: 64
-    type: "gcn"
-    heads: 4
-    dropout: 0.5
+    type: "gat"
+    heads: 8
+    dropout: 0
     concat: True
-    add_to_node: True
+    add_to_node: False
 
 optim:
-  batch_size: 32
-  lr: 0.001
-  epochs: 10
-  es_patience: 3
+  batch_size: 256
+  lr: 0.0012
+  epochs: 40
+  es_patience: 7
   scheduler:
     name: ""  # StepLR, ReduceLROnPlateau
     step_size: 5000
