@@ -25,7 +25,7 @@ class ProxyModule(pl.LightningModule):
         loss = self.criterion(out, y)
         mae = self.mae(out, y)
         mse = self.mse(out, y)
-        lr = self.optimizers().param_groups[0]['lr']
+        lr = self.optimizers().param_groups[0]["lr"]
 
         self.log("train_loss", loss)
         self.log("train_mae", mae)
@@ -57,10 +57,10 @@ class ProxyModule(pl.LightningModule):
         self.mse.reset()
 
     def on_validation_end(self) -> None:
-        if self.active_logger: 
+        if self.active_logger:
             self.logger.experiment.summary["Best MAE"] = self.best_mae
             self.logger.experiment.summary["Best MSE"] = self.best_mse
-        else: 
+        else:
             print("Best MAE: ", self.best_mae)
 
     def test_step(self, batch, batch_idx):
@@ -77,7 +77,7 @@ class ProxyModule(pl.LightningModule):
             scheduler = optim.lr_scheduler.ReduceLROnPlateau(
                 optimizer,
                 factor=self.config["optim"]["scheduler"]["decay_factor"],
-                patience=self.config["optim"]["es_patience"]
+                patience=self.config["optim"]["es_patience"],
             )
         elif self.config["optim"]["scheduler"]["name"] == "StepLR":
             scheduler = optim.lr_scheduler.StepLR(
