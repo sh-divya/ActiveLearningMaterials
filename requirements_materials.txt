@@ -23,3 +23,5 @@ torch_scatter
 wandb
 wheel
 phast
+torch_geometric
+minydra

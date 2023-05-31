@@ -1,11 +1,11 @@
 model:
   num_layers: 2
   hidden_channels: 512
+  comp_num_layers: 1
+  comp_hidden_channels: 64
   sg_emb_size: 128
   lat_hidden_channels: 64
   lat_num_layers: 1
-  comp_num_layers: 1
-  comp_hidden_channels: 64
   comp_phys_embeds:
     use: True
     z_emb_size: 32
@@ -13,6 +13,14 @@ model:
     group_emb_size: 16
     properties_proj_size: 32
     n_elements: 90
+  conv:
+    num_layers: 2
+    hidden_channels: 64
+    type: "gcn"
+    heads: 4
+    dropout: 0.5
+    concat: True
+    add_to_node: True
 
 optim:
   batch_size: 32

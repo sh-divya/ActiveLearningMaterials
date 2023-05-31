@@ -78,6 +78,12 @@ def parse_args_to_dict() -> dict:
         help="wandb project to log to",
     )
     parser.add_argument(
+        "--wandb_tags",
+        type=str,
+        default="",
+        help="Comma-separated tags for wandb",
+    )
+    parser.add_argument(
         "--wandb_entity",
         type=str,
         default="mila-ocp",

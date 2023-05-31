@@ -29,6 +29,9 @@ class CrystalFeat(Dataset):
         self.sg = x[:, 1].to(torch.int32)
         self.lattice = x[:, 2:8].float()
         self.composition = x[:, 8:].to(torch.int32)
+        # To directly handle missing atomic numbers
+        # missing_atoms = torch.zeros(x.shape[0], 5)
+        # self.composition = torch.cat((x[:, 8:92].to(torch.int32), missing_atoms, x[:, 92:]), dim=-1)
 
     def __len__(self):
         return self.sg.shape[0]
