@@ -1,7 +1,7 @@
 from torch.utils.data import DataLoader
 
-from proxies.data import CrystalFeat
-from utils.misc import ROOT
+from dave.proxies.data import CrystalFeat
+from dave.utils.misc import ROOT
 
 
 def make_loaders(config):
