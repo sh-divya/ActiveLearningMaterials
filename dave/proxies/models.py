@@ -98,7 +98,7 @@ class GNNBlock(nn.Module):
                     DenseGATConv(
                         input_dim,
                         conv_hidden_channels,
-                        head=heads,
+                        heads=heads,
                         concat=concat,
                         dropout=dropout,
                     )
