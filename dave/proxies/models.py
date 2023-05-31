@@ -92,7 +92,7 @@ class GNNBlock(nn.Module):
 
         for i in range(conv_num_layers):
             if i > 0:
-                input_dim = conv_hidden_channels
+                input_dim = conv_hidden_channels * heads
             if conv_type == "gat":
                 gnn_layers.append(
                     DenseGATConv(
@@ -280,9 +280,16 @@ class ProxyGraphModel(nn.Module):
             lat_num_layers, lat_hidden_channels, lat_size
         )
         # Prediction
-        self.pred_inp_size = comp_hidden_channels + sg_emb_size + lat_hidden_channels
+        self.pred_inp_size = (
+            comp_hidden_channels * conv.get("heads", 1)
+            + sg_emb_size
+            + lat_hidden_channels
+        )
         self.prediction_head = ProxyMLP(
-            self.pred_inp_size, pred_num_layers, pred_hidden_channels, False
+            self.pred_inp_size,
+            pred_num_layers,
+            pred_hidden_channels,
+            False,
         )
         # Interaction blocks (GNN)
         self.add_to_node = conv["add_to_node"]
