@@ -26,7 +26,7 @@ if __name__ == "__main__":
         # args.append("--debug")
         args.append("--config=mlp-mp20")
         args.append("--optim.epochs=3")
-        #args.append("--optim.scheduler.name=ReduceLROnPlateau")
+        # args.append("--optim.scheduler.name=ReduceLROnPlateau")
         # args.append("--optim.scheduler.name=StepLR")
         sys.argv[1:] = args
 
@@ -34,7 +34,7 @@ if __name__ == "__main__":
     config = load_config()
     if not config.get("wandb_run_name"):
         config["wandb_run_name"] = config["run_dir"].split("/")[-1]
-        
+
     print_config(config)
     if not config.get("debug"):
         logger = WandbLogger(
