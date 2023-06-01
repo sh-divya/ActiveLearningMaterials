@@ -31,7 +31,11 @@ class DFdataset(Dataset):
     def __init__(self, dataframe, target):
         feat_cols = dataframe.columns != target
         self.x = torch.tensor(dataframe.loc[:, feat_cols].values)
-        dataframe["binned"] = pd.cut(dataframe[target], 200)
+        min_t, max_t = dataframe[target].min(), dataframe[target].max()
+        step = (max_t - min_t) / 200
+        bins = np.linspace(min_t - step, max_t + step, 200)
+        labels = list(range(1, 200))
+        dataframe["binned"] = pd.cut(dataframe[target], bins=bins, labels=labels)
         self.targets = torch.tensor(dataframe.loc[:, "binned"].values)
 
     def __len__(self):
@@ -112,6 +116,90 @@ def split(base_path, data_select, strategy, write_path, verbose):
         plt.close()
 
 
+def comp_string(comp, pt):
+    compound = {}
+    for e, element in enumerate(pt):
+        if comp[e] > 0:
+            compound[element] = comp[e]
+    return compound
+
+
+def jaccard(comp1, comp2):
+    idx1 = comp1 > 0
+    idx2 = comp2 > 0
+    idx_inter = [i and j for i, j in zip(idx1, idx2)]
+    idx_union = [i or j for i, j in zip(idx1, idx2)]
+
+    anb = sum(map(min, zip(comp1[idx_inter], comp2[idx_inter])))
+    aub = sum(map(sum, zip(comp1[idx_union], comp2[idx_union])))
+
+    return 1 - anb / aub
+
+
+def levenshtein(comp1, comp2):
+    """
+    Levenshtein distance as in
+    https://python-course.eu/applications-python/levenshtein-distance.php
+    """
+    comp1 = "".join([f"{k}{v}" for k, v in comp1.items()])
+    comp2 = "".join([f"{k}{v}" for k, v in comp2.items()])
+
+    rows = len(comp1) + 1
+    cols = len(comp2) + 1
+    dist = [[0 for x in range(cols)] for x in range(rows)]
+
+    for i in range(1, rows):
+        dist[i][0] = i
+
+    for i in range(1, cols):
+        dist[0][i] = i
+
+    for col in range(1, cols):
+        for row in range(1, rows):
+            if comp1[row - 1] == comp2[col - 1]:
+                cost = 0
+            else:
+                cost = 1
+            dist[row][col] = min(
+                dist[row - 1][col] + 1,
+                dist[row][col - 1] + 1,
+                dist[row - 1][col - 1] + cost,
+            )
+    return dist[row][col]
+
+
+def custom_levenshtein(comp1, comp2):
+    """Calculate the Levenshtein distance between two compound dicts.
+
+    This is adapted from pyenchant
+    """
+    el1 = comp1.keys()
+    el2 = comp2.keys()
+
+    size1 = len(el1)
+    size2 = len(el2)
+
+    matrix = np.zeros(size1, size2)
+    matrix[:, 0] = np.arange(size1)
+    matrix[0, :] = np.arange(size2)
+    for i in range(1, size1):
+        for j in range(1, size2):
+            if el1[i - 1] == el2[j - 1]:
+                cost = abs(comp1[el1[i - 1]] - comp2[el1[j - 1]])
+
+    return 1
+
+
+def custom_distance(s1, s2, elements):
+    comp1 = comp_string(s1[7:], elements)
+    comp2 = comp_string(s2[7:], elements)
+    abc_dist = np.linalg.norm(s1[1:4] - s2[1:4])
+    angles_dist = np.linalg.norm(s1[4:7] - s1[4:7])
+    sg_dist = 1.414 if s1[0] != s2[0] else 0
+    # return sg_dist + abc_dist + angles_dist + levenshtein(comp1, comp2)
+    return sg_dist + abc_dist + angles_dist + jaccard(s1[7:], s2[7:])
+
+
 def proportional(df, target, verbose):
     train_val, test = scsplit(df, stratify=df[target], test_size=0.2, continuous=True)
     train, val = scsplit(
@@ -124,19 +212,19 @@ def proportional(df, target, verbose):
         trainds = DFdataset(train, target)
         valds = DFdataset(val, target)
         testds = DFdataset(test, target)
-        print(trainds[0])
         print("Strategy: Stratifed split b/w Train, val and test")
         print("Split ratio: Train=0.6, Val=0.2, Test=0.2")
         d = DatasetDistance(
             trainds,
             valds,
-            ignore_source_labels=False,
-            ignore_target_labels=False,
-            inner_ot_method="exact",
+            ignore_source_labels=True,
+            ignore_target_labels=True,
+            inner_ot_method="gaussian_approx",
             debiased_loss=True,
             p=2,
             entreg=1e-1,
             device="cpu",
+            # min_labelcount=0,
         )
         dist = d.distance(maxsamples=1000)
         print("Train-Val OTDD:{dist}")
@@ -157,7 +245,7 @@ def proportional(df, target, verbose):
 
 def ood(df, target, verbose):
     id_train, id_test = scsplit(df, stratify=df[target], test_size=0.3, continuous=True)
-    train, od_test = split_from_swaps(id_train, id_test, target, 1000, 100, 100)
+    train, od_test = split_from_swaps(id_train, id_test, target, 100, 5, 20)
     train, id_val = scsplit(
         train.reset_index(drop=True),
         stratify=train.reset_index(drop=True)[target],
@@ -221,22 +309,25 @@ def split_from_swaps(train, test, target, n_swaps=100, swaps_per_iter=5, history
     https://github.com/Confusezius/Characterizing_Generalization_in_DeepMetricLearning
     """
     train_hist, test_hist = [], []
-    feat_cols = train.columns != target
+    feat_cols = train.columns[train.columns != target]
+    metric = lambda x, y: custom_distance(x, y, feat_cols[7:])
 
     for i in range(n_swaps):
         trainmean = train.loc[:, feat_cols].mean().values.reshape(1, -1)
         testmean = test.loc[:, feat_cols].mean().values.reshape(1, -1)
         dists_train_trainmean = pairwise_distances(
-            train.loc[:, feat_cols], trainmean, metric="euclidean"
+            train.loc[:, feat_cols],
+            trainmean,
+            metric=metric,
         )
         dists_train_testmean = pairwise_distances(
-            train.loc[:, feat_cols], testmean, metric="euclidean"
+            train.loc[:, feat_cols], testmean, metric=metric
         )
         dists_test_trainmean = pairwise_distances(
-            test.loc[:, feat_cols], trainmean, metric="euclidean"
+            test.loc[:, feat_cols], trainmean, metric=metric
         )
         dists_test_testmean = pairwise_distances(
-            test.loc[:, feat_cols], testmean, metric="euclidean"
+            test.loc[:, feat_cols], testmean, metric=metric
         )
 
         train_swaps = np.argsort(
