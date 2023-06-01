@@ -5,9 +5,9 @@ import torch
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from utils.parser import parse_args_to_dict
-from utils.misc import resolve
-from proxies.models import make_model
+from dave.utils.parser import parse_args_to_dict
+from dave.utils.misc import resolve
+from dave.proxies.models import make_model
 
 if __name__ == "__main__":
     args = parse_args_to_dict()
