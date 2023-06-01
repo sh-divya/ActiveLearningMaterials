@@ -7,7 +7,7 @@ import torch
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from config.mp20 import config
-from proxies.data import CrystalFeat
+from dave.proxies.data import CrystalFeat
 
 
 if __name__ == "__main__":

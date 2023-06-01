@@ -1,0 +1,50 @@
+program: run.py
+method: bayes
+metric:
+  goal: minimize
+  name: val_mae
+
+parameters:
+  model.hidden_channels:
+    values: [64, 128, 196, 256, 320, 384]
+  model.num_layers:
+    values: [2, 3, 4, 5]
+  model.sg_emb_size:
+    values: [64, 128, 196, 256]
+  model.lat_hidden_channels:
+    values: [32, 64, 128, 196]
+  model.lat_num_layers:
+    values: [1, 2, 3]
+  model.comp_num_layers:
+    values: [1, 2, 3]
+  model.comp_hidden_channels:
+    values: [32, 64, 128, 196]
+  model.comp_phys_embeds.z_emb_size:
+    values: [16, 32, 64, 128]
+  model.comp_phys_embeds.period_emb_size:
+    values: [8, 16, 32, 64]
+  model.comp_phys_embeds.group_emb_size:
+    values: [8, 16, 32, 64]
+  model.comp_phys_embeds.properties_proj_size:
+    values: [16, 32, 64, 128]
+
+  optim.batch_size:
+    values: [32, 64, 128, 196]
+  optim.es_patience: 
+    values: [3,5,7]
+  optim.lr:
+    distribution: log_uniform_values
+    min: 0.0002
+    max: 0.002
+  optim.epochs:
+    values: [20, 25, 30, 40]
+  optim.scheduler.name:
+    values: ["StepLR", "ReduceLROnPlateau", ""] 
+
+command:
+  - ${env}
+  - ${interpreter}
+  - ${program}
+  - "--config"
+  - "physmlp-mp20"
+  - ${args}
