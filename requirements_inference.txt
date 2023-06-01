@@ -1,4 +1,4 @@
-torch
-torch_scatter
+torch>=2.0
+torch_scatter -f https://data.pyg.org/whl/torch-2.0.0+cu117.html
 phast
 torch_geometric
