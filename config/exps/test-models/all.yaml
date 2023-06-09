@@ -6,7 +6,7 @@ job:
 
 default: 
   comp_size: 89
-  wandb_tags: baselines
+  wandb_tags: "baselines"
 
 runs:
   - config: graph-mp20
