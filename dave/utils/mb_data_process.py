@@ -6,7 +6,7 @@ from pathlib import Path
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 BASE_PATH = Path(__file__).parent.parent
 proxy_path = BASE_PATH / "proxies"
-script_path = BASE_PATH / "scripts"
+script_path = BASE_PATH.parent / "scripts"
 sys.path.append(str(proxy_path))
 sys.path.append(str(script_path))
 
@@ -47,7 +47,7 @@ class DFdataset(Dataset):
 
 @click.command()
 @click.option("--read_path", default="./data")
-@click.option("--write_base", default="./proxies")
+@click.option("--write_base", default="./dave/proxies")
 def write_dataset_csv(read_path, write_base):
     db_path = Path(read_path)
     write_base = Path(write_base)
@@ -81,30 +81,33 @@ def split(base_path, data_select, strategy, write_path, verbose):
     base_path = Path(base_path)
     data_types = {k: np.int32 for k in FEATURE_KEYS}
     data_types = {k: np.float32 for k in ["a", "b", "c", "alpha", "beta", "gamma"]}
-
+    if not write_path:
+        write_path = Path(base_path)
+    else:
+        write_path = Path(write_path)
     for d in data_select:
         db = list(db_target.keys())[int(d)]
         target = db_target[db]
         read_path = base_path / db / "data" / (db + ".csv")
         df = pd.read_csv(read_path, dtype=data_types, index_col=0)
-        if not write_path:
-            write_path = Path(base_path / db)
+        if (write_path / db).is_dir():
+            db_write = write_path / db
         else:
-            write_path = Path(write_path)
+            db_write = write_path
         if strategy == "stratify":
             train, val, test = proportional(df, target, verbose)
-            train.to_csv(write_path / "train_data.csv")
-            val.to_csv(write_path / "val_data.csv")
-            test.to_csv(write_path / "test_data.csv")
+            train.to_csv(db_write / "train_data.csv")
+            val.to_csv(db_write / "val_data.csv")
+            test.to_csv(db_write / "test_data.csv")
             fig, ax = plt.subplots(2, 4, figsize=(15, 6))
             for s, n in zip((train, val, test), ("train", "val", "test")):
                 lines, labels = plots_from_df(s, target, ax, n)
         elif strategy == "ood":
             train, id_val, od_val, test = ood(df, target, verbose)
-            train.to_csv(write_path / "train_data.csv")
-            id_val.to_csv(write_path / "idval_data.csv")
-            od_val.to_csv(write_path / "odval_data.csv")
-            test.to_csv(write_path / "test_data.csv")
+            train.to_csv(db_write / "train_data.csv")
+            id_val.to_csv(db_write / "idval_data.csv")
+            od_val.to_csv(db_write / "odval_data.csv")
+            test.to_csv(db_write / "test_data.csv")
             fig, ax = plt.subplots(2, 4, figsize=(15, 6))
             for s, n in zip(
                 (train, id_val, od_val, test), ("train", "id_val", "od_val", "test")
@@ -112,7 +115,7 @@ def split(base_path, data_select, strategy, write_path, verbose):
                 lines, labels = plots_from_df(s, target, ax, n)
         fig.legend(lines, labels, loc="upper right")
         fig.tight_layout()
-        fig.savefig(write_path / (f"{d}_{strategy}.png"))
+        fig.savefig(db_write / (f"{d}_{strategy}.png"))
         plt.close()
 
 
@@ -360,4 +363,7 @@ def split_from_swaps(train, test, target, n_swaps=100, swaps_per_iter=5, history
 
 if __name__ == "__main__":
     # write_dataset_csv()
+
+    # test command
+    # python dave/utils/mb_data_process.py --base_path=./dave/proxies --write_path="./data"
     split()
