@@ -104,10 +104,10 @@ def split(base_path, data_select, strategy, write_path, verbose):
                 lines, labels = plots_from_df(s, target, ax, n)
         elif strategy == "ood":
             train, id_val, od_val, test = ood(df, target, verbose)
-            train.to_csv(db_write / "train_data.csv")
+            train.to_csv(db_write / f"train_data_{strategy}.csv")
             id_val.to_csv(db_write / "idval_data.csv")
             od_val.to_csv(db_write / "odval_data.csv")
-            test.to_csv(db_write / "test_data.csv")
+            test.to_csv(db_write / f"test_data_{strategy}.csv")
             fig, ax = plt.subplots(2, 4, figsize=(15, 6))
             for s, n in zip(
                 (train, id_val, od_val, test), ("train", "id_val", "od_val", "test")
@@ -248,7 +248,7 @@ def proportional(df, target, verbose):
 
 def ood(df, target, verbose):
     id_train, id_test = scsplit(df, stratify=df[target], test_size=0.3, continuous=True)
-    train, od_test = split_from_swaps(id_train, id_test, target, 100, 5, 20)
+    train, od_test = split_from_swaps(id_train, id_test, target, 1000, 20, 20)
     train, id_val = scsplit(
         train.reset_index(drop=True),
         stratify=train.reset_index(drop=True)[target],
@@ -306,14 +306,15 @@ def ood(df, target, verbose):
     return train, id_val, od_val, od_test
 
 
-def split_from_swaps(train, test, target, n_swaps=100, swaps_per_iter=5, history=20):
+def split_from_swaps(train, test, target, n_swaps=100, swaps_per_iter=20, history=10):
     """
     Function adapted from
     https://github.com/Confusezius/Characterizing_Generalization_in_DeepMetricLearning
     """
     train_hist, test_hist = [], []
     feat_cols = train.columns[train.columns != target]
-    metric = lambda x, y: custom_distance(x, y, feat_cols[7:])
+    # metric = lambda x, y: custom_distance(x, y, feat_cols[7:])
+    metric = "euclidean"
 
     for i in range(n_swaps):
         trainmean = train.loc[:, feat_cols].mean().values.reshape(1, -1)
