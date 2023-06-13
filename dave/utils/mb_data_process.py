@@ -17,6 +17,7 @@ from data_dist import plots_from_df
 import torch
 import click
 import scipy as sp
+import sklearn
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -25,6 +26,8 @@ from sklearn.metrics import pairwise_distances
 from pymatgen.core.structure import Structure
 from otdd.pytorch.distance import DatasetDistance
 from verstack.stratified_continuous_split import scsplit
+
+SG_DIX = np.load(BASE_PATH / "utils" / "sg_decomp.npy")
 
 
 class DFdataset(Dataset):
@@ -198,7 +201,9 @@ def custom_distance(s1, s2, elements):
     comp2 = comp_string(s2[7:], elements)
     abc_dist = np.linalg.norm(s1[1:4] - s2[1:4])
     angles_dist = np.linalg.norm(s1[4:7] - s1[4:7])
-    sg_dist = 1.414 if s1[0] != s2[0] else 0
+    sg_dist = sklearn.metrics.jaccard_score(
+        SG_DIX[int(s1[0]) - 1], SG_DIX[int(s2[0]) - 1]
+    )
     # return sg_dist + abc_dist + angles_dist + levenshtein(comp1, comp2)
     return sg_dist + abc_dist + angles_dist + jaccard(s1[7:], s2[7:])
 
@@ -313,8 +318,8 @@ def split_from_swaps(train, test, target, n_swaps=100, swaps_per_iter=20, histor
     """
     train_hist, test_hist = [], []
     feat_cols = train.columns[train.columns != target]
-    # metric = lambda x, y: custom_distance(x, y, feat_cols[7:])
-    metric = "euclidean"
+    metric = lambda x, y: custom_distance(x, y, feat_cols[7:])
+    # metric = "euclidean"
 
     for i in range(n_swaps):
         trainmean = train.loc[:, feat_cols].mean().values.reshape(1, -1)
