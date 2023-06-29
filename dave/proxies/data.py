@@ -1,8 +1,9 @@
-import os
+import pickle
 import torch
 import pandas as pd
 import os.path as osp
 from torch.utils.data import Dataset, DataLoader
+import lmdb
 
 
 class CrystalFeat(Dataset):
@@ -52,30 +53,75 @@ class CrystalFeat(Dataset):
         return (comp, sg, lat), target
 
 
-if __name__ == "__main__":
-    folder = "./carbon"
-    # write_data_csv(folder)
-    # xt = {
-    #     "mean": torch.load(osp.join(folder, "x.mean")),
-    #     "std": torch.load(osp.join(folder, "x.std")),
-    # }
-    # yt = {
-    #     "mean": torch.load(osp.join(folder, "y.mean")),
-    #     "std": torch.load(osp.join(folder, "y.std")),
-    # }
-    temp = CrystalFeat(
-        root=folder, target="energy_per_atom", subset="train"
-    )  # , scalex=xt, scaley=yt)
-    bs = len(temp)
-    print(temp[10][0])
-    loader = DataLoader(temp, batch_size=100)
-    for x, y in loader:
-        # m1 = x[-1].mean(dim=0)
-        # s1 = x[-1].std(dim=0)
-        torch.save(m1, osp.join(folder, "x.mean"))
-        torch.save(s1, osp.join(folder, "x.std"))
+class MatBenchDataset(Dataset):
+    def __init__(self, src, indices, scalex=False, scaley=False, n_els=103):
+        self.xtransform = scalex
+        self.ytransform = scaley
+        self.src = src
+        self.indices = indices
+        self.n_els = n_els
 
-        # m2 = y.mean(dim=0)
-        # s2 = y.std(dim=0)
-        # torch.save(m2, osp.join(folder, "y.mean"))
-        # torch.save(s2, osp.join(folder, "y.std"))
+        self._db = None
+
+    @property
+    def db(self):
+        if self._db is None:
+            self._db = lmdb.open(
+                str(self.src),
+                subdir=False,
+                readonly=True,
+                lock=False,
+                readahead=False,
+                meminit=False,
+                max_readers=1,
+            )
+        return self._db
+
+    def __len__(self):
+        return len(self.indices)
+
+    def __getitem__(self, idx):
+        struct, target = pickle.loads(
+            self.db.begin().get(f"{self.indices[idx]}".encode("ascii")),
+        )
+
+        target = torch.tensor(target, dtype=torch.float32)
+
+        sg = struct.get_space_group_info()[1]
+        lat = torch.tensor(
+            struct.lattice.lengths + struct.lattice.angles, dtype=torch.float32
+        )
+        str_to_comp = struct.composition.get_el_amt_dict()
+        comp = torch.zeros(self.n_els, dtype=torch.int32)
+        for el in struct.composition.elements:
+            comp[el.number - 1] = str_to_comp[el.name]
+        comp = comp.to(torch.int32)
+
+        if self.xtransform:
+            lat = ((lat - self.xtransform["mean"]) / self.xtransform["std"]).to(
+                torch.float32
+            )
+        if self.ytransform:
+            target = ((target - self.ytransform["mean"]) / self.ytransform["std"]).to(
+                torch.float32
+            )
+        return (comp, sg, lat), target
+
+
+if __name__ == "__main__":
+    from dave.utils.misc import set_cpus_to_workers
+    from dave.utils.loaders import make_loaders
+
+    config = {
+        "config": "physmlp-matbench",
+        "scales": {
+            "x": False,
+            "y": False,
+        },
+        "src": "/Users/victor/Documents/Github/ActiveLearningMaterials/data/matbench_mp_e_form.lmdb",
+        "val_frac": 0.20,
+        "fold": 0,
+        "optim": {"batch_size": 32},
+    }
+    config = set_cpus_to_workers(config)
+    loaders = make_loaders(config)
