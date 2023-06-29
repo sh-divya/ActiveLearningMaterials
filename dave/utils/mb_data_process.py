@@ -179,21 +179,35 @@ def custom_levenshtein(comp1, comp2):
 
     This is adapted from pyenchant
     """
-    el1 = comp1.keys()
-    el2 = comp2.keys()
+    el1 = list(comp1.keys())
+    el2 = list(comp2.keys())
+    all_els = FEATURE_KEYS[7:]
 
-    size1 = len(el1)
-    size2 = len(el2)
+    rows = len(el1) + 1
+    cols = len(el2) + 1
 
-    matrix = np.zeros(size1, size2)
-    matrix[:, 0] = np.arange(size1)
-    matrix[0, :] = np.arange(size2)
-    for i in range(1, size1):
-        for j in range(1, size2):
+    dist = [[0 for x in range(cols)] for x in range(rows)]
+
+    for i in range(1, rows):
+        dist[i][0] = i
+
+    for i in range(1, cols):
+        dist[0][i] = i
+
+    for j in range(1, cols):
+        for i in range(1, rows):
+            z1 = all_els.index(el1[i - 1]) + 1
+            z2 = all_els.index(el2[j - 1]) + 1
             if el1[i - 1] == el2[j - 1]:
-                cost = abs(comp1[el1[i - 1]] - comp2[el1[j - 1]])
-
-    return 1
+                cost = abs(comp1[el1[i - 1]] - comp2[el1[j - 1]]) * z1
+            else:
+                cost = abs(comp1[el1[i - 1]] * z1 - comp2[el2[j - 1]] * z2)
+            dist[i][j] = min(
+                dist[i - 1][j] + z1 * comp1[el1[i - 1]],
+                dist[i][j - 1] + z2 * comp2[el2[j - 1]],
+                dist[i - 1][j - 1] + cost,
+            )
+    return dist[i][j]
 
 
 def custom_distance(s1, s2, elements):
@@ -372,4 +386,7 @@ if __name__ == "__main__":
 
     # test command
     # python dave/utils/mb_data_process.py --base_path=./dave/proxies --write_path="./data"
-    split()
+    # split()
+    c1 = {"Al": 2, "O": 3}
+    c2 = {"Na": 1, "Cl": 1}
+    print(custom_levenshtein(c1, c2))
