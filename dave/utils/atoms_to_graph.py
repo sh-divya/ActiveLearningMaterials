@@ -6,6 +6,7 @@ import ase.io.trajectory
 import numpy as np
 import torch
 from pymatgen.io.ase import AseAtomsAdaptor
+from pymatgen.core.periodic_table import Element
 import pymatgen
 from pyxtal import pyxtal
 from pyxtal.lattice import Lattice
@@ -268,6 +269,36 @@ def pymatgen_structure_to_graph(struct, a2g: AtomsToGraphs):
     return data
 
 
+def state_to_pyxtal_graph(
+    composition, lattice_parameters, lattice_type, space_group, converter: AtomsToGraphs
+):
+    cell = Lattice.from_para(*lattice_parameters, ltype=lattice_type)
+    element_ids = np.nonzero(composition)
+    element_counts = composition[element_ids]
+
+    element_symbols = [Element.from_Z(i).symbol for i in element_ids]
+
+    sites = [
+        {
+            "4e": [0.0000, 0.0000, 0.2418],
+            "4g": [0.1294, 0.6392, 0.0000],
+        },
+        {"4g": [0.2458, 0.2522, 0.0000]},
+        {"4g": [0.4241, 0.3636, 0.0000]},  # partial information on O sites
+    ]
+
+    s = pyxtal()
+    s.from_random(
+        3,
+        space_group,
+        element_symbols,
+        element_counts,
+        lattice=cell,
+        # sites=sites,
+    )
+    return pymatgen_structure_to_graph(s.to_pymatgen(), converter)
+
+
 if __name__ == "__main__":
     # Crystal positions sampling
     cell = Lattice.from_para(7.8758, 7.9794, 5.6139, 90, 90, 90, ltype="orthorhombic")
@@ -292,10 +323,6 @@ if __name__ == "__main__":
     a2g = AtomsToGraphs(
         max_neigh=50,
         radius=6.0,
-        r_energy=False,
-        r_forces=False,
-        r_distances=True,
-        r_edges=False,
     )
 
     data = pymatgen_structure_to_graph(struct, a2g)
