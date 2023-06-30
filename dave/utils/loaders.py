@@ -23,10 +23,18 @@ def make_loaders(config):
 
         return {
             "train": DataLoader(
-                trainset, batch_size=config["optim"]["batch_size"], shuffle=True
+                trainset,
+                batch_size=config["optim"]["batch_size"],
+                shuffle=True,
+                pin_memory=True,
+                num_workers=config["optim"].get("num_workers", 0),
             ),
             "val": DataLoader(
-                valset, batch_size=config["optim"]["batch_size"], shuffle=False
+                valset,
+                batch_size=config["optim"]["batch_size"],
+                shuffle=False,
+                pin_memory=True,
+                num_workers=config["optim"].get("num_workers", 0),
             ),
         }
 
