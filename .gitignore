@@ -16,6 +16,7 @@ checkpoints/
 .vscode/
 .DS_Store
 data/
+proxies/matbench_*/data/
 
 # From https://github.com/github/gitignore/blob/main/Python.gitignore
 
