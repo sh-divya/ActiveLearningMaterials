@@ -284,6 +284,9 @@ def load_config() -> dict:
 
     if "scales" in config:
         config = load_scales(config)
+
+    config = set_cpus_to_workers(config)
+
     return config
 
 
