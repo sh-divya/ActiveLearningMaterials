@@ -1,8 +1,18 @@
 import os
+import sys
 import torch
 import pandas as pd
 import os.path as osp
+from pathlib import Path
+from pymatgen.core.structure import Structure
 from torch.utils.data import Dataset, DataLoader
+from torch_geometric.data import Data, download_url
+from torch_geometric.data import InMemoryDataset
+
+DAVE_PATH = Path(__file__).parent.parent
+sys.path.append(str(DAVE_PATH))
+
+from utils.atoms_to_graph import AtomsToGraphs, pymatgen_structure_to_graph
 
 
 class CrystalFeat(Dataset):
@@ -52,30 +62,56 @@ class CrystalFeat(Dataset):
         return (comp, sg, lat), target
 
 
-if __name__ == "__main__":
-    folder = "./carbon"
-    # write_data_csv(folder)
-    # xt = {
-    #     "mean": torch.load(osp.join(folder, "x.mean")),
-    #     "std": torch.load(osp.join(folder, "x.std")),
-    # }
-    # yt = {
-    #     "mean": torch.load(osp.join(folder, "y.mean")),
-    #     "std": torch.load(osp.join(folder, "y.std")),
-    # }
-    temp = CrystalFeat(
-        root=folder, target="energy_per_atom", subset="train"
-    )  # , scalex=xt, scaley=yt)
-    bs = len(temp)
-    print(temp[10][0])
-    loader = DataLoader(temp, batch_size=100)
-    for x, y in loader:
-        # m1 = x[-1].mean(dim=0)
-        # s1 = x[-1].std(dim=0)
-        torch.save(m1, osp.join(folder, "x.mean"))
-        torch.save(s1, osp.join(folder, "x.std"))
+class CrystalGraph(InMemoryDataset):
+    def __init__(
+        self,
+        root,
+        transform=None,
+        pre_transform=None,
+        pre_filter=None,
+        name="mp20",
+        subset="train",
+    ):
+        super().__init__(root, transform, pre_transform, pre_filter)
+        self.data, self.slices = torch.load(self.processed_paths[0])
+        self.name = name
+        self.subset = subset
 
-        # m2 = y.mean(dim=0)
-        # s2 = y.std(dim=0)
-        # torch.save(m2, osp.join(folder, "y.mean"))
-        # torch.save(s2, osp.join(folder, "y.std"))
+    @property
+    def raw_file_names(self):
+        if self.name == "mp20":
+            return [f"{self.subset}.csv"]
+
+    @property
+    def processed_file_names(self):
+        return [self.subset + ".pt"]
+
+    def download(self):
+        if self.name == "mp20":
+            download_url(
+                f"https://raw.githubusercontent.com/txie-93/cdvae/main/data/mp_20/{self.subset}.csv",
+                self.raw_dir,
+            )
+
+    def process(self):
+        a2g = AtomsToGraphs(
+            max_neigh=50,
+            radius=6.0,
+            r_energy=False,
+            r_forces=False,
+            r_distances=True,
+            r_edges=False,
+        )
+        data_df = pd.read_csv(self.raw_file_names + ".csv")
+        data_list = []
+        for idx, row in data_df.iterrows():
+            struct = Structure.from_str(row["cif"], fmt="cif")
+            target = row["formation_energy_per_atom"]
+            data = pymatgen_structure_to_graph(struct, a2g)
+            print(data)
+            data_list.append(data)
+            break
+
+
+if __name__ == "__main__":
+    temp = CrystalGraph("/network/scratch/d/divya.sharma/ActiveLearningMaterials/data")
