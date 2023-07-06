@@ -4,7 +4,9 @@ import torch
 import pandas as pd
 import os.path as osp
 from pathlib import Path
+from typing import Callable, List, Any, Sequence
 from pymatgen.core.structure import Structure
+
 from torch.utils.data import Dataset, DataLoader
 from torch_geometric.data import Data, download_url
 from torch_geometric.data import InMemoryDataset
@@ -72,10 +74,18 @@ class CrystalGraph(InMemoryDataset):
         name="mp20",
         subset="train",
     ):
-        super().__init__(root, transform, pre_transform, pre_filter)
-        self.data, self.slices = torch.load(self.processed_paths[0])
         self.name = name
         self.subset = subset
+        super().__init__(root, transform, pre_transform, pre_filter)
+        self.data, self.slices = torch.load(self.processed_paths[0])
+
+    @property
+    def raw_dir(self) -> str:
+        return osp.join(self.root, "data")
+
+    @property
+    def processed_dir(self) -> str:
+        return osp.join(self.root, f"dave/proxies/{self.name}")
 
     @property
     def raw_file_names(self):
@@ -102,16 +112,12 @@ class CrystalGraph(InMemoryDataset):
             r_distances=True,
             r_edges=False,
         )
-        data_df = pd.read_csv(self.raw_file_names + ".csv")
+        data_df = pd.read_csv(osp.join(self.raw_dir, self.raw_file_names[0]))
         data_list = []
         for idx, row in data_df.iterrows():
             struct = Structure.from_str(row["cif"], fmt="cif")
             target = row["formation_energy_per_atom"]
             data = pymatgen_structure_to_graph(struct, a2g)
-            print(data)
             data_list.append(data)
-            break
-
-
-if __name__ == "__main__":
-    temp = CrystalGraph("/network/scratch/d/divya.sharma/ActiveLearningMaterials/data")
+        data, slices = self.collate(data_list)
+        torch.save((data, slices), self.processed_paths[0])
