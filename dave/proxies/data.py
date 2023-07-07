@@ -2,7 +2,9 @@ import pickle
 import torch
 import pandas as pd
 import os.path as osp
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
+from torch.utils.data._utils.collate import default_collate
+
 import lmdb
 
 
@@ -82,6 +84,20 @@ class MatBenchStructDataset(Dataset):
     def __len__(self):
         return len(self.indices)
 
+    def collate_structs(samples_list):
+        """
+        Function to collate a list of samples into a batch, while preserving the
+        pymatgen structures.
+
+        Args:
+            samples_list (list): List from MatBenchStructDataset[i]
+
+        Returns:
+            tuple: (list, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor)
+        """
+        tensors = default_collate([s[1:] for s in samples_list])
+        return ([s[0] for s in samples_list], *tensors)
+
     def __getitem__(self, idx):
         struct, target = pickle.loads(
             self.db.begin().get(f"{self.indices[idx]}".encode("ascii")),
@@ -107,7 +123,7 @@ class MatBenchStructDataset(Dataset):
             target = ((target - self.ytransform["mean"]) / self.ytransform["std"]).to(
                 torch.float32
             )
-        return (comp, sg, lat), target
+        return struct, comp, sg, lat, target
 
 
 if __name__ == "__main__":
@@ -115,7 +131,7 @@ if __name__ == "__main__":
     from dave.utils.loaders import make_loaders
 
     config = {
-        "config": "physmlp-matbench",
+        "config": "physmlp-mbstruct",
         "scales": {
             "x": False,
             "y": False,
@@ -123,7 +139,14 @@ if __name__ == "__main__":
         "src": "/Users/victor/Documents/Github/ActiveLearningMaterials/data/matbench_mp_e_form.lmdb",
         "val_frac": 0.20,
         "fold": 0,
-        "optim": {"batch_size": 32},
+        "optim": {
+            "batch_size": 32,
+            "num_workers": 0,
+        },
     }
-    config = set_cpus_to_workers(config)
+    # config = set_cpus_to_workers(config)
     loaders = make_loaders(config)
+    print("Getting first batch")
+    for batch in loaders["train"]:
+        struct, comp, sg, lat, target = batch
+        break

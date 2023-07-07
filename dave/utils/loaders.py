@@ -1,4 +1,5 @@
 from torch.utils.data import DataLoader
+from torch.utils.data._utils.collate import default_collate
 
 from dave.proxies.data import CrystalFeat, MatBenchStructDataset
 from dave.utils.misc import ROOT, load_matbench_train_val_indices
@@ -6,6 +7,8 @@ from dave.utils.misc import ROOT, load_matbench_train_val_indices
 
 def make_loaders(config, mb_data=None):
     ds_id = config["config"].split("-")[-1]
+
+    collate_fn = default_collate
 
     if ds_id in {"mbform", "mbgap", "mp20"}:
         if config["config"].endswith("-mbform"):
@@ -46,6 +49,9 @@ def make_loaders(config, mb_data=None):
             scalex=config["scales"]["x"],
             scaley=config["scales"]["y"],
         )
+
+        collate_fn = MatBenchStructDataset.collate_structs
+
     else:
         raise ValueError(f"Unknown config: {config['config']}")
 
@@ -56,6 +62,7 @@ def make_loaders(config, mb_data=None):
             num_workers=config["optim"]["num_workers"],
             shuffle=True,
             pin_memory=True,
+            collate_fn=collate_fn,
         ),
         "val": DataLoader(
             valset,
@@ -63,5 +70,6 @@ def make_loaders(config, mb_data=None):
             num_workers=config["optim"]["num_workers"],
             shuffle=False,
             pin_memory=True,
+            collate_fn=collate_fn,
         ),
     }
