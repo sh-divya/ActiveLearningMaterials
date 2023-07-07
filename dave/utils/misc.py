@@ -253,10 +253,11 @@ def load_scales(config):
     return config
 
 
-def load_config() -> dict:
+def load_config(base: dict = {}) -> dict:
     # 1. parse command-line args
     cli_conf = parse_args_to_dict()
     cli_conf["cmd"] = " ".join(sys.argv)
+    cli_conf = merge_dicts(cli_conf, base)
     assert (
         "config" in cli_conf
     ), "Must specify config string as `--config={task}-{model}`"
