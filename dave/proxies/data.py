@@ -20,6 +20,8 @@ class CrystalFeat(Dataset):
             "band_gap",
             "e_above_hull",
             "energy_per_atom",
+            "Eform",
+            "Band Gap",
         ]
         self.xtransform = scalex
         self.ytransform = scaley

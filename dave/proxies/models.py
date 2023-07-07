@@ -193,7 +193,7 @@ class ProxyEmbeddingModel(nn.Module):
             self.comp_emb_mlp = mlp_from_layers(
                 comp_num_layers, comp_hidden_channels, comp_size
             )
-        self.sg_emb = nn.Embedding(230, sg_emb_size)
+        self.sg_emb = nn.Embedding(231, sg_emb_size)
         self.lat_emb_mlp = mlp_from_layers(
             lat_num_layers, lat_hidden_channels, lat_size
         )
