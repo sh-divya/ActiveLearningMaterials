@@ -9,6 +9,7 @@ scales:
     std: $src/y.std
 fold: 0
 val_frac: 0.20
+src: /network/scratch/s/schmidtv/Public/crystals/matbench/matbench_mp_e_form.lmdb
 alphabet: # index to z
   [
     1,

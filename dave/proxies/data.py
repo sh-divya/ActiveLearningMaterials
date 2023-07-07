@@ -130,13 +130,15 @@ if __name__ == "__main__":
     from dave.utils.misc import set_cpus_to_workers
     from dave.utils.loaders import make_loaders
 
+    from tqdm import tqdm
+
     config = {
         "config": "physmlp-mbstruct",
         "scales": {
             "x": False,
             "y": False,
         },
-        "src": "/Users/victor/Documents/Github/ActiveLearningMaterials/data/matbench_mp_e_form.lmdb",
+        "src": "/network/scratch/s/schmidtv/Public/crystals/matbench/matbench_mp_e_form.lmdb",
         "val_frac": 0.20,
         "fold": 0,
         "optim": {
@@ -144,9 +146,12 @@ if __name__ == "__main__":
             "num_workers": 0,
         },
     }
-    # config = set_cpus_to_workers(config)
+    config = set_cpus_to_workers(config)
     loaders = make_loaders(config)
     print("Getting first batch")
-    for batch in loaders["train"]:
+    xs = []
+    ys = []
+    for batch in tqdm(loaders["train"]):
         struct, comp, sg, lat, target = batch
-        break
+        xs.append(lat)
+        ys.append(target)
