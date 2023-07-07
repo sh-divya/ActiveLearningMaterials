@@ -66,6 +66,7 @@ class MatBenchStructDataset(Dataset):
         self.n_els = n_els
 
         self._db = None
+        self._txn = None
 
     @property
     def db(self):
@@ -80,6 +81,12 @@ class MatBenchStructDataset(Dataset):
                 max_readers=1,
             )
         return self._db
+
+    @property
+    def txn(self):
+        if self._txn is None:
+            self._txn = self.db.begin()
+        return self._txn
 
     def __len__(self):
         return len(self.indices)
@@ -100,7 +107,7 @@ class MatBenchStructDataset(Dataset):
 
     def __getitem__(self, idx):
         struct, target = pickle.loads(
-            self.db.begin().get(f"{self.indices[idx]}".encode("ascii")),
+            self.txn.get(f"{self.indices[idx]}".encode("ascii")),
         )
 
         target = torch.tensor(target, dtype=torch.float32)
@@ -149,9 +156,7 @@ if __name__ == "__main__":
     config = set_cpus_to_workers(config)
     loaders = make_loaders(config)
     print("Getting first batch")
-    xs = []
-    ys = []
     for batch in tqdm(loaders["train"]):
         struct, comp, sg, lat, target = batch
-        xs.append(lat)
-        ys.append(target)
+        break
+    print("struct, comp, sg, lat, target = batch")

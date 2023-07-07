@@ -480,7 +480,7 @@ def load_matbench_train_val_indices(fold, val_frac):
     assert fold_str in mb_val
 
     indices = np.array(
-        [int(float(i.split("-")[-1])) for i in mb_val[fold_str]["train"]]
+        [int(float(i.split("-")[-1])) - 1 for i in mb_val[fold_str]["train"]]
     )
 
     with temp_seed(fold):
@@ -489,5 +489,11 @@ def load_matbench_train_val_indices(fold, val_frac):
     n_val = int(len(indices) * val_frac)
     val_indices = indices[perm[:n_val]]
     train_indices = indices[perm[n_val:]]
+
+    print(
+        f"Train samples: {len(train_indices)} "
+        + f"| Val samples: {len(val_indices)}"
+        + f" | Test samples (not loaded): {len(mb_val[fold_str]['test'])}"
+    )
 
     return train_indices, val_indices
