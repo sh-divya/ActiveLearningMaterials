@@ -55,7 +55,7 @@ class CrystalFeat(Dataset):
         return (comp, sg, lat), target
 
 
-class MatBenchDataset(Dataset):
+class MatBenchStructDataset(Dataset):
     def __init__(self, src, indices, scalex=False, scaley=False, n_els=103):
         self.xtransform = scalex
         self.ytransform = scaley
