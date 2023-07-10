@@ -1,6 +1,8 @@
 import os
 import sys
+import gzip
 import torch
+import tempfile
 import pandas as pd
 import os.path as osp
 from pathlib import Path
@@ -89,8 +91,7 @@ class CrystalGraph(InMemoryDataset):
 
     @property
     def raw_file_names(self):
-        if self.name == "mp20":
-            return [f"{self.subset}.csv"]
+        return [f"{self.subset}.csv"]
 
     @property
     def processed_file_names(self):
@@ -102,6 +103,21 @@ class CrystalGraph(InMemoryDataset):
                 f"https://raw.githubusercontent.com/txie-93/cdvae/main/data/mp_20/{self.subset}.csv",
                 self.raw_dir,
             )
+        if self.name == "matbench_mp_e_form":
+            download_url(
+                "https://ml.materialsproject.org/projects/matbench_mp_e_form.json.gz",
+                self.raw_dir,
+            )
+            fd, path = tempfile.mkstemp(dir=self.raw_dir)
+            with os.fdopen(fd, "w") as tmp:
+                tmp.write(
+                    gzip.open(
+                        osp.join(self.raw_dir, "matbench_mp_e_form.json.gz"), "rb"
+                    )
+                )
+                write_dataset_csv(read_path=path, write_base=self.raw_dir, data=0)
+                parent_data = str(Path(self.root).parent)
+                split(base_path=parent_data, data_select="0")
 
     def process(self):
         a2g = AtomsToGraphs(
@@ -116,7 +132,10 @@ class CrystalGraph(InMemoryDataset):
         data_list = []
         for idx, row in data_df.iterrows():
             struct = Structure.from_str(row["cif"], fmt="cif")
-            target = row["formation_energy_per_atom"]
+            if self.name == "mp20":
+                target = row["formation_energy_per_atom"]
+            else:
+                target = row["Eform"]
             data = pymatgen_structure_to_graph(struct, a2g)
             data_list.append(data)
         data, slices = self.collate(data_list)
