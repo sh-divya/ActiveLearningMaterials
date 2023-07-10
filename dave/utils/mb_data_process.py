@@ -51,29 +51,31 @@ class DFdataset(Dataset):
 @click.command()
 @click.option("--read_path", default="./data")
 @click.option("--write_base", default="./dave/proxies")
-def write_dataset_csv(read_path, write_base):
+@click.option("--data", default="0")
+def write_dataset_csv(read_path, write_base, data):
     db_path = Path(read_path)
     write_base = Path(write_base)
     db_name = ["matbench_mp_e_form", "matbench_mp_gap"]
     targets = ["Eform", "Band Gap"]
 
     for i, db in enumerate(db_name):
-        y = []
-        proxy_features = {key: [] for key in FEATURE_KEYS}
-        cif_str = []
-        json_file = db_path / (db + ".json")
-        with open(json_file, "r") as fobj:
-            jobj = json.load(fobj)
-            for j in jobj["data"]:
-                struc = Structure.from_dict(j[0])
-                proxy_features = feature_per_struc(struc, proxy_features)
-                cif_str.append(struc.to(None, fmt="cif"))
-                y.append(j[1])
-        proxy_features[targets[i]] = y
-        proxy_features["cif"] = cif_str
-        df = pd.DataFrame.from_dict(proxy_features)
-        df = df.loc[:, (df != 0).any()]
-        df.to_csv(write_base / db / "data" / (db + ".csv"))
+        if i in [int(d) for d in data]:
+            y = []
+            proxy_features = {key: [] for key in FEATURE_KEYS}
+            cif_str = []
+            json_file = db_path / (db + ".json")
+            with open(json_file, "r") as fobj:
+                jobj = json.load(fobj)
+                for j in jobj["data"]:
+                    struc = Structure.from_dict(j[0])
+                    proxy_features = feature_per_struc(struc, proxy_features)
+                    cif_str.append(struc.to(None, fmt="cif"))
+                    y.append(j[1])
+            proxy_features[targets[i]] = y
+            proxy_features["cif"] = cif_str
+            df = pd.DataFrame.from_dict(proxy_features)
+            df = df.loc[:, (df != 0).any()]
+            df.to_csv(write_base / db / "data" / (db + ".csv"))
 
 
 @click.command()
@@ -386,9 +388,11 @@ def split_from_swaps(train, test, target, n_swaps=100, swaps_per_iter=20, histor
 
 
 if __name__ == "__main__":
-    # write_dataset_csv()
-
     # test command
+    # write_dataset_csv(
+    #     ["--read_path", "../data", "--write_base", "../data", "--data", "0"]
+    # )
+    # OR
     # python dave/utils/mb_data_process.py --base_path=./dave/proxies --write_path="./data"
     split()
     # c1 = {"Al": 2, "O": 3}
