@@ -60,14 +60,17 @@ def write_dataset_csv(read_path, write_base):
     for i, db in enumerate(db_name):
         y = []
         proxy_features = {key: [] for key in FEATURE_KEYS}
+        cif_str = []
         json_file = db_path / (db + ".json")
         with open(json_file, "r") as fobj:
             jobj = json.load(fobj)
             for j in jobj["data"]:
                 struc = Structure.from_dict(j[0])
                 proxy_features = feature_per_struc(struc, proxy_features)
+                cif_str.append(struc.to(None, fmt="cif"))
                 y.append(j[1])
         proxy_features[targets[i]] = y
+        proxy_features["cif"] = cif_str
         df = pd.DataFrame.from_dict(proxy_features)
         df = df.loc[:, (df != 0).any()]
         df.to_csv(write_base / db / "data" / (db + ".csv"))
@@ -281,6 +284,7 @@ def ood(df, target, verbose):
         continuous=True,
     )
 
+    # doesn't work yet
     if verbose:
         trainds = DFdataset(train, target)
         id_valds = DFdataset(id_val, target)
@@ -386,7 +390,7 @@ if __name__ == "__main__":
 
     # test command
     # python dave/utils/mb_data_process.py --base_path=./dave/proxies --write_path="./data"
-    # split()
-    c1 = {"Al": 2, "O": 3}
-    c2 = {"Na": 1, "Cl": 1}
-    print(custom_levenshtein(c1, c2))
+    split()
+    # c1 = {"Al": 2, "O": 3}
+    # c2 = {"Na": 1, "Cl": 1}
+    # print(custom_levenshtein(c1, c2))
