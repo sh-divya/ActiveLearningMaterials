@@ -5,13 +5,10 @@ from pathlib import Path
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 BASE_PATH = Path(__file__).parent.parent
-proxy_path = BASE_PATH / "proxies"
 script_path = BASE_PATH.parent / "scripts"
-sys.path.append(str(proxy_path))
 sys.path.append(str(script_path))
 
 from cdvae_csv import feature_per_struc, FEATURE_KEYS
-from data import CrystalFeat
 from data_dist import plots_from_df
 
 import torch
@@ -53,6 +50,44 @@ class DFdataset(Dataset):
 @click.option("--write_base", default="./dave/proxies")
 @click.option("--data", default="0")
 def write_dataset_csv(read_path, write_base, data):
+    """
+    Reads JSON files and extracts relevant features.
+
+    Args:
+        read_path (str): Path to the directory containing JSON files.
+        Default is "./data".
+        write_base (str): Base directory for writing output CSV files.
+        Default is "./dave/proxies".
+        data (str): Data source identifier. Default is "0".
+
+    Directory Structure:
+        - The JSON files should be located in the `read_path` directory.
+        - The JSON file names should correspond to the values in the `db_name` list,
+          with the `.json` extension.
+        - The output CSV files will be written in the `write_base` directory.
+        - Within the `write_base` directory, there will be subdirectories for each
+          database name in the `db_name` list.
+        - Within each database subdirectory, there will be a subdirectory named `data`,
+          where the output CSV files will be written.
+        - The output CSV file names will be the same as the respective database names,
+          but with the `.csv` extension.
+
+        {read_path}/
+            matbench_mp_e_form.json
+            matbench_mp_gap.json
+
+        {write_base}/
+            {db_name[0]}/
+                data/
+                    {db_name[0]}.csv
+
+            {db_name[1]}/
+                data/
+                    {db_name[1]}.csv
+
+    Returns:
+        None
+    """
     db_path = Path(read_path)
     write_base = Path(write_base)
     db_name = ["matbench_mp_e_form", "matbench_mp_gap"]
@@ -85,6 +120,46 @@ def write_dataset_csv(read_path, write_base, data):
 @click.option("--write_path", default=None)
 @click.option("--verbose", is_flag=True, default=False)
 def split(base_path, data_select, strategy, write_path, verbose):
+    """
+    Splits data into training, validation, and test sets based on specified strategy.
+
+    Args:
+        base_path (str): Base directory containing the input CSV files. Default is "./proxies".
+        data_select (str): Selection identifier for the dataset. Default is "01".
+        strategy (str): Strategy for data splitting. Default is "stratify".
+        write_path (str): Directory path to write the output files. If not provided, the base_path is used.
+        verbose (bool): Whether to enable verbose output. Default is False.
+
+    Directory Structure:
+        - The input CSV files should be located in the `base_path` directory.
+        - The input CSV file names should correspond to the database names in the `db_target` dictionary.
+        - The output files will be written in the `write_path` directory.
+        - If `write_path` is not provided, the base_path will be used for writing the output files.
+        - Within the `write_path` directory, there will be subdirectories corresponding to each database.
+        - The subdirectories will be named based on the respective database names.
+        - The output files will have different names and extensions depending on the selected strategy.
+
+        {base_path}/
+            {db_name[0]}/
+                data/
+                    {db_name[0]}.csv
+                train_data.csv
+                val_data.csv
+                test_data.csv
+                {data_select[0]}_{strategy}.png
+
+            {db_name[1]}/
+                data/
+                    {db_name[1]}.csv
+                train_data.csv
+                val_data.csv
+                test_data.csv
+                {data_select[1]}_{strategy}.png
+
+
+    Returns:
+        None
+    """
     db_target = {"matbench_mp_e_form": "Eform", "matbench_mp_gap": "Band Gap"}
     base_path = Path(base_path)
     data_types = {k: np.int32 for k in FEATURE_KEYS}
@@ -335,6 +410,19 @@ def split_from_swaps(train, test, target, n_swaps=100, swaps_per_iter=20, histor
     """
     Function adapted from
     https://github.com/Confusezius/Characterizing_Generalization_in_DeepMetricLearning
+    Performs data swapping between train and test sets based on distance metrics.
+
+    Args:
+        train (pd.DataFrame): Training dataset.
+        test (pd.DataFrame): Test dataset.
+        target (str): Name of the target column.
+        n_swaps (int): Number of swapping iterations. Default is 100.
+        swaps_per_iter (int): Number of swaps per iteration. Default is 20.
+        history (int): Number of previous swaps to consider for preventing duplicate swaps. Default is 10.
+
+    Returns:
+        pd.DataFrame: Modified training dataset after swapping.
+        pd.DataFrame: Modified test dataset after swapping.
     """
     train_hist, test_hist = [], []
     feat_cols = train.columns[train.columns != target]

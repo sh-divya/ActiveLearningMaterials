@@ -14,9 +14,10 @@ from torch_geometric.data import Data, download_url
 from torch_geometric.data import InMemoryDataset
 
 DAVE_PATH = Path(__file__).parent.parent
-sys.path.append(str(DAVE_PATH))
+sys.path.append(str(DAVE_PATH / "utils"))
 
-from utils.atoms_to_graph import AtomsToGraphs, pymatgen_structure_to_graph
+from atoms_to_graph import AtomsToGraphs, pymatgen_structure_to_graph
+from mb_data_process import write_dataset_csv, split
 
 
 class CrystalFeat(Dataset):
@@ -85,7 +86,7 @@ class CrystalGraph(InMemoryDataset):
 
     @property
     def raw_dir(self) -> str:
-        return osp.join(self.root, "data")
+        return osp.join(self.root, f"data/{self.name}")
 
     @property
     def processed_dir(self) -> str:
@@ -93,7 +94,10 @@ class CrystalGraph(InMemoryDataset):
 
     @property
     def raw_file_names(self):
-        return [f"{self.subset}.csv"]
+        if self.name == "mp20":
+            return [f"{self.subset}.csv"]
+        else:
+            return [f"{self.subset}_data.csv"]
 
     @property
     def processed_file_names(self):
@@ -106,20 +110,26 @@ class CrystalGraph(InMemoryDataset):
                 self.raw_dir,
             )
         if self.name == "matbench_mp_e_form":
+            print(self.raw_dir)
+            print(self.raw_paths)
             download_url(
                 "https://ml.materialsproject.org/projects/matbench_mp_e_form.json.gz",
                 self.raw_dir,
             )
-            fd, path = tempfile.mkstemp(dir=self.raw_dir)
+            fd, tmp_path = tempfile.mkstemp(dir=self.raw_dir)
             with os.fdopen(fd, "w") as tmp:
                 tmp.write(
                     gzip.open(
                         osp.join(self.raw_dir, "matbench_mp_e_form.json.gz"), "rb"
                     )
                 )
-                write_dataset_csv(read_path=path, write_base=self.raw_dir, data=0)
-                parent_data = str(Path(self.root).parent)
-                split(base_path=parent_data, data_select="0")
+                raw_parent = Path(self.raw_dir).parent
+                write_dataset_csv(
+                    read_path=self.raw_dir, write_base=str(raw_parent), data=0
+                )
+                split(base_path=raw_parent, data_select="0")
+            os.close(fd)
+            os.remove(tmp_path)
 
     def process(self):
         a2g = AtomsToGraphs(
