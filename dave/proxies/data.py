@@ -6,6 +6,7 @@ import tempfile
 import pandas as pd
 import os.path as osp
 from pathlib import Path
+from urllib import request
 from typing import Callable, List, Any, Sequence
 from pymatgen.core.structure import Structure
 
@@ -86,11 +87,13 @@ class CrystalGraph(InMemoryDataset):
 
     @property
     def raw_dir(self) -> str:
-        return osp.join(self.root, f"data/{self.name}")
+        check_path = Path(self.root) / "data" / f"{self.name}"
+        return str(check_path)
 
     @property
     def processed_dir(self) -> str:
-        return osp.join(self.root, f"dave/proxies/{self.name}")
+        check_path = Path(self.root) / "dave" / "proxies" / f"{self.name}"
+        return str(check_path)
 
     @property
     def raw_file_names(self):
@@ -104,6 +107,8 @@ class CrystalGraph(InMemoryDataset):
         return [self.subset + ".pt"]
 
     def download(self):
+        temp_raw = Path(self.raw_dir)
+        temp_raw.mkdir(parents=True, exist_ok=True)
         if self.name == "mp20":
             download_url(
                 f"https://raw.githubusercontent.com/txie-93/cdvae/main/data/mp_20/{self.subset}.csv",
@@ -112,10 +117,14 @@ class CrystalGraph(InMemoryDataset):
         if self.name == "matbench_mp_e_form":
             print(self.raw_dir)
             print(self.raw_paths)
-            download_url(
+            request.urlretrieve(
                 "https://ml.materialsproject.org/projects/matbench_mp_e_form.json.gz",
-                self.raw_dir,
+                temp_raw / "matbench_mp_e_form.json.gz",
             )
+            # download_url(
+            #     "https://ml.materialsproject.org/projects/matbench_mp_e_form.json.gz",
+            #     self.raw_dir,
+            # )
             fd, tmp_path = tempfile.mkstemp(dir=self.raw_dir)
             with os.fdopen(fd, "w") as tmp:
                 tmp.write(
