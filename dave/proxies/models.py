@@ -122,7 +122,7 @@ class GNNBlock(nn.Module):
         adj = adj.to(device=x.device)
         x = to_dense_batch(x, batch_mask)[0]
 
-        for layer in self.gnn_layers:
+        for l, layer in enumerate(self.gnn_layers):
             x = layer(x, adj)
             x = self.act(x)
         x = torch.sum(x, dim=1)
@@ -159,7 +159,6 @@ class ProxyMLP(nn.Module):
             if i % 2 == 1:
                 x = self.hidden_act(x)
                 x = self.dropout(x)
-
         return x
 
 
@@ -275,13 +274,13 @@ class ProxyGraphModel(nn.Module):
             self.comp_emb_mlp = mlp_from_layers(
                 comp_num_layers, comp_hidden_channels, comp_size
             )
-        self.sg_emb = nn.Embedding(230, sg_emb_size)
+        self.sg_emb = nn.Embedding(231, sg_emb_size)
         self.lat_emb_mlp = mlp_from_layers(
             lat_num_layers, lat_hidden_channels, lat_size
         )
         # Prediction
         self.pred_inp_size = (
-            comp_hidden_channels * conv.get("heads", 1)
+            conv["hidden_channels"] * conv.get("heads", 1)
             + sg_emb_size
             + lat_hidden_channels
         )
