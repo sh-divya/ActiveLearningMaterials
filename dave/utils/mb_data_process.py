@@ -23,6 +23,8 @@ from sklearn.metrics import pairwise_distances
 from pymatgen.core.structure import Structure
 from otdd.pytorch.distance import DatasetDistance
 from verstack.stratified_continuous_split import scsplit
+from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+
 
 SG_DIX = np.load(BASE_PATH / "utils" / "sg_decomp.npy")
 
@@ -98,11 +100,14 @@ def write_dataset_csv(read_path, write_base, data):
             y = []
             proxy_features = {key: [] for key in FEATURE_KEYS}
             cif_str = []
+            mb_ids = []
             json_file = db_path / (db + ".json")
             with open(json_file, "r") as fobj:
                 jobj = json.load(fobj)
                 for j in jobj["data"]:
                     struc = Structure.from_dict(j[0])
+                    SGA = SpacegroupAnalyzer(struc)
+                    struc = SGA.get_conventional_standard_structure()
                     proxy_features = feature_per_struc(struc, proxy_features)
                     cif_str.append(struc.to(None, fmt="cif"))
                     y.append(j[1])
