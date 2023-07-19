@@ -2,13 +2,14 @@ import os
 import sys
 import gzip
 import torch
+import requests
 import tempfile
 import pandas as pd
 import os.path as osp
 from pathlib import Path
-from urllib import request
 from typing import Callable, List, Any, Sequence
 from pymatgen.core.structure import Structure
+from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
 from torch.utils.data import Dataset, DataLoader
 from torch_geometric.data import Data, download_url
@@ -17,8 +18,7 @@ from torch_geometric.data import InMemoryDataset
 DAVE_PATH = Path(__file__).parent.parent
 sys.path.append(str(DAVE_PATH / "utils"))
 
-from atoms_to_graph import AtomsToGraphs, pymatgen_structure_to_graph
-from mb_data_process import write_dataset_csv, split
+from atoms_to_graph import AtomsToGraphs, pymatgen_structure_to_graph, collate
 
 
 class CrystalFeat(Dataset):
@@ -37,6 +37,7 @@ class CrystalFeat(Dataset):
             "energy_per_atom",
             "Eform",
             "Band Gap",
+            "cif",
         ]
         self.xtransform = scalex
         self.ytransform = scaley
@@ -82,6 +83,14 @@ class CrystalGraph(InMemoryDataset):
     ):
         self.name = name
         self.subset = subset
+        self.a2g = AtomsToGraphs(
+            max_neigh=50,
+            radius=6.0,
+            r_energy=False,
+            r_forces=False,
+            r_distances=True,
+            r_edges=False,
+        )
         super().__init__(root, transform, pre_transform, pre_filter)
         self.data, self.slices = torch.load(self.processed_paths[0])
 
@@ -107,7 +116,10 @@ class CrystalGraph(InMemoryDataset):
         return [self.subset + ".pt"]
 
     def download(self):
-        temp_raw = Path(self.raw_dir)
+        from mb_data_process import write_dataset_csv, split
+
+        raw_parent = Path(self.raw_dir).parent
+        temp_raw = Path(self.raw_dir) / "data"
         temp_raw.mkdir(parents=True, exist_ok=True)
         if self.name == "mp20":
             download_url(
@@ -115,49 +127,65 @@ class CrystalGraph(InMemoryDataset):
                 self.raw_dir,
             )
         if self.name == "matbench_mp_e_form":
-            print(self.raw_dir)
-            print(self.raw_paths)
-            request.urlretrieve(
-                "https://ml.materialsproject.org/projects/matbench_mp_e_form.json.gz",
-                temp_raw / "matbench_mp_e_form.json.gz",
-            )
-            # download_url(
-            #     "https://ml.materialsproject.org/projects/matbench_mp_e_form.json.gz",
-            #     self.raw_dir,
-            # )
-            fd, tmp_path = tempfile.mkstemp(dir=self.raw_dir)
-            with os.fdopen(fd, "w") as tmp:
-                tmp.write(
-                    gzip.open(
-                        osp.join(self.raw_dir, "matbench_mp_e_form.json.gz"), "rb"
+            json_file = raw_parent / "matbench_mp_e_form.json"
+            if not json_file.is_file():
+                with open(str(json_file), "wb") as j:
+                    r = requests.get(
+                        "https://ml.materialsproject.org/projects/matbench_mp_e_form.json.gz"
                     )
-                )
-                raw_parent = Path(self.raw_dir).parent
-                write_dataset_csv(
-                    read_path=self.raw_dir, write_base=str(raw_parent), data=0
-                )
-                split(base_path=raw_parent, data_select="0")
-            os.close(fd)
-            os.remove(tmp_path)
+                    j.write(gzip.decompress(r.content))
+            if not (Path(self.raw_dir) / f"data/{self.name}.csv").is_file():
+                try:
+                    write_dataset_csv(
+                        [
+                            "--read_path",
+                            str(raw_parent),
+                            "--write_base",
+                            str(raw_parent),
+                            "--data",
+                            "0",
+                        ]
+                    )
+                except SystemExit as err:
+                    split(["--base_path", raw_parent, "--data_select", "0"])
+                    return
+            else:
+                split(["--base_path", raw_parent, "--data_select", "0"])
 
     def process(self):
-        a2g = AtomsToGraphs(
-            max_neigh=50,
-            radius=6.0,
-            r_energy=False,
-            r_forces=False,
-            r_distances=True,
-            r_edges=False,
-        )
         data_df = pd.read_csv(osp.join(self.raw_dir, self.raw_file_names[0]))
         data_list = []
+        proc_dir = Path(self.processed_dir)
+        proc_dir.mkdir(parents=True, exist_ok=True)
         for idx, row in data_df.iterrows():
             struct = Structure.from_str(row["cif"], fmt="cif")
+            # SGA = SpacegroupAnalyzer(struct)
+            # struct = SGA.get_conventional_standard_structure()
             if self.name == "mp20":
-                target = row["formation_energy_per_atom"]
+                target = "formation_energy_per_atom"
             else:
-                target = row["Eform"]
-            data = pymatgen_structure_to_graph(struct, a2g)
+                target = "Eform"
+            y = row[target]
+            not_comp_cols = [
+                "cif",
+                target,
+                "Space Group",
+                "a",
+                "b",
+                "c",
+                "alpha",
+                "beta",
+                "gamma",
+            ]
+            data = pymatgen_structure_to_graph(struct, self.a2g)
+            data.y = y
+            data.comp = []
+            for col in data_df.columns[1:]:
+                if col not in not_comp_cols:
+                    data.comp.append(row[col])
+            data.lp = [row[i] for i in ["a", "b", "c", "alpha", "beta", "gamma"]]
+            data.sg = row["Space Group"]
             data_list.append(data)
-        data, slices = self.collate(data_list)
+        # data, slices = self.collate(data_list)
+        data, slices = collate(data_list)
         torch.save((data, slices), self.processed_paths[0])
