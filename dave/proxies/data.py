@@ -159,10 +159,10 @@ class CrystalGraph(InMemoryDataset):
         proc_dir.mkdir(parents=True, exist_ok=True)
         for idx, row in data_df.iterrows():
             struct = Structure.from_str(row["cif"], fmt="cif")
-            # SGA = SpacegroupAnalyzer(struct)
-            # struct = SGA.get_conventional_standard_structure()
             if self.name == "mp20":
                 target = "formation_energy_per_atom"
+                SGA = SpacegroupAnalyzer(struct)
+                struct = SGA.get_conventional_standard_structure()
             else:
                 target = "Eform"
             y = row[target]
