@@ -17,15 +17,19 @@ if __name__ == "__main__":
     parser.add_argument("name")
     args = parser.parse_args().name
 
-    targets = {"matbench_mp_e_form": "Eform", "matbench_mp_gap": "Band Gap"}
+    targets = {
+        "matbench_mp_e_form": "Eform",
+        "matbench_mp_gap": "Band Gap",
+        "mp20": "formation_energy_per_atom",
+    }
 
     csv = csv_path / args
 
-    with open(csv / "data" / (args + ".csv")) as f:
-        els = f.readline().split(",")[8:-1]
-        print(len(els))
-        for e in els:
-            print(Element(e).Z)
+    # with open(csv / "data" / (args + ".csv")) as f:
+    #     els = f.readline().split(",")[8:-1]
+    #     print(len(els))
+    #     for e in els:
+    #         print(Element(e).Z)
     data = CrystalFeat(csv, targets[args], subset="train")
     loader = DataLoader(data, batch_size=len(data))
     for x, y in loader:
