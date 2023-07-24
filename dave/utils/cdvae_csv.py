@@ -1,7 +1,11 @@
 import pandas as pd
 import os.path as osp
+from pathlib import Path
 from pymatgen.core.periodic_table import Element
 from pymatgen.core.structure import Structure
+from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+
+DEFAULT_ROOT = Path(__file__).parent.parent
 
 FEATURE_KEYS = ["Space Group", "a", "b", "c", "alpha", "beta", "gamma"] + [
     Element("H").from_Z(i).symbol for i in range(1, 119)
@@ -55,6 +59,8 @@ def write_data_csv(root):
         sub_df = id_cif_prop[sub_cols]
         for idx, row in id_cif_prop.iterrows():
             struc = Structure.from_str(row["cif"], fmt="cif")
+            SGA = SpacegroupAnalyzer(struc)
+            struc = SGA.get_conventional_standard_structure()
             proxy_features = feature_per_struc(struc, proxy_features)
         lens = [len(val) for k, val in proxy_features.items()]
         df = pd.DataFrame.from_dict(proxy_features)
@@ -71,3 +77,7 @@ def write_data_csv(root):
         high = l + low
         df = master_df.iloc[low:high, :]
         df.to_csv(osp.join(root, subsets[i] + "_data.csv"))
+
+
+if __name__ == "__main__":
+    write_data_csv(str(DEFAULT_ROOT / "proxies/mp20"))
