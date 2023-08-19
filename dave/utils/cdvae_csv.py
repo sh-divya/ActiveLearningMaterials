@@ -1,16 +1,11 @@
 import pandas as pd
 import os.path as osp
-<<<<<<< HEAD
 from pathlib import Path
 from pymatgen.core.periodic_table import Element
 from pymatgen.core.structure import Structure
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
 DEFAULT_ROOT = Path(__file__).parent.parent
-=======
-from pymatgen.core.periodic_table import Element
-from pymatgen.core.structure import Structure
->>>>>>> 932b8be16e2f4be2eedc9a101ca69fd941938d57
 
 FEATURE_KEYS = ["Space Group", "a", "b", "c", "alpha", "beta", "gamma"] + [
     Element("H").from_Z(i).symbol for i in range(1, 119)
@@ -64,15 +59,13 @@ def write_data_csv(root):
         sub_df = id_cif_prop[sub_cols]
         for idx, row in id_cif_prop.iterrows():
             struc = Structure.from_str(row["cif"], fmt="cif")
-<<<<<<< HEAD
             SGA = SpacegroupAnalyzer(struc)
             struc = SGA.get_conventional_standard_structure()
-=======
->>>>>>> 932b8be16e2f4be2eedc9a101ca69fd941938d57
             proxy_features = feature_per_struc(struc, proxy_features)
         lens = [len(val) for k, val in proxy_features.items()]
         df = pd.DataFrame.from_dict(proxy_features)
         sub_df = sub_df.astype({"material_id": "str"})
+        sub_df["cif"] = id_cif_prop["cif"]
         master_df.append(sub_df)
         sub_lens.append(len(sub_df))
     master_df = pd.concat(master_df, axis=0, ignore_index=True)
@@ -85,10 +78,7 @@ def write_data_csv(root):
         high = l + low
         df = master_df.iloc[low:high, :]
         df.to_csv(osp.join(root, subsets[i] + "_data.csv"))
-<<<<<<< HEAD
 
 
 if __name__ == "__main__":
     write_data_csv(str(DEFAULT_ROOT / "proxies/mp20"))
-=======
->>>>>>> 932b8be16e2f4be2eedc9a101ca69fd941938d57

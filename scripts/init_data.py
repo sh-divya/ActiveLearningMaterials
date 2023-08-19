@@ -17,7 +17,6 @@ if __name__ == "__main__":
     parser.add_argument("name")
     args = parser.parse_args().name
 
-<<<<<<< HEAD
     targets = {
         "matbench_mp_e_form": "Eform",
         "matbench_mp_gap": "Band Gap",
@@ -26,22 +25,6 @@ if __name__ == "__main__":
 
     csv = csv_path / args
 
-    # with open(csv / "data" / (args + ".csv")) as f:
-    #     els = f.readline().split(",")[8:-1]
-    #     print(len(els))
-    #     for e in els:
-    #         print(Element(e).Z)
-=======
-    targets = {"matbench_mp_e_form": "Eform", "matbench_mp_gap": "Band Gap"}
-
-    csv = csv_path / args
-
-    with open(csv / "data" / (args + ".csv")) as f:
-        els = f.readline().split(",")[8:-1]
-        print(len(els))
-        for e in els:
-            print(Element(e).Z)
->>>>>>> 932b8be16e2f4be2eedc9a101ca69fd941938d57
     data = CrystalFeat(csv, targets[args], subset="train")
     loader = DataLoader(data, batch_size=len(data))
     for x, y in loader:

@@ -44,7 +44,7 @@ class CrystalFeat(Dataset):
         data_df = pd.read_csv(osp.join(csv_path, subset + "_data.csv"))
         self.y = torch.tensor(data_df[target].values, dtype=torch.float32)
         sub_cols = [col for col in data_df.columns if col not in self.cols_of_interest]
-        x = torch.tensor(data_df[sub_cols].values, dtype=float)
+        x = torch.tensor(data_df[sub_cols].values)
         self.sg = x[:, 1].to(torch.int32)
         self.lattice = x[:, 2:8].float()
         self.composition = x[:, 8:].to(torch.int32)
@@ -91,6 +91,12 @@ class CrystalGraph(InMemoryDataset):
             r_distances=True,
             r_edges=False,
         )
+        if transform is not None:
+            self.xtransform = transform["x"]
+            self.ytransform = transform["y"]
+        else:
+            self.xtransform = None
+            self.ytransform = None
         super().__init__(root, transform, pre_transform, pre_filter)
         self.data, self.slices = torch.load(self.processed_paths[0])
 
@@ -106,27 +112,35 @@ class CrystalGraph(InMemoryDataset):
 
     @property
     def raw_file_names(self):
-        if self.name == "mp20":
-            return [f"{self.subset}.csv"]
-        else:
-            return [f"{self.subset}_data.csv"]
+        return [f"{self.subset}_data.csv"]
 
     @property
     def processed_file_names(self):
         return [self.subset + ".pt"]
 
     def download(self):
-        from mb_data_process import write_dataset_csv, split
-
         raw_parent = Path(self.raw_dir).parent
         temp_raw = Path(self.raw_dir) / "data"
         temp_raw.mkdir(parents=True, exist_ok=True)
         if self.name == "mp20":
+            from cdvae_csv import write_data_csv
+
             download_url(
-                f"https://raw.githubusercontent.com/txie-93/cdvae/main/data/mp_20/{self.subset}.csv",
-                self.raw_dir,
+                f"https://raw.githubusercontent.com/txie-93/cdvae/main/data/mp_20/train.csv",
+                temp_raw,
             )
+            download_url(
+                f"https://raw.githubusercontent.com/txie-93/cdvae/main/data/mp_20/val.csv",
+                temp_raw,
+            )
+            download_url(
+                f"https://raw.githubusercontent.com/txie-93/cdvae/main/data/mp_20/test.csv",
+                temp_raw,
+            )
+            write_data_csv(self.raw_dir)
         if self.name == "matbench_mp_e_form":
+            from mb_data_process import write_dataset_csv, split
+
             json_file = raw_parent / "matbench_mp_e_form.json"
             if not json_file.is_file():
                 with open(str(json_file), "wb") as j:
@@ -159,20 +173,13 @@ class CrystalGraph(InMemoryDataset):
         proc_dir.mkdir(parents=True, exist_ok=True)
         for idx, row in data_df.iterrows():
             struct = Structure.from_str(row["cif"], fmt="cif")
-<<<<<<< HEAD
             if self.name == "mp20":
                 target = "formation_energy_per_atom"
                 SGA = SpacegroupAnalyzer(struct)
                 struct = SGA.get_conventional_standard_structure()
-=======
-            # SGA = SpacegroupAnalyzer(struct)
-            # struct = SGA.get_conventional_standard_structure()
-            if self.name == "mp20":
-                target = "formation_energy_per_atom"
->>>>>>> 932b8be16e2f4be2eedc9a101ca69fd941938d57
             else:
                 target = "Eform"
-            y = row[target]
+            y = torch.tensor(row[target], dtype=torch.float32)
             not_comp_cols = [
                 "cif",
                 target,
@@ -183,16 +190,34 @@ class CrystalGraph(InMemoryDataset):
                 "alpha",
                 "beta",
                 "gamma",
+                "material_id",
+                "band_gap",
+                "e_above_hull",
             ]
             data = pymatgen_structure_to_graph(struct, self.a2g)
-            data.y = y
-            data.comp = []
+            if self.ytransform is not None:
+                data.y = ((y - self.ytransform["mean"]) / self.ytransform["std"]).to(
+                    torch.float32
+                )
+            else:
+                data.y = y
+            comp = []
             for col in data_df.columns[1:]:
                 if col not in not_comp_cols:
-                    data.comp.append(row[col])
-            data.lp = [row[i] for i in ["a", "b", "c", "alpha", "beta", "gamma"]]
-            data.sg = row["Space Group"]
+                    comp.append(row[col])
+            data.comp = torch.tensor(comp, dtype=torch.int32)
+            lp = torch.tensor(
+                [row[i] for i in ["a", "b", "c", "alpha", "beta", "gamma"]],
+                dtype=torch.int32,
+            )
+            if self.xtransform is not None:
+                data.lp = (lp - self.xtransform["mean"] / self.xtransform["std"]).to(
+                    torch.float32
+                )
+            else:
+                data.lp = lp
+            data.sg = torch.tensor(row["Space Group"], dtype=torch.int32)
             data_list.append(data)
-        # data, slices = self.collate(data_list)
-        data, slices = collate(data_list)
+        data, slices = self.collate(data_list)
+        # data, slices = collate(data_list)
         torch.save((data, slices), self.processed_paths[0])
