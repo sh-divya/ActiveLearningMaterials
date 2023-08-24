@@ -14,6 +14,7 @@ from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from torch.utils.data import Dataset, DataLoader
 from torch_geometric.data import Data, download_url
 from torch_geometric.data import InMemoryDataset
+from torch_geometric.loader import DataLoader as GraphLoader
 
 DAVE_PATH = Path(__file__).parent.parent
 sys.path.append(str(DAVE_PATH / "utils"))
@@ -94,6 +95,7 @@ class CrystalGraph(InMemoryDataset):
         if transform is not None:
             self.xtransform = transform["x"]
             self.ytransform = transform["y"]
+            transform = None
         else:
             self.xtransform = None
             self.ytransform = None
