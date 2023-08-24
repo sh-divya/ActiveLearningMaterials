@@ -5,6 +5,7 @@ from torch_scatter import scatter
 from torch_geometric.nn.dense import DenseGATConv, DenseGCNConv
 from torch_geometric.nn.norm import GraphNorm
 from torch_geometric.utils import to_dense_batch
+from faenet.model import FAENet
 
 
 def weights_init(m):
@@ -54,6 +55,9 @@ def make_model(config):
             alphabet=config["alphabet"],
             conv=config["model"]["conv"],
         )
+        return model
+    elif config["config"].startswith("fae"):
+        model = FAENet()
         return model
     else:
         raise ValueError(f"Unknown model config: {config['config']}")
