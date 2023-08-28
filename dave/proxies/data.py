@@ -16,10 +16,13 @@ from torch_geometric.data import Data, download_url
 from torch_geometric.data import InMemoryDataset
 from torch_geometric.loader import DataLoader as GraphLoader
 
-DAVE_PATH = Path(__file__).parent.parent
-sys.path.append(str(DAVE_PATH / "utils"))
 
-from atoms_to_graph import AtomsToGraphs, pymatgen_structure_to_graph, collate
+from dave.utils.atoms_to_graph import (
+    AtomsToGraphs,
+    pymatgen_structure_to_graph,
+    collate,
+    compute_neighbors,
+)
 
 
 class CrystalFeat(Dataset):
@@ -141,7 +144,7 @@ class CrystalGraph(InMemoryDataset):
             )
             write_data_csv(self.raw_dir)
         if self.name == "matbench_mp_e_form":
-            from mb_data_process import write_dataset_csv, split
+            from dave.utils.mb_data_process import write_dataset_csv, split
 
             json_file = raw_parent / "matbench_mp_e_form.json"
             if not json_file.is_file():
@@ -222,4 +225,10 @@ class CrystalGraph(InMemoryDataset):
             data_list.append(data)
         data, slices = self.collate(data_list)
         # data, slices = collate(data_list)
+        Path(self.processed_paths[0]).parent.mkdir(exist_ok=True, parents=True)
         torch.save((data, slices), self.processed_paths[0])
+
+    def get(self, idx):
+        data = super().get(idx)
+        data.neighbors = compute_neighbors(data, data.edge_index)
+        return data
