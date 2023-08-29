@@ -77,7 +77,8 @@ class ProxyModule(pl.LightningModule):
             scheduler = optim.lr_scheduler.ReduceLROnPlateau(
                 optimizer,
                 factor=self.config["optim"]["scheduler"]["decay_factor"],
-                patience=self.config["optim"]["es_patience"],
+                patience=self.config["optim"]["scheduler"].get("patience")
+                or self.config["optim"]["es_patience"],
             )
         elif self.config["optim"]["scheduler"]["name"] == "StepLR":
             scheduler = optim.lr_scheduler.StepLR(
