@@ -7,5 +7,5 @@
 
 module load anaconda/3 cuda/11.7
 conda activate crystal-proxy
-cd /home/mila/s/schmidtv/ocp-project/ActiveLearningMaterials
+cd /home/mila/s/schmidtv/ocp-project/run-repos/ActiveLearningMaterials-dev
 wandb agent --count 150 mila-ocp/ActiveLearningMaterials/ua95pu8h  # sweep_id
