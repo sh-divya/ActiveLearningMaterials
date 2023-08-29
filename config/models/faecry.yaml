@@ -1,0 +1,12 @@
+optim:
+  batch_size: 64
+  lr: 0.0012
+  epochs: 40
+  es_patience: 7
+  scheduler:
+    name: ReduceLROnPlateau
+    decay_factor: 0.5
+    patience: 5
+frame_averaging: 3D
+fa_method: all
+return_pyxtal: True
