@@ -8,7 +8,7 @@ BASE_PATH = Path(__file__).parent.parent
 script_path = BASE_PATH.parent / "scripts"
 sys.path.append(str(script_path))
 
-from cdvae_csv import feature_per_struc, FEATURE_KEYS
+from dave.utils.cdvae_csv import feature_per_struc, FEATURE_KEYS
 from data_dist import plots_from_df
 
 import torch
@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 from torch.utils.data import Dataset
 from sklearn.metrics import pairwise_distances
 from pymatgen.core.structure import Structure
+
 from otdd.pytorch.distance import DatasetDistance
 from verstack.stratified_continuous_split import scsplit
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
@@ -96,7 +97,7 @@ def write_dataset_csv(read_path, write_base, data):
     targets = ["Eform", "Band Gap"]
 
     for i, db in enumerate(db_name):
-        if i in [int(d) for d in data]:
+        if i in set([int(d) for d in data]):
             y = []
             proxy_features = {key: [] for key in FEATURE_KEYS}
             cif_str = []
