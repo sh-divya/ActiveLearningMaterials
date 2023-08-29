@@ -1,27 +1,30 @@
-import os
-import sys
 import gzip
-import torch
-import requests
-import tempfile
-import pandas as pd
+import os
 import os.path as osp
+import sys
+import tempfile
 from pathlib import Path
-from typing import Callable, List, Any, Sequence
+from typing import Any, Callable, List, Sequence
+
+import pandas as pd
+import requests
+import torch
+from faenet.transforms import FrameAveraging
 from pymatgen.core.structure import Structure
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
-
-from torch.utils.data import Dataset, DataLoader
-from torch_geometric.data import Data, download_url
-from torch_geometric.data import InMemoryDataset
+from pyxtal import pyxtal
+from pyxtal.lattice import Lattice
+from torch.utils.data import DataLoader, Dataset
+from torch_geometric.data import Data, InMemoryDataset, download_url
 from torch_geometric.loader import DataLoader as GraphLoader
-
+from tqdm import tqdm
 
 from dave.utils.atoms_to_graph import (
     AtomsToGraphs,
-    pymatgen_structure_to_graph,
     collate,
     compute_neighbors,
+    pymatgen_structure_to_graph,
+    pymatgen_struct_to_pyxtal_to_graphs,
 )
 
 
@@ -84,9 +87,16 @@ class CrystalGraph(InMemoryDataset):
         pre_filter=None,
         name="mp20",
         subset="train",
+        frame_averaging=None,
+        fa_method=None,
+        return_pyxtal=False,
     ):
         self.name = name
         self.subset = subset
+        self.frame_averaging = frame_averaging
+        self.fa_method = fa_method
+        self.return_pyxtal = return_pyxtal
+
         self.a2g = AtomsToGraphs(
             max_neigh=50,
             radius=6.0,
@@ -104,6 +114,11 @@ class CrystalGraph(InMemoryDataset):
             self.ytransform = None
         super().__init__(root, transform, pre_transform, pre_filter)
         self.data, self.slices = torch.load(self.processed_paths[0])
+
+        self.fa_transform = None
+        if self.frame_averaging is not None:
+            assert self.fa_method is not None
+            self.fa_transform = FrameAveraging(self.frame_averaging, self.fa_method)
 
     @property
     def raw_dir(self) -> str:
@@ -144,16 +159,20 @@ class CrystalGraph(InMemoryDataset):
             )
             write_data_csv(self.raw_dir)
         if self.name == "matbench_mp_e_form":
-            from dave.utils.mb_data_process import write_dataset_csv, split
+            from dave.utils.mb_data_process import split, write_dataset_csv
 
             json_file = raw_parent / "matbench_mp_e_form.json"
             if not json_file.is_file():
+                json_url = "https://ml.materialsproject.org/projects/matbench_mp_e_form.json.gz"
+                print("Downloading from " + json_url)
                 with open(str(json_file), "wb") as j:
-                    r = requests.get(
-                        "https://ml.materialsproject.org/projects/matbench_mp_e_form.json.gz"
-                    )
+                    r = requests.get(json_url)
                     j.write(gzip.decompress(r.content))
             if not (Path(self.raw_dir) / f"data/{self.name}.csv").is_file():
+                print(
+                    "Writing csv: "
+                    + str((Path(self.raw_dir) / f"data/{self.name}.csv"))
+                )
                 try:
                     write_dataset_csv(
                         [
@@ -176,7 +195,7 @@ class CrystalGraph(InMemoryDataset):
         data_list = []
         proc_dir = Path(self.processed_dir)
         proc_dir.mkdir(parents=True, exist_ok=True)
-        for idx, row in data_df.iterrows():
+        for idx, row in tqdm(data_df.iterrows(), total=len(data_df)):
             struct = Structure.from_str(row["cif"], fmt="cif")
             if self.name == "mp20":
                 target = "formation_energy_per_atom"
@@ -222,6 +241,7 @@ class CrystalGraph(InMemoryDataset):
             else:
                 data.lp = lp
             data.sg = torch.tensor(row["Space Group"], dtype=torch.int32)
+            data.struct = struct
             data_list.append(data)
         data, slices = self.collate(data_list)
         # data, slices = collate(data_list)
@@ -230,5 +250,14 @@ class CrystalGraph(InMemoryDataset):
 
     def get(self, idx):
         data = super().get(idx)
+        pyx_data = None
         data.neighbors = compute_neighbors(data, data.edge_index)
-        return data
+
+        if self.fa_transform is not None:
+            # Careful with pyxtal transofmrs too
+            data = self.fa_transform(data)
+        if self.return_pyxtal:
+            pyx_data = pymatgen_struct_to_pyxtal_to_graphs(
+                data.struct, self.a2g, to_conventional=True, n=1
+            )[0]
+        return data, pyx_data
