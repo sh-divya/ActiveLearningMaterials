@@ -2,6 +2,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --ntasks=1
 #SBATCH --mem=32GB
+#SBATCH --partition=main
 #SBATCH --output=/network/scratch/s/schmidtv/crystals-proxys/runs/sweeps/ua95pu8h/output-%j.out
 #SBATCH --error=/network/scratch/s/schmidtv/crystals-proxys/runs/sweeps/ua95pu8h/error-%j.out
 
