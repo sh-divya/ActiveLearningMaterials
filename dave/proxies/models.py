@@ -56,7 +56,10 @@ def make_model(config):
             conv=config["model"]["conv"],
         )
         return model
-    elif config["config"].startswith("fae"):
+    elif config["config"].startswith("fae-"):
+        model = FAENet()
+        return model
+    elif config["config"].startswith("faecry-"):
         model = FAENet()
         return model
     else:
