@@ -260,4 +260,4 @@ class CrystalGraph(InMemoryDataset):
             pyx_data = pymatgen_struct_to_pyxtal_to_graphs(
                 data.struct, self.a2g, to_conventional=True, n=1
             )[0]
-        return data, pyx_data
+        return data
