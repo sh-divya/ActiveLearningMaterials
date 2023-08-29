@@ -47,12 +47,16 @@ class ProxyModule(pl.LightningModule):
         return loss
 
     def on_validation_epoch_end(self):
-        epoch_val_mae = self.mae.compute()
-        epoch_val_mse = self.mse.compute()
-        if epoch_val_mae < self.best_mae:
-            self.best_mae = epoch_val_mae
-        if epoch_val_mse < self.best_mse:
-            self.best_mse = epoch_val_mse
+        total_val_mae = self.mae.compute()
+        total_val_mse = self.mse.compute()
+
+        self.log("total_val_mae", total_val_mae)
+        self.log("total_val_mse", total_val_mse)
+
+        if total_val_mae < self.best_mae:
+            self.best_mae = total_val_mae
+        if total_val_mse < self.best_mse:
+            self.best_mse = total_val_mse
         self.mae.reset()
         self.mse.reset()
 
