@@ -25,3 +25,5 @@ wheel
 phast
 torch_geometric
 minydra
+matbench
+lmdb

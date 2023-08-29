@@ -1,6 +1,9 @@
+import contextlib
 import copy
 import os
 import random
+import re
+import subprocess
 import sys
 from itertools import product
 from os.path import expandvars
@@ -250,10 +253,11 @@ def load_scales(config):
     return config
 
 
-def load_config() -> dict:
+def load_config(base: dict = {}) -> dict:
     # 1. parse command-line args
     cli_conf = parse_args_to_dict()
     cli_conf["cmd"] = " ".join(sys.argv)
+    cli_conf = merge_dicts(cli_conf, base)
     assert (
         "config" in cli_conf
     ), "Must specify config string as `--config={task}-{model}`"
@@ -282,6 +286,8 @@ def load_config() -> dict:
 
     if "scales" in config:
         config = load_scales(config)
+
+    config = set_cpus_to_workers(config)
     return config
 
 
@@ -395,3 +401,99 @@ def prepare_for_gfn(ckpt_path_dict, release, rescale_outputs, verbose=True):
         print("Proxy ready.")
 
     return model, proxy_loaders, scales
+
+
+@contextlib.contextmanager
+def temp_seed(seed):
+    state = np.random.get_state()
+    np.random.seed(seed)
+    try:
+        yield
+    finally:
+        np.random.set_state(state)
+
+
+def run_command(command):
+    """
+    Run a shell command and return the output.
+    """
+    return subprocess.check_output(command.split(" ")).decode("utf-8").strip()
+
+
+def count_cpus():
+    cpus = None
+    if JOB_ID:
+        try:
+            slurm_cpus = run_command(f"squeue --job {JOB_ID} -o %c").split("\n")[1]
+            cpus = int(slurm_cpus)
+        except subprocess.CalledProcessError:
+            cpus = os.cpu_count()
+    else:
+        cpus = os.cpu_count()
+
+    return cpus
+
+
+def count_gpus():
+    gpus = 0
+    if JOB_ID:
+        try:
+            slurm_gpus = run_command(f"squeue --job {JOB_ID} -o %b").split("\n")[1]
+            gpus = re.findall(r".*(\d+)", slurm_gpus) or 0
+            gpus = int(gpus[0]) if gpus != 0 else gpus
+        except subprocess.CalledProcessError:
+            gpus = torch.cuda.device_count()
+    else:
+        gpus = torch.cuda.device_count()
+
+    return gpus
+
+
+def set_cpus_to_workers(config, silent=None):
+    if not config.get("no_cpus_to_workers"):
+        cpus = count_cpus()
+        gpus = count_gpus()
+        nw = config["optim"].get("num_workers")
+
+        if cpus is not None:
+            if gpus == 0:
+                workers = cpus - 1
+            else:
+                workers = cpus // gpus
+
+            if (silent is False or not config.get("silent")) and (nw) != workers:
+                print(
+                    f"🏭 Overriding num_workers from {nw}",
+                    f"to {workers} to match the machine's CPUs.",
+                    "Use --no_cpus_to_workers=true to disable this behavior.",
+                )
+
+            config["optim"]["num_workers"] = workers
+    return config
+
+
+def load_matbench_train_val_indices(fold, val_frac):
+    import matbench
+
+    fold_str = f"fold_{fold}"
+    mb_val = matbench.metadata.mbv01_validation["splits"]["matbench_mp_e_form"]
+    assert fold_str in mb_val
+
+    indices = np.array(
+        [int(float(i.split("-")[-1])) - 1 for i in mb_val[fold_str]["train"]]
+    )
+
+    with temp_seed(fold):
+        perm = np.random.permutation(len(indices))
+
+    n_val = int(len(indices) * val_frac)
+    val_indices = indices[perm[:n_val]]
+    train_indices = indices[perm[n_val:]]
+
+    print(
+        f"Train samples: {len(train_indices)} "
+        + f"| Val samples: {len(val_indices)}"
+        + f" | Test samples (not loaded): {len(mb_val[fold_str]['test'])}"
+    )
+
+    return train_indices, val_indices
