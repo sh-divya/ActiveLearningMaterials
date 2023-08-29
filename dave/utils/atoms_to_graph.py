@@ -11,6 +11,7 @@ from pyxtal import pyxtal
 from pyxtal.lattice import Lattice
 from torch_geometric.data import Data
 from tqdm import tqdm
+from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from torch_scatter import segment_coo, segment_csr
 
 
@@ -271,17 +272,52 @@ class AtomsToGraphs:
         return data_list
 
 
-def pymatgen_structure_to_graph(struct, a2g: AtomsToGraphs):
+def make_a2g():
+    return AtomsToGraphs(
+        max_neigh=50,
+        radius=6.0,
+        r_energy=False,
+        r_forces=False,
+        r_distances=True,
+        r_edges=True,
+    )
+
+
+def pymatgen_structure_to_graph(struct, a2g: AtomsToGraphs = None):
+    if a2g is None:
+        a2g = make_a2g()
     atoms = AseAtomsAdaptor.get_atoms(struct)
     data = a2g.convert(atoms)
-    split_idx_dist = a2g._get_neighbors_pymatgen(atoms)
-    edge_index, edge_distances, cell_offsets = a2g._reshape_features(*split_idx_dist)
-
-    data.edge_index = edge_index
-    data.cell_offsets = cell_offsets
-    data.distances = edge_distances
-
     return data
+
+
+def pymatgen_struct_to_pyxtal_to_graphs(struct, a2g=None, to_conventional=True, n=1):
+    # %timeit pymatgen_struct_to_pyxtal_to_graph(Structure.from_str(data_df.sample().iloc[0]["cif"], fmt="cif"))
+    # 279 ms ± 178 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
+    if a2g is None:
+        a2g = make_a2g()
+    if to_conventional:
+        SGA = SpacegroupAnalyzer(struct)
+        struct = SGA.get_conventional_standard_structure()
+    spg: int = struct.get_space_group_info()[1]
+    comp: dict = struct.composition.get_el_amt_dict()
+    ltype: str = SpacegroupAnalyzer(struct).get_crystal_system()
+    lattice = Lattice.from_para(
+        *struct.lattice.abc, *struct.lattice.angles, ltpye=ltype
+    )
+    results = []
+    for _ in range(n):
+        s = pyxtal()
+        s.from_random(
+            3,
+            spg,
+            list(comp.keys()),  # Species strings
+            list(comp.values()),  # Species counts
+            lattice=lattice,
+            conventional=to_conventional,
+        )
+        results.append(pymatgen_structure_to_graph(s.to_pymatgen(), a2g))
+    return results
 
 
 if __name__ == "__main__":
@@ -305,14 +341,7 @@ if __name__ == "__main__":
     print(s)
     struct = s.to_pymatgen()
 
-    a2g = AtomsToGraphs(
-        max_neigh=50,
-        radius=6.0,
-        r_energy=False,
-        r_forces=False,
-        r_distances=True,
-        r_edges=False,
-    )
+    a2g = make_a2g()
 
     data = pymatgen_structure_to_graph(struct, a2g)
 
