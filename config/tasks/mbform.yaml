@@ -1,4 +1,4 @@
-src: /network/scratch/s/schmidtv/crystals-proxys/data/materials_dataset_v0
+src: /network/scratch/s/schmidtv/crystals-proxys/data/materials_dataset_v0/data/matbench_mp_e_form
 target: Eform
 scales:
   x:
