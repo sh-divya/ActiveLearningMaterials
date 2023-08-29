@@ -12,17 +12,6 @@ from pymatgen.core.structure import Structure
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
 from torch.utils.data import Dataset, DataLoader
-from torch_geometric.data import Data, download_url
-from torch_geometric.data import InMemoryDataset
-from torch_geometric.loader import DataLoader as GraphLoader
-
-
-from dave.utils.atoms_to_graph import (
-    AtomsToGraphs,
-    pymatgen_structure_to_graph,
-    collate,
-    compute_neighbors,
-)
 
 
 class CrystalFeat(Dataset):
