@@ -12,24 +12,39 @@ def make_loaders(config):
     else:
         ROOT = Path(config["root"]).resolve()
 
-    if config["config"].endswith("-mp20"):
+    if data == "mp20":
         name = "mp20"
-        pass
-    elif config["config"].endswith("-mbform"):
+    elif data == "mbform":
         name = "matbench_mp_e_form"
         config["model"]["input_len"] = 91
-    elif config["config"].endswith("-mbgap"):
+    elif data == "mbgap":
         config["model"]["input_len"] = 91
     else:
         raise ValueError(f"Unknown config: {config['config']}")
 
-    if model == "fae":
+    if model in {"fae", "faecry"}:
         load_class = GraphLoader
         trainset = CrystalGraph(
-            str(config["root"]), name=name, subset="train", transform=config["scales"]
+            root=str(config["root"]),
+            transform=config["scales"],
+            pre_transform=None,
+            pre_filter=None,
+            name=name,
+            frame_averaging=config.get("frame_averaging"),
+            fa_method=config.get("frame_averaging"),
+            return_pyxtal=config.get("frame_averaging"),
+            subset="train",
         )
         valset = CrystalGraph(
-            str(config["root"]), name=name, subset="val", transform=config["scales"]
+            root=str(config["root"]),
+            transform=config["scales"],
+            pre_transform=None,
+            pre_filter=None,
+            name=name,
+            frame_averaging=config.get("frame_averaging"),
+            fa_method=config.get("fa_method"),
+            return_pyxtal=config.get("return_pyxtal"),
+            subset="val",
         )
     else:
         load_class = DataLoader
