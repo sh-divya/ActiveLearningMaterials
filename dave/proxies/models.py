@@ -6,6 +6,7 @@ from torch_geometric.nn.dense import DenseGATConv, DenseGCNConv
 from torch_geometric.nn.norm import GraphNorm
 from torch_geometric.utils import to_dense_batch
 from faenet.model import FAENet
+from faenet import model_forward as fae_model_forward
 
 
 def weights_init(m):
@@ -359,3 +360,14 @@ class ProxyGraphModel(nn.Module):
         # Concatenate and predict
         x = torch.cat((comp_x, sg_x, lat_x), dim=-1)
         return self.prediction_head(x)
+
+
+class GLFAENet(nn.Module):
+    # PROTOTYPE: to be updated
+    def __init__(self, config):
+        super().__init__()
+        self.fae = FAENet(config)
+
+    def forward(self, x):
+        x = self.fae(x)
+        return fae_model_forward(x)
