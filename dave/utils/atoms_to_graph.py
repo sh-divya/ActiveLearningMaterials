@@ -9,9 +9,24 @@ from pymatgen.io.ase import AseAtomsAdaptor
 import pymatgen
 from pyxtal import pyxtal
 from pyxtal.lattice import Lattice
-from pymatgen.core.periodic_table import Element
 from torch_geometric.data import Data
 from tqdm import tqdm
+from torch_scatter import segment_coo, segment_csr
+
+
+def compute_neighbors(data, edge_index):
+    # Get number of neighbors
+    # segment_coo assumes sorted index
+    ones = edge_index[1].new_ones(1).expand_as(edge_index[1])
+    num_neighbors = segment_coo(ones, edge_index[1], dim_size=data.natoms.sum())
+
+    # Get number of neighbors per image
+    image_indptr = torch.zeros(
+        data.natoms.shape[0] + 1, device=data.pos.device, dtype=torch.long
+    )
+    image_indptr[1:] = torch.cumsum(data.natoms, dim=0)
+    neighbors = segment_csr(num_neighbors, image_indptr)
+    return neighbors
 
 
 def collate(data_list):
@@ -269,54 +284,6 @@ def pymatgen_structure_to_graph(struct, a2g: AtomsToGraphs):
     return data
 
 
-def state_to_pyxtal_graph(
-    composition: list,
-    lattice_parameters: list,
-    lattice_type: str,
-    space_group: int,
-    converter: AtomsToGraphs,
-):
-    """
-    Convert a state to a pyxtal graph.
-
-    Args:
-        composition (list): A list of integers representing the composition.
-        lattice_parameters (list): A list of floats representing the lattice parameters.
-        lattice_type (str): A string representing the lattice type eg. "triclinic".
-        space_group (int): An integer representing the space group.
-        converter (AtomsToGraphs): An AtomsToGraphs object.
-    """
-    cell = Lattice.from_para(*lattice_parameters, ltype=lattice_type)
-    element_ids = np.nonzero(composition)
-    element_counts = composition[element_ids]
-
-    element_symbols = [Element.from_Z(i).symbol for i in element_ids]
-
-    sites = [
-        {
-            "4e": [0.0000, 0.0000, 0.2418],
-            "4g": [0.1294, 0.6392, 0.0000],
-        },
-        {
-            "4g": [0.2458, 0.2522, 0.0000],
-        },
-        {
-            "4g": [0.4241, 0.3636, 0.0000],
-        },  # partial information on O sites
-    ]
-
-    s = pyxtal()
-    s.from_random(
-        3,
-        space_group,
-        element_symbols,
-        element_counts,
-        lattice=cell,
-        # sites=sites,
-    )
-    return pymatgen_structure_to_graph(s.to_pymatgen(), converter)
-
-
 if __name__ == "__main__":
     # Crystal positions sampling
     cell = Lattice.from_para(7.8758, 7.9794, 5.6139, 90, 90, 90, ltype="orthorhombic")
@@ -341,6 +308,10 @@ if __name__ == "__main__":
     a2g = AtomsToGraphs(
         max_neigh=50,
         radius=6.0,
+        r_energy=False,
+        r_forces=False,
+        r_distances=True,
+        r_edges=False,
     )
 
     data = pymatgen_structure_to_graph(struct, a2g)
