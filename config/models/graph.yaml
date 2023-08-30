@@ -25,9 +25,10 @@ model:
 optim:
   batch_size: 256
   lr: 0.0012
-  epochs: 40
+  epochs: 100
   es_patience: 7
   scheduler:
-    name: ""  # StepLR, ReduceLROnPlateau
+    name: ReduceLROnPlateau
+    patience: 4
     step_size: 5000
     decay_factor: 0.5

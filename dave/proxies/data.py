@@ -23,8 +23,8 @@ from dave.utils.atoms_to_graph import (
     AtomsToGraphs,
     collate,
     compute_neighbors,
-    pymatgen_structure_to_graph,
     pymatgen_struct_to_pyxtal_to_graphs,
+    pymatgen_structure_to_graph,
 )
 
 

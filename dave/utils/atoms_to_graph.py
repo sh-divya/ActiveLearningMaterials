@@ -4,15 +4,15 @@ import ase
 import ase.db.sqlite
 import ase.io.trajectory
 import numpy as np
+import pymatgen
 import torch
 from pymatgen.io.ase import AseAtomsAdaptor
-import pymatgen
+from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pyxtal import pyxtal
 from pyxtal.lattice import Lattice
 from torch_geometric.data import Data
-from tqdm import tqdm
-from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from torch_scatter import segment_coo, segment_csr
+from tqdm import tqdm
 
 
 def compute_neighbors(data, edge_index):

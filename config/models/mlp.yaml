@@ -9,6 +9,7 @@ optim:
   epochs: 50
   es_patience: 5
   scheduler:
-    name: ""  # StepLR, ReduceLROnPlateau
+    name: ReduceLROnPlateau
+    patience: 4
     step_size: 5000
     decay_factor: 0.5
