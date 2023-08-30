@@ -6,6 +6,7 @@ import pytorch_lightning as pl
 import torch.nn as nn
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning.loggers.logger import DummyLogger
 
 from dave.proxies.models import make_model
 from dave.proxies.pl_modules import ProxyModule
@@ -44,7 +45,7 @@ if __name__ == "__main__":
             tags=config["wandb_tags"],
         )
     else:
-        logger = None
+        logger = DummyLogger()
         print(
             "\n🛑Debug mode: run dir was not created, checkpoints"
             + " will not be saved, and no logger will be used\n"
