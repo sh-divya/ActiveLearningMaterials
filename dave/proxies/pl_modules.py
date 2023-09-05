@@ -25,7 +25,7 @@ class ProxyModule(pl.LightningModule):
             y = batch.y
         else:
             x, y = batch
-        out = self.model(x), batch_idx.squeeze(-1)
+        out = self.model(x, batch_idx).squeeze(-1)
         loss = self.criterion(out, y)
         mae = self.mae(out, y)
         mse = self.mse(out, y)
