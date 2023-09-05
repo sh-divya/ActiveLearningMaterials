@@ -69,7 +69,14 @@ def write_data_csv(root):
         master_df.append(sub_df)
         sub_lens.append(len(sub_df))
     master_df = pd.concat(master_df, axis=0, ignore_index=True)
-    master_df = pd.concat([master_df, df.loc[:, (df != 0).any()]], axis=1)
+    master_df = pd.concat(
+        [
+            master_df,
+            df.iloc[:, : df.columns.get_loc(df.columns[(df != 0).any()][-1]) + 1],
+        ],
+        axis=1,
+    )
+
     for i, l in enumerate(sub_lens):
         if i == 0:
             low = 0

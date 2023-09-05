@@ -115,7 +115,9 @@ def write_dataset_csv(read_path, write_base, data):
             proxy_features[targets[i]] = y
             proxy_features["cif"] = cif_str
             df = pd.DataFrame.from_dict(proxy_features)
-            df = df.loc[:, (df != 0).any()]
+            df = df.iloc[
+                :, : df.columns.get_loc(df.columns[(df != 0).any()][-3]) + 1
+            ].join(df.iloc[:, -2:])
             df.to_csv(write_base / db / "data" / (db + ".csv"))
 
 
