@@ -143,7 +143,7 @@ class CrystalGraph(InMemoryDataset):
         temp_raw = Path(self.raw_dir) / "data"
         temp_raw.mkdir(parents=True, exist_ok=True)
         if self.name == "mp20":
-            from cdvae_csv import write_data_csv
+            from dave.utils.cdvae_csv import write_data_csv
 
             download_url(
                 f"https://raw.githubusercontent.com/txie-93/cdvae/main/data/mp_20/train.csv",
@@ -252,7 +252,7 @@ class CrystalGraph(InMemoryDataset):
         data = super().get(idx)
         pyx_data = None
         data.neighbors = compute_neighbors(data, data.edge_index)
-
+        data.tags = 0
         if self.fa_transform is not None:
             # Careful with pyxtal transofmrs too
             data = self.fa_transform(data)

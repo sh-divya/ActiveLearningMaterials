@@ -4,6 +4,7 @@ from phast.embedding import PhysEmbedding
 from torch_scatter import scatter
 from torch_geometric.nn.dense import DenseGATConv, DenseGCNConv
 from torch_geometric.nn.norm import GraphNorm
+from torch_geometric.nn import global_mean_pool
 from torch_geometric.utils import to_dense_batch
 from faenet.model import FAENet
 from faenet import model_forward as fae_model_forward
@@ -156,7 +157,7 @@ class ProxyMLP(nn.Module):
             hidden_channels = in_feat
         self.nn_layers.append(nn.Linear(hidden_channels, 1))
 
-    def forward(self, x):
+    def forward(self, x, batch=None):
         if self.concat:
             x[1] = x[1].unsqueeze(dim=-1)
             x = torch.cat(x, dim=-1)
@@ -214,7 +215,7 @@ class ProxyEmbeddingModel(nn.Module):
             self._alphabet = torch.Tensor(alphabet)
         self.register_buffer("alphabet", self._alphabet)
 
-    def forward(self, x):
+    def forward(self, x, batch=None):
         comp_x, sg_x, lat_x = x
         # comp_x -> batch_size x n_elements=89
         # sg_x -> batch_size, int
@@ -232,7 +233,8 @@ class ProxyEmbeddingModel(nn.Module):
                 torch.arange(comp_x.shape[0]).to(comp_x.device),
                 comp_x.sum(dim=1).long(),
             )
-            comp_x = self.phys_emb(self.alphabet[z].to(torch.int32))
+            comp_x = self.phys_emb(z).to(torch.int32)
+            # comp_x = self.phys_emb(self.alphabet[z].to(torch.int32))
             comp_x = scatter(comp_x, batch_mask, dim=0, reduce="mean")
         else:
             comp_x = self.comp_emb_mlp(comp_x)
@@ -327,7 +329,7 @@ class ProxyGraphModel(nn.Module):
             self._alphabet = torch.Tensor(alphabet)
         self.register_buffer("alphabet", self._alphabet)
 
-    def forward(self, x):
+    def forward(self, x, batch=None):
         # Process the space group
         sg_x = x[1].long()
         sg_x = self.sg_emb(sg_x).squeeze(1)
@@ -347,8 +349,8 @@ class ProxyGraphModel(nn.Module):
             x[0].sum(dim=1).to(torch.int32),
         )
         # Derive physics aware embeddings
-        # comp_x = self.phys_emb(z)
-        comp_x = self.phys_emb(self.alphabet[z].to(torch.int32))
+        comp_x = self.phys_emb(z).to(torch.int32)
+        # comp_x = self.phys_emb(self.alphabet[z].to(torch.int32))
 
         # Add space group and lattice embeddings to node attributes
         if self.add_to_node:
@@ -371,3 +373,18 @@ class GLFAENet(nn.Module):
     def forward(self, x):
         x = self.fae(x)
         return fae_model_forward(x)
+
+
+class ArchFAE(nn.Module):
+    def __init__(self, alphabet=[]):
+        super().__init__()
+        self.base_fae = FAENet(tag_hidden_channels=0)
+        # if not alphabet:
+        #     self._alphabet = torch.Tensor(list(range(comp_size)))
+        # else:
+        # self._alphabet = torch.Tensor(alphabet)
+        # self.register_buffer("alphabet", self._alphabet)
+
+    def forward(self, data, batch=None):
+        node_level_preds = self.base_fae.energy_forward(data)["energy"]
+        return global_mean_pool(node_level_preds, batch)

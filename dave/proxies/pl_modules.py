@@ -20,8 +20,12 @@ class ProxyModule(pl.LightningModule):
         self.active_logger = config.get("debug") is None
 
     def training_step(self, batch, batch_idx):
-        x, y = batch
-        out = self.model(x).squeeze(-1)
+        if self.config["config"].startswith("fae-"):
+            x = batch
+            y = batch.y
+        else:
+            x, y = batch
+        out = self.model(x), batch_idx.squeeze(-1)
         loss = self.criterion(out, y)
         mae = self.mae(out, y)
         mse = self.mse(out, y)
@@ -35,8 +39,12 @@ class ProxyModule(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        x, y = batch
-        out = self.model(x).squeeze(-1)
+        if self.config["config"].startswith("fae-"):
+            x = batch
+            y = batch.y
+        else:
+            x, y = batch
+        out = self.model(x, batch_idx).squeeze(-1)
         loss = self.criterion(out, y)
         mae = self.mae(out, y)
         mse = self.mse(out, y)
@@ -68,7 +76,10 @@ class ProxyModule(pl.LightningModule):
             print(f"\nBest MAE: {self.best_mae}\n")
 
     def test_step(self, batch, batch_idx):
-        x, _ = batch
+        if self.config["config"].startswith("fae-"):
+            x = batch
+        else:
+            x, _ = batch
         s = time.time()
         _ = self.model(x).squeeze(-1)
         sample_inf_time = (time.time() - s) / batch[0][0].shape[0]
