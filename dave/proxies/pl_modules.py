@@ -18,9 +18,13 @@ class ProxyModule(pl.LightningModule):
         self.best_mse = 10e6
         self.save_hyperparameters(config)
         self.active_logger = config.get("debug") is None
+        self.graph = False
+        model = self.config["config"].split("-")[0]
+        if model in ["fae", "faecry", "sch"]:
+            self.graph = True
 
     def training_step(self, batch, batch_idx):
-        if self.config["config"].startswith("fae-"):
+        if self.graph:
             x = batch
             y = batch.y
         else:
@@ -39,7 +43,7 @@ class ProxyModule(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        if self.config["config"].startswith("fae-"):
+        if self.graph:
             x = batch
             y = batch.y
         else:
@@ -76,7 +80,7 @@ class ProxyModule(pl.LightningModule):
             print(f"\nBest MAE: {self.best_mae}\n")
 
     def test_step(self, batch, batch_idx):
-        if self.config["config"].startswith("fae-"):
+        if self.graph:
             x = batch
         else:
             x, _ = batch

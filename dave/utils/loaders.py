@@ -20,13 +20,13 @@ def make_loaders(config):
         name = "mp20"
     elif data == "mbform":
         name = "matbench_mp_e_form"
-        config["model"]["input_len"] = 91
+        config["model"]["input_len"] = 101
     elif data == "mbgap":
-        config["model"]["input_len"] = 91
+        config["model"]["input_len"] = 101
     else:
         raise ValueError(f"Unknown config: {config['config']}")
 
-    if model in {"fae", "faecry"}:
+    if model in {"fae", "faecry", "sch"}:
         load_class = GraphLoader
         trainset = CrystalGraph(
             root=str(config["root"]),
@@ -69,9 +69,17 @@ def make_loaders(config):
 
     return {
         "train": load_class(
-            trainset, batch_size=config["optim"]["batch_size"], shuffle=True
+            trainset,
+            batch_size=config["optim"]["batch_size"],
+            shuffle=True,
+            pin_memory=True,
+            num_workers=config["optim"].get("num_workers", 0),
         ),
         "val": load_class(
-            valset, batch_size=config["optim"]["batch_size"], shuffle=False
+            valset,
+            batch_size=config["optim"]["batch_size"],
+            shuffle=False,
+            pin_memory=True,
+            num_workers=config["optim"].get("num_workers", 0),
         ),
     }

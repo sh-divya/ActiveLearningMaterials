@@ -3,8 +3,8 @@ import torch
 from phast.embedding import PhysEmbedding
 from torch_scatter import scatter
 from torch_geometric.nn.dense import DenseGATConv, DenseGCNConv
-from torch_geometric.nn.norm import GraphNorm
 from torch_geometric.nn import global_mean_pool
+from torch_geometric.nn import models as graph_nn
 from torch_geometric.utils import to_dense_batch
 from faenet.model import FAENet
 from faenet import model_forward as fae_model_forward
@@ -63,6 +63,9 @@ def make_model(config):
         return model
     elif config["config"].startswith("faecry-"):
         model = FAENet()
+        return model
+    elif config["config"].startswith("sch-"):
+        model = BaSch()
         return model
     else:
         raise ValueError(f"Unknown model config: {config['config']}")
@@ -376,15 +379,44 @@ class GLFAENet(nn.Module):
 
 
 class ArchFAE(nn.Module):
-    def __init__(self, alphabet=[]):
+    def __init__(
+        self,
+        comp_size: int,
+        comp_num_layers: int,
+        comp_hidden_channels: int,
+        comp_phys_embeds: int,
+    ):
         super().__init__()
         self.base_fae = FAENet(tag_hidden_channels=0)
-        # if not alphabet:
-        #     self._alphabet = torch.Tensor(list(range(comp_size)))
-        # else:
-        # self._alphabet = torch.Tensor(alphabet)
-        # self.register_buffer("alphabet", self._alphabet)
+        hidden_channels = self.base_fae.hidden_channels
+        phys_hidden_channels = self.base_fae.phys_hidden_channels
+        pg_hidden_channels = self.base_fae.pg_hidden_channels
+        self.replace_emb = nn.Embedding(
+            comp_size, hidden_channels - phys_hidden_channels - 2 * pg_hidden_channels
+        )
+        self.base_fae.emb = self.replace_emb
 
     def forward(self, data, batch=None):
         node_level_preds = self.base_fae.energy_forward(data)["energy"]
         return global_mean_pool(node_level_preds, batch)
+
+
+class BaSch(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.schnet = graph_nn.SchNet(
+            hidden_channels=64,
+            num_filters=64,
+            num_interactions=3,
+            num_gaussians=60,
+            cutoff=6.0,
+            max_num_neighbors=50,
+            readout="mean",
+        )
+
+    def forward(self, x, batch_idx):
+        z = x.atomic_numbers.int()
+        atom_pos = x.pos
+        print(batch_idx)
+        print(type(batch_idx))
+        return self.schnet(z, atom_pos, batch_idx)
