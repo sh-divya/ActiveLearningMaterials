@@ -252,12 +252,12 @@ def load_scales(config):
     return config
 
 
-def load_config() -> dict:
+def load_config(args_overwrite={}) -> dict:
     # 1. parse command-line args
-    cli_conf = parse_args_to_dict()
+    cli_conf = {**parse_args_to_dict(), **args_overwrite}
     cli_conf["cmd"] = " ".join(sys.argv)
     assert (
-        "config" in cli_conf
+        "config" in cli_conf and cli_conf["config"] is not None
     ), "Must specify config string as `--config={task}-{model}`"
     # 2. load config files
     model, task = cli_conf["config"].split("-")
