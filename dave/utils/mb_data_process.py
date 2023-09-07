@@ -53,6 +53,10 @@ class DFdataset(Dataset):
 @click.option("--write_base", default="./dave/proxies")
 @click.option("--data", default="0")
 def write_dataset_csv(read_path, write_base, data):
+    return base_write_dataset_csv(read_path, write_base, data)
+
+
+def base_write_dataset_csv(read_path, write_base, data):
     """
     Reads JSON files and extracts relevant features.
 
@@ -128,6 +132,9 @@ def write_dataset_csv(read_path, write_base, data):
 @click.option("--write_path", default=None)
 @click.option("--verbose", is_flag=True, default=False)
 def split(base_path, data_select, strategy, write_path, verbose):
+    return split(base_path, data_select, strategy, write_path, verbose):
+
+def base_split(base_path, data_select, strategy, write_path, verbose):
     """
     Splits data into training, validation, and test sets based on specified strategy.
 

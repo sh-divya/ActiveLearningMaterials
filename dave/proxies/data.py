@@ -152,7 +152,7 @@ class CrystalGraph(InMemoryDataset):
             )
             write_data_csv(self.raw_dir)
         if self.name == "matbench_mp_e_form":
-            from dave.utils.mb_data_process import split, write_dataset_csv
+            from dave.utils.mb_data_process import base_split, base_write_dataset_csv
 
             json_file = raw_parent / "matbench_mp_e_form.json"
             if not json_file.is_file():
@@ -166,22 +166,10 @@ class CrystalGraph(InMemoryDataset):
                     "Writing csv: "
                     + str((Path(self.raw_dir) / f"data/{self.name}.csv"))
                 )
-                try:
-                    write_dataset_csv(
-                        [
-                            "--read_path",
-                            str(raw_parent),
-                            "--write_base",
-                            str(raw_parent),
-                            "--data",
-                            "0",
-                        ]
-                    )
-                except SystemExit as err:
-                    split(["--base_path", raw_parent, "--data_select", "0"])
-                    return
+                base_write_dataset_csv(str(raw_parent), str(raw_parent), 0)
+                base_split(raw_parent, 0)
             else:
-                split(["--base_path", raw_parent, "--data_select", "0"])
+                base_split(raw_parent, 0)
 
     def process(self):
         data_df = pd.read_csv(osp.join(self.raw_dir, self.raw_file_names[0]))
