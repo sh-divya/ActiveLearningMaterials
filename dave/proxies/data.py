@@ -20,7 +20,7 @@ from torch_geometric.loader import DataLoader as GraphLoader
 from tqdm import tqdm
 
 from dave.utils.atoms_to_graph import (
-    AtomsToGraphs,
+    make_a2g,
     collate,
     compute_neighbors,
     pymatgen_struct_to_pyxtal_to_graphs,
@@ -97,14 +97,7 @@ class CrystalGraph(InMemoryDataset):
         self.fa_method = fa_method
         self.return_pyxtal = return_pyxtal
 
-        self.a2g = AtomsToGraphs(
-            max_neigh=50,
-            radius=6.0,
-            r_energy=False,
-            r_forces=False,
-            r_distances=True,
-            r_edges=False,
-        )
+        self.a2g = make_a2g()
         if transform is not None:
             self.xtransform = transform["x"]
             self.ytransform = transform["y"]
