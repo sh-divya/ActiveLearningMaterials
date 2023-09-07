@@ -19,6 +19,7 @@ from torch_geometric.data import Data, InMemoryDataset, download_url
 from torch_geometric.loader import DataLoader as GraphLoader
 from tqdm import tqdm
 
+
 from dave.utils.atoms_to_graph import (
     make_a2g,
     collate,

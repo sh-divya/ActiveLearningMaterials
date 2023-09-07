@@ -85,8 +85,12 @@ class ProxyModule(pl.LightningModule):
         else:
             x, _ = batch
         s = time.time()
-        _ = self.model(x).squeeze(-1)
-        sample_inf_time = (time.time() - s) / batch[0][0].shape[0]
+        _ = self.model(x, batch_idx).squeeze(-1)
+        if self.graph:
+            batch_size = batch.num_graphs
+        else:
+            batch_size = batch[0][0].shape[0]
+        sample_inf_time = (time.time() - s) / batch_size
 
         self.log("sample_inf_time", sample_inf_time, on_epoch=True)
 

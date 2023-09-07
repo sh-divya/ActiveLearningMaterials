@@ -59,13 +59,18 @@ def make_model(config):
         )
         return model
     elif config["config"].startswith("fae-"):
-        model = FAENet()
+        model = ArchFAE()
         return model
     elif config["config"].startswith("faecry-"):
         model = FAENet()
         return model
     elif config["config"].startswith("sch-"):
-        model = BaSch()
+        model = BaSch(
+            config["model"]["hidden_channels"],
+            config["model"]["num_filters"],
+            config["model"]["num_interactions"],
+            config["model"]["readout"],
+        )
         return model
     else:
         raise ValueError(f"Unknown model config: {config['config']}")
@@ -402,21 +407,19 @@ class ArchFAE(nn.Module):
 
 
 class BaSch(nn.Module):
-    def __init__(self):
+    def __init__(self, hidden_channels, num_filters, num_interactions, readout):
         super().__init__()
         self.schnet = graph_nn.SchNet(
-            hidden_channels=64,
-            num_filters=64,
-            num_interactions=3,
+            hidden_channels=hidden_channels,
+            num_filters=num_filters,
+            num_interactions=num_interactions,
             num_gaussians=60,
             cutoff=6.0,
             max_num_neighbors=50,
-            readout="mean",
+            readout=readout,
         )
 
     def forward(self, x, batch_idx):
         z = x.atomic_numbers.int()
         atom_pos = x.pos
-        print(batch_idx)
-        print(type(batch_idx))
-        return self.schnet(z, atom_pos, batch_idx)
+        return self.schnet(z, atom_pos, x.batch)
