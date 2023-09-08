@@ -91,12 +91,14 @@ class CrystalGraph(InMemoryDataset):
         frame_averaging=None,
         fa_method=None,
         return_pyxtal=False,
+        n_pyxtal=1,
     ):
         self.name = name
         self.subset = subset
         self.frame_averaging = frame_averaging
         self.fa_method = fa_method
         self.return_pyxtal = return_pyxtal
+        self.n_pyxtal = n_pyxtal
 
         self.a2g = make_a2g()
         if transform is not None:
@@ -248,7 +250,6 @@ class CrystalGraph(InMemoryDataset):
         """
         # Blue graph
         data = super().get(idx)
-        pyx_data = None
         data.neighbors = compute_neighbors(data, data.edge_index)
         data.tags = 0
         if self.fa_transform is not None:
@@ -256,8 +257,11 @@ class CrystalGraph(InMemoryDataset):
             data = self.fa_transform(data)
         if self.return_pyxtal:
             # Yellow graph
-            pyx_data = pymatgen_struct_to_pyxtal_to_graphs(
-                data.struct, self.a2g, to_conventional=True, n=1
-            )[0]
-            data.pyx_data = pyx_data
+            pyxtal_data_list = pymatgen_struct_to_pyxtal_to_graphs(
+                data.struct,
+                self.a2g,
+                to_conventional=True,
+                n=self.n_pyxtal,
+            )
+            data.pyxtal_data_list = pyxtal_data_list
         return data
