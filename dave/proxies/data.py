@@ -230,6 +230,22 @@ class CrystalGraph(InMemoryDataset):
         torch.save((data, slices), self.processed_paths[0])
 
     def get(self, idx):
+        """
+        Data object loaded:
+            Data(
+                pos=[948350, 3],
+                cell=[23232, 3, 3],
+                atomic_numbers=[948350],
+                natoms=[23232],
+                fixed=[948350],
+                y=[23232], # n_samples
+                comp=[2183808],
+                lp=[139392],
+                sg=[23232],
+                struct=[23232] # pymatgen structure
+            )
+        """
+        # Blue graph
         data = super().get(idx)
         pyx_data = None
         data.neighbors = compute_neighbors(data, data.edge_index)
@@ -238,7 +254,9 @@ class CrystalGraph(InMemoryDataset):
             # Careful with pyxtal transofmrs too
             data = self.fa_transform(data)
         if self.return_pyxtal:
+            # Yellow graph
             pyx_data = pymatgen_struct_to_pyxtal_to_graphs(
                 data.struct, self.a2g, to_conventional=True, n=1
             )[0]
+            data.pyx_data = pyx_data
         return data
