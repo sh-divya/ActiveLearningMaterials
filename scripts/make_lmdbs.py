@@ -14,6 +14,9 @@ from tqdm import tqdm
 from pymatgen.core import Structure
 import warnings
 
+from multiprocessing.pool import ThreadPool
+from multiprocessing import Pool
+
 try:
     from rich.console import Console
 except ImportError:
@@ -105,10 +108,10 @@ def dict_to_list_of_bytes(args):
 
 if __name__ == "__main__":
     parser = ArgumentParser(add_help=False)
-    parser.add_argument("--csv_split_input", type=str)
     parser.add_argument("--output_path", type=str, default=str(repo_root / "data"))
-    parser.add_argument("--json_input", type=str, default=None)
+    parser.add_argument("--input", type=str, default=None, required=True)
     parser.add_argument("--num_workers", type=int, default=1)
+    parser.add_argument("--processes", action="store_true")
     parser.add_argument("--to_graph", action="store_true")
     parser.add_argument("-h", "--help", action="store_true")
     args = parser.parse_args()
@@ -118,16 +121,9 @@ if __name__ == "__main__":
         baseprint(parser.format_help())
         sys.exit(0)
 
-    csv_path = json_path = input_path = None
-    if args.csv_split_input:
-        csv_path = resolve(args.csv_split_input)
-        input_path = csv_path
-    if args.json_input:
-        json_path = resolve(args.json_input)
-        input_path = json_path
-
-    assert csv_path or json_path, "One input required"
-    assert not (csv_path and json_path), "Only one input allowed"
+    input_path = resolve(args.input)
+    if "csv" in input_path.suffix:
+        is_csv = True
 
     output_path = resolve(args.output_path)
     if not output_path.exists():
@@ -155,26 +151,22 @@ if __name__ == "__main__":
         a2g = make_a2g()
 
     data_list = None
-    if csv_path:
-        assert (
-            csv_path.suffix == ".csv"
-        ), f"csv_split_input must be a csv file ({csv_path})"
-        assert csv_path.exists(), f"csv_split_input must exist ({csv_path})"
-        assert csv_path.is_file(), f"csv_split_input must be a file ({csv_path})"
-        with console.status(f"Reading csv from {csv_path} with pandas"):
-            df = pd.read_csv(csv_path)
+    if is_csv:
+        assert input_path.exists(), f"input_path must exist ({input_path})"
+        assert input_path.is_file(), f"input_path must be a file ({input_path})"
+        with console.status(f"Reading csv from {input_path} with pandas"):
+            df = pd.read_csv(input_path)
             data_list = [
                 {k: d[k] for k in ["cif", "Eform"]} for d in df.to_dict("records")
             ]
-
-    elif json_path:
+    else:
         assert (
-            json_path.suffix == ".json"
-        ), f"json_input must be a json file ({json_path})"
-        assert json_path.exists(), f"json_input must exist ({json_path})"
-        assert json_path.is_file(), f"json_input must be a file ({json_path})"
-        with console.status(f"Reading json from {json_path}"):
-            with open(json_path, "r") as f:
+            input_path.suffix == ".json"
+        ), f"--input must be a json or a csv file ({input_path})"
+        assert input_path.exists(), f"json_input must exist ({input_path})"
+        assert input_path.is_file(), f"json_input must be a file ({input_path})"
+        with console.status(f"Reading json from {input_path}"):
+            with open(input_path, "r") as f:
                 data = json.load(f)
             data_list = [{**d[0], "Eform": d[1]} for d in data["data"]]
     assert data_list is not None, "data_list is None, something went wrong"
@@ -202,7 +194,9 @@ if __name__ == "__main__":
     else:
         data_list_per_worker = np.array_split(data_list, args.num_workers)
         print(f"Using {args.num_workers} processes", style="yellow")
-        with mp.Pool(args.num_workers) as pool:
+        with (
+            Pool(args.num_workers) if args.processes else ThreadPool(args.num_workers)
+        ) as pool:
             all_data_list_bytes = pool.map(
                 dict_to_list_of_bytes,
                 [
