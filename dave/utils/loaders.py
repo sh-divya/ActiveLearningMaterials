@@ -1,3 +1,4 @@
+import os.path as osp
 from copy import copy
 from pathlib import Path
 
@@ -14,7 +15,7 @@ def make_loaders(config):
     if not config.get("root"):
         pass
     else:
-        root = Path(config["root"]).resolve()
+        root = Path(osp.expandvars(config["root"])).resolve()
 
     if data == "mp20":
         name = "mp20"

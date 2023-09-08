@@ -1,3 +1,9 @@
+model:
+  hidden_channels: 64
+  num_filters: 64
+  num_interactions: 2
+  readout: mean
+
 optim:
   batch_size: 256
   lr: 0.0012
