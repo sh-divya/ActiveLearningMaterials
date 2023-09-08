@@ -132,7 +132,8 @@ def base_write_dataset_csv(read_path, write_base, data):
 @click.option("--write_path", default=None)
 @click.option("--verbose", is_flag=True, default=False)
 def split(base_path, data_select, strategy, write_path, verbose):
-    return split(base_path, data_select, strategy, write_path, verbose):
+    return split(base_path, data_select, strategy, write_path, verbose)
+
 
 def base_split(base_path, data_select, strategy, write_path, verbose):
     """
