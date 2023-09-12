@@ -241,7 +241,7 @@ class ProxyEmbeddingModel(nn.Module):
                 torch.arange(comp_x.shape[0]).to(comp_x.device),
                 comp_x.sum(dim=1).long(),
             )
-            comp_x = self.phys_emb(z).to(torch.int32)
+            comp_x = self.phys_emb(z).to(torch.float32)
             # comp_x = self.phys_emb(self.alphabet[z].to(torch.int32))
             comp_x = scatter(comp_x, batch_mask, dim=0, reduce="mean")
         else:
