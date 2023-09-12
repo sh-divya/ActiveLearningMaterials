@@ -6,10 +6,12 @@ import tempfile
 from pathlib import Path
 from typing import Any, Callable, List, Sequence
 
+import numpy as np
 import pandas as pd
 import requests
 import torch
 from faenet.transforms import FrameAveraging
+from mendeleev.fetch import fetch_table
 from pymatgen.core.structure import Structure
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pyxtal import pyxtal
@@ -19,14 +21,32 @@ from torch_geometric.data import Data, InMemoryDataset, download_url
 from torch_geometric.loader import DataLoader as GraphLoader
 from tqdm import tqdm
 
-
 from dave.utils.atoms_to_graph import (
-    make_a2g,
     collate,
     compute_neighbors,
+    make_a2g,
     pymatgen_struct_to_pyxtal_to_graphs,
     pymatgen_structure_to_graph,
 )
+
+
+def composition_df_to_z_tensor(comp_df, max_z=-1):
+    """
+    Transforms a dataframe with missing species to a complete tensor with composition
+    for all elements up to max_z.
+
+    Args:
+        comp_df (pd.DataFrame): The csv data as a DataFrame
+        max_z (int, optional): Maximum atomic number in the data set. Defaults to -1.
+    """
+    table = fetch_table("elements").loc[:, ["atomic_number", "symbol"]]
+    table = table.set_index("symbol")
+    if max_z == -1:
+        max_z = table.loc[comp_df.columns[-1], "atomic_number"]
+    z = np.zeros((len(comp_df), max_z + 1))
+    for col in comp_df.columns:
+        z[:, table.loc[col, "atomic_number"]] = comp_df[col].values
+    return torch.tensor(z, dtype=torch.int32)
 
 
 class CrystalFeat(Dataset):
@@ -51,11 +71,20 @@ class CrystalFeat(Dataset):
         self.ytransform = scaley
         data_df = pd.read_csv(osp.join(csv_path, subset + "_data.csv"))
         self.y = torch.tensor(data_df[target].values, dtype=torch.float32)
-        sub_cols = [col for col in data_df.columns if col not in self.cols_of_interest]
-        x = torch.tensor(data_df[sub_cols].values)
-        self.sg = x[:, 1].to(torch.int32)
-        self.lattice = x[:, 2:8].float()
-        self.composition = x[:, 8:].to(torch.int32)
+        sub_cols = [
+            col for col in data_df.columns if col not in set(self.cols_of_interest)
+        ]
+        H_index = sub_cols.index("H")  # should be 8
+        # N
+        self.sg = torch.tensor(data_df["Space Group"].values, dtype=torch.int32)
+        # N x 6
+        self.lattice = torch.tensor(
+            data_df[["a", "b", "c", "alpha", "beta", "gamma"]].values,
+            dtype=torch.float32,
+        )
+        # N x (max_z + 1) -> H is index 1
+        self.composition = composition_df_to_z_tensor(data_df[sub_cols[H_index:]])
+
         # To directly handle missing atomic numbers
         # missing_atoms = torch.zeros(x.shape[0], 5)
         # self.composition = torch.cat((x[:, 8:92].to(torch.int32), missing_atoms, x[:, 92:]), dim=-1)
