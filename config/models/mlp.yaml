@@ -2,6 +2,7 @@ model:
   input_len: 95
   hidden_channels: 384
   num_layers: 5
+  concat: True
 
 optim:
   batch_size: 64

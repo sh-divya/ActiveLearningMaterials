@@ -22,6 +22,7 @@ def make_model(config):
             in_feat=config["model"]["input_len"],
             num_layers=config["model"]["num_layers"],
             hidden_channels=config["model"]["hidden_channels"],
+            concat=config["model"]["concat"],
         )
         model.apply(weights_init)
         return model
@@ -131,6 +132,7 @@ class GNNBlock(nn.Module):
 
     def forward(self, x, batch_mask):
         # Create a complete graph adjacency matrix for each batch: dim [B, N, N]
+        # Feature matrix has dimension [B, N, F]
         count_atoms_per_graph = torch.unique(batch_mask, return_counts=True)[1]
         N_max = max(count_atoms_per_graph)
         batch_size = max(batch_mask).item() + 1
@@ -149,14 +151,20 @@ class GNNBlock(nn.Module):
 
 
 class ProxyMLP(nn.Module):
-    """
-    Proxy model for the prediction of the formation energy of a crystal structure.
-    MLP of composition (and space group and lattice parameters).
-    """
+    """ Proxy model for the prediction of the formation energy of a crystal structure.
+        MLP of composition (and space group and lattice parameters).
+        
+        Args:
+            in_feat (int): number of input features (composition size)
+            num_layers (int): number of MLP layers
+            hidden_channels (int): number of hidden channels
+            concat (bool, optional): concatenate space group 
+                and lattice to the composition. Defaults to True.
+        """
 
-    def __init__(self, in_feat, num_layers, hidden_channels, cat=True):
+    def __init__(self, in_feat, num_layers, hidden_channels, concat=True):
         super(ProxyMLP, self).__init__()
-        self.concat = cat
+        self.concat = concat
         self.hidden_act = nn.LeakyReLU(0.2)
         self.dropout = nn.Dropout(p=0.5)
         self.final_act = nn.Identity()  # nn.Tanh()
@@ -178,7 +186,7 @@ class ProxyMLP(nn.Module):
         if self.concat:  # composition + sg + lattice
             x[1] = x[1].unsqueeze(dim=-1)
             x = torch.cat(x, dim=-1)
-        else:  # keep composition only
+        elif isinstance(x, list):  # keep composition only
             x = x[0]
         # MLP
         for i, layer in enumerate(self.nn_layers):
@@ -205,13 +213,34 @@ class ProxyEmbeddingModel(nn.Module):
         comp_size: int,
         comp_num_layers: int,
         comp_hidden_channels: int,
-        comp_phys_embeds: int,
+        comp_phys_embeds: dict,
         lat_size: int,
         lat_num_layers: int,
         lat_hidden_channels: int,
         sg_emb_size: int,
         alphabet: list = [],
     ):
+        """
+        Args:
+            pred_num_layers (int): number of MLP layers for the prediction head
+            pred_hidden_channels (int): number of hidden channels for the prediction head
+            comp_size (int): total number of chemical elements
+            comp_num_layers (int): number of MLP layers to model composition
+            comp_hidden_channels (int): number of hidden channels to model composition
+            comp_phys_embeds (dict): dictionary with various parameters for the physics aware embeddings
+                of the composition
+                    - use (bool): whether to use physics aware embeddings
+                    - z_emb_size: 32
+                    - period_emb_size: 16
+                    - group_emb_size: 16
+                    - properties_proj_size: 32
+                    - n_elements: 90
+            lat_size (int): number of lattice parameters
+            lat_num_layers (int): number of MLP layers for the lattice parameters
+            lat_hidden_channels (int): number of hidden channels for the lattice parameters
+            sg_emb_size (int): size of the learned space group embedding
+            alphabet (list, optional): _description_. Defaults to [].
+        """
         super().__init__()
         self.use_comp_phys_embeds = comp_phys_embeds["use"]
         if self.use_comp_phys_embeds:
@@ -299,22 +328,45 @@ class ProxyGraphModel(nn.Module):
         alphabet: list,
         conv: dict,
     ):
+        """
+        Args:
+            pred_num_layers (int): number of MLP layers for the prediction head
+            pred_hidden_channels (int): number of hidden channels for the prediction head
+            comp_size (int): total number of chemical elements
+            comp_num_layers (int): number of MLP layers to model composition
+            comp_hidden_channels (int): number of hidden channels to model composition
+            comp_phys_embeds (dict): dictionary with various parameters for the physics aware embeddings
+                of the composition
+                    - z_emb_size: 32
+                    - period_emb_size: 16
+                    - group_emb_size: 16
+                    - properties_proj_size: 32
+                    - n_elements: 90
+            lat_size (int): number of lattice parameters
+            lat_num_layers (int): number of MLP layers for the lattice parameters
+            lat_hidden_channels (int): number of hidden channels for the lattice parameters
+            sg_emb_size (int): size of the learned space group embedding
+            alphabet (list, optional): _description_. Defaults to [].
+            conv (dict): dictionary of attributes for the graph convolution layer
+                    - num_layers: 2
+                    - hidden_channels: 64
+                    - type: "gcn"
+                    - heads: 4
+                    - dropout: 0.5
+                    - concat: True
+                    - add_to_node: True
+        """
         super().__init__()
-        # Encoding blocks
-        self.use_comp_phys_embeds = comp_phys_embeds["use"]
-        if self.use_comp_phys_embeds:
-            self.phys_emb = PhysEmbedding(
-                z_emb_size=comp_phys_embeds["z_emb_size"],
-                period_emb_size=comp_phys_embeds["period_emb_size"],
-                group_emb_size=comp_phys_embeds["group_emb_size"],
-                properties_proj_size=comp_phys_embeds["properties_proj_size"],
-                n_elements=max(alphabet) + 1,
-                final_proj_size=comp_hidden_channels,
-            )
-        else:
-            self.comp_emb_mlp = mlp_from_layers(
-                comp_num_layers, comp_hidden_channels, comp_size
-            )
+        # Encoding blocks    
+        self.phys_emb = PhysEmbedding(
+            z_emb_size=comp_phys_embeds["z_emb_size"],
+            period_emb_size=comp_phys_embeds["period_emb_size"],
+            group_emb_size=comp_phys_embeds["group_emb_size"],
+            properties_proj_size=comp_phys_embeds["properties_proj_size"],
+            n_elements=max(alphabet) + 1,
+            final_proj_size=comp_hidden_channels,
+        )
+
         self.sg_emb = nn.Embedding(231, sg_emb_size)
         self.lat_emb_mlp = mlp_from_layers(
             lat_num_layers, lat_hidden_channels, lat_size
@@ -380,7 +432,7 @@ class ProxyGraphModel(nn.Module):
             x[0].sum(dim=1).to(torch.int32),
         )
         # Derive physics aware embeddings
-        comp_x = self.phys_emb(z).to(torch.int32)
+        comp_x = self.phys_emb(z).to(torch.float32)
         # comp_x = self.phys_emb(self.alphabet[z].to(torch.int32))
 
         # Add space group and lattice embeddings to node attributes
