@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "dave-proxy"
+name = "dave"
 version = "0.3.2"
 description = "DAVE proxy for the Crystals GFlowNet - Conventional cell @ MatBench Eform"
 authors = [
@@ -9,7 +9,6 @@ authors = [
 ]
 license = "MIT"
 readme = "README.md"
-packages = [{ include = "dave" }]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
