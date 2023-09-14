@@ -10,6 +10,13 @@ The code runs on python=3.9, and the required packages can be installed using
 pip install -r requirements_materials.txt
 ```
 
+If you are experiencing dependencies issues, here is a working configuration:
+```bash
+python -m pip install torch==2.0.1+cu117 --extra-index-url https://download.pytorch.org/whl/cu117
+python -m pip install torch-scatter torch-geometric -f https://data.pyg.org/whl/torch-2.0.1+cu117.html
+pip install torchmetrics torchvision lightning lightning-cloud lightning-utilities black click flake8 matplotlib numpy oauthlib pandas pandocfilters Pillow pymatgen scikit-learn scipy setuptools sympy wandb wheel phast minydra faenet pyxtal
+```
+
 ## Ionic Conductivity
 
 Dataset can downloaded using functions in utils/mp.py
