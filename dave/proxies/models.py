@@ -91,6 +91,8 @@ def mlp_from_layers(num_layers, hidden_channels, input_size=None, act=None, norm
 
 
 class GNNBlock(nn.Module):
+    """GNN block which updates atom representations"""
+
     def __init__(
         self,
         input_dim,
@@ -147,12 +149,19 @@ class GNNBlock(nn.Module):
 
 
 class ProxyMLP(nn.Module):
+    """
+    Proxy model for the prediction of the formation energy of a crystal structure.
+    MLP of composition (and space group and lattice parameters).
+    """
+
     def __init__(self, in_feat, num_layers, hidden_channels, cat=True):
         super(ProxyMLP, self).__init__()
         self.concat = cat
         self.hidden_act = nn.LeakyReLU(0.2)
         self.dropout = nn.Dropout(p=0.5)
         self.final_act = nn.Identity()  # nn.Tanh()
+        if self.concat:
+            in_feat = in_feat + 7  # space group + lattice params
         # Model archi
         self.nn_layers = nn.ModuleList()
         for i in range(num_layers - 1):
@@ -166,9 +175,12 @@ class ProxyMLP(nn.Module):
         self.nn_layers.append(nn.Linear(hidden_channels, 1))
 
     def forward(self, x, batch=None):
-        if self.concat:
+        if self.concat:  # composition + sg + lattice
             x[1] = x[1].unsqueeze(dim=-1)
             x = torch.cat(x, dim=-1)
+        else:  # keep composition only
+            x = x[0]
+        # MLP
         for i, layer in enumerate(self.nn_layers):
             x = layer(x)
             if i == len(self.nn_layers) - 1:
@@ -180,6 +192,12 @@ class ProxyMLP(nn.Module):
 
 
 class ProxyEmbeddingModel(nn.Module):
+    """
+    Proxy model for the prediction of the formation energy of a crystal structure.
+    MLP of composition, space group and lattice parameters,
+    where composition is modelled using physics aware embeddings.
+    """
+
     def __init__(
         self,
         pred_num_layers: int,
@@ -261,6 +279,11 @@ class ProxyEmbeddingModel(nn.Module):
 
 
 class ProxyGraphModel(nn.Module):
+    """
+    Proxy model for the prediction of the formation energy of a crystal structure.
+    GNN model to embed the composition, MLP for space group and lattice params.
+    """
+
     def __init__(
         self,
         pred_num_layers: int,
@@ -384,6 +407,8 @@ class GLFAENet(nn.Module):
 
 
 class ArchFAE(nn.Module):
+    """FAENet model"""
+
     def __init__(
         self,
         comp_size: int,
@@ -407,6 +432,8 @@ class ArchFAE(nn.Module):
 
 
 class BaSch(nn.Module):
+    """SchNet model"""
+
     def __init__(self, hidden_channels, num_filters, num_interactions, readout):
         super().__init__()
         self.schnet = graph_nn.SchNet(
@@ -423,3 +450,34 @@ class BaSch(nn.Module):
         z = x.atomic_numbers.int()
         atom_pos = x.pos
         return self.schnet(z, atom_pos, x.batch)
+
+
+# class FAENet_IS2RS(nn.Module):
+#     def __init__(
+#         self,
+#         comp_size: int,
+#         comp_num_layers: int,
+#         comp_hidden_channels: int,
+#         comp_phys_embeds: int,
+#     ):
+#         super().__init__()
+#         self.base_fae = FAENet(tag_hidden_channels=0)
+#         hidden_channels = self.base_fae.hidden_channels
+#         phys_hidden_channels = self.base_fae.phys_hidden_channels
+#         pg_hidden_channels = self.base_fae.pg_hidden_channels
+#         self.replace_emb = nn.Embedding(
+#             comp_size, hidden_channels - phys_hidden_channels - 2 * pg_hidden_channels
+#         )
+#         self.base_fae.emb = self.replace_emb
+
+#     def forward(self, data, batch=None):
+#         node_level_preds = self.base_fae.energy_forward(data)["energy"]
+#         return global_mean_pool(node_level_preds, batch)
+
+#     def __init__(self, config):
+#         super().__init__()
+#         self.fae = FAENet(config)
+
+#     def forward(self, x):
+#         x = self.fae(x)
+#         return fae_model_forward(x)
