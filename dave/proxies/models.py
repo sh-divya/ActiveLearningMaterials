@@ -169,7 +169,7 @@ class ProxyMLP(nn.Module):
         self.dropout = nn.Dropout(p=0.5)
         self.final_act = nn.Identity()  # nn.Tanh()
         if self.concat:
-            in_feat = in_feat + 7  # space group + lattice params
+            in_feat += 7  # space group + lattice params
         # Model archi
         self.nn_layers = nn.ModuleList()
         for i in range(num_layers - 1):

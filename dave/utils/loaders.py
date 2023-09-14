@@ -21,9 +21,8 @@ def make_loaders(config):
         name = "mp20"
     elif data == "mbform":
         name = "matbench_mp_e_form"
-        config["model"]["input_len"] = 101
     elif data == "mbgap":
-        config["model"]["input_len"] = 101
+        name = "matbench_mp_e_gap"
     else:
         raise ValueError(f"Unknown config: {config['config']}")
 
