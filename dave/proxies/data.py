@@ -276,6 +276,11 @@ class CrystalGraph(InMemoryDataset):
                 sg=[23232],
                 struct=[23232] # pymatgen structure
             )
+        Returns: 
+            Data object with additional attributes:
+                data.pyxtal_data_list
+                data.neighbors
+                data.tags
         """
         # Blue graph
         data = super().get(idx)
