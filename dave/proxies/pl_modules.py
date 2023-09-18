@@ -2,6 +2,7 @@ import pytorch_lightning as pl
 import torch.optim as optim
 import time
 from torchmetrics import MeanAbsoluteError, MeanSquaredError
+from dave.utils.atoms_to_graphs import prepocess_training_data
 
 
 class ProxyModule(pl.LightningModule):
@@ -18,17 +19,15 @@ class ProxyModule(pl.LightningModule):
         self.best_mse = 10e6
         self.save_hyperparameters(config)
         self.active_logger = config.get("debug") is None
-        self.graph = False
+        self.preproc_method = False
         model = self.config["config"].split("-")[0]
         if model in ["fae", "faecry", "sch"]:
-            self.graph = True
+            self.preproc_method = "graph"
+        elif model in ["pyxtal_faenet"]:
+            self.preproc_method = "pyxtal"
 
     def training_step(self, batch, batch_idx):
-        if self.graph:
-            x = batch
-            y = batch.y
-        else:
-            x, y = batch
+        x,y = prepocess_training_data(batch, self.preproc_method)
         out = self.model(x, batch_idx).squeeze(-1)
         loss = self.criterion(out, y)
         mae = self.mae(out, y)
@@ -43,11 +42,7 @@ class ProxyModule(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        if self.graph:
-            x = batch
-            y = batch.y
-        else:
-            x, y = batch
+        x, y = prepocess_training_data(batch, self.preproc_method)   
         out = self.model(x, batch_idx).squeeze(-1)
         loss = self.criterion(out, y)
         mae = self.mae(out, y)
@@ -84,6 +79,7 @@ class ProxyModule(pl.LightningModule):
             x = batch
         else:
             x, _ = batch
+        # TODO: for pyxtal
         s = time.time()
         _ = self.model(x, batch_idx).squeeze(-1)
         if self.graph:

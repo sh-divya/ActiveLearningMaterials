@@ -320,6 +320,18 @@ def pymatgen_struct_to_pyxtal_to_graphs(struct, a2g=None, to_conventional=True, 
     return results
 
 
+def preprocess_training_data(batch, preproc_method):
+    if preproc_method == "graph":
+        x = batch
+        y = batch.y
+    elif preproc_method == "pyxtal":
+        x = batch
+        y = batch.pyxtal.y
+    else:
+        x, y = batch
+    return x, y
+
+
 if __name__ == "__main__":
     # Crystal positions sampling
     cell = Lattice.from_para(7.8758, 7.9794, 5.6139, 90, 90, 90, ltype="orthorhombic")
