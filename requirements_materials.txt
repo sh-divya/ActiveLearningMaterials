@@ -27,3 +27,5 @@ phast
 minydra
 faenet
 pyxtal
+verstack
+# otdd
