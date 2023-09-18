@@ -7,7 +7,7 @@ from torch_geometric.nn import global_mean_pool
 from torch_geometric.nn import models as graph_nn
 from torch_geometric.utils import to_dense_batch
 from faenet.model import FAENet
-from faenet import model_forward as fae_model_forward
+from faenet.fa_forward import model_forward
 
 
 def weights_init(m):
@@ -58,6 +58,9 @@ def make_model(config):
             alphabet=config["alphabet"],
             conv=config["model"]["conv"],
         )
+        return model
+    elif config["config"].startswith("pyxtal"):
+        model = Pyxtal_FAENet(config["frame_averaging"], **config["model"])
         return model
     elif config["config"].startswith("fae-"):
         model = ArchFAE()
@@ -151,16 +154,16 @@ class GNNBlock(nn.Module):
 
 
 class ProxyMLP(nn.Module):
-    """ Proxy model for the prediction of the formation energy of a crystal structure.
-        MLP of composition (and space group and lattice parameters).
-        
-        Args:
-            in_feat (int): number of input features (composition size)
-            num_layers (int): number of MLP layers
-            hidden_channels (int): number of hidden channels
-            concat (bool, optional): concatenate space group 
-                and lattice to the composition. Defaults to True.
-        """
+    """Proxy model for the prediction of the formation energy of a crystal structure.
+    MLP of composition (and space group and lattice parameters).
+
+    Args:
+        in_feat (int): number of input features (composition size)
+        num_layers (int): number of MLP layers
+        hidden_channels (int): number of hidden channels
+        concat (bool, optional): concatenate space group
+            and lattice to the composition. Defaults to True.
+    """
 
     def __init__(self, in_feat, num_layers, hidden_channels, concat=True):
         super(ProxyMLP, self).__init__()
@@ -357,7 +360,7 @@ class ProxyGraphModel(nn.Module):
                     - add_to_node: True
         """
         super().__init__()
-        # Encoding blocks    
+        # Encoding blocks
         self.phys_emb = PhysEmbedding(
             z_emb_size=comp_phys_embeds["z_emb_size"],
             period_emb_size=comp_phys_embeds["period_emb_size"],
@@ -455,7 +458,7 @@ class GLFAENet(nn.Module):
 
     def forward(self, x):
         x = self.fae(x)
-        return fae_model_forward(x)
+        return model_forward(x)
 
 
 class ArchFAE(nn.Module):
@@ -504,32 +507,17 @@ class BaSch(nn.Module):
         return self.schnet(z, atom_pos, x.batch)
 
 
-# class FAENet_IS2RS(nn.Module):
-#     def __init__(
-#         self,
-#         comp_size: int,
-#         comp_num_layers: int,
-#         comp_hidden_channels: int,
-#         comp_phys_embeds: int,
-#     ):
-#         super().__init__()
-#         self.base_fae = FAENet(tag_hidden_channels=0)
-#         hidden_channels = self.base_fae.hidden_channels
-#         phys_hidden_channels = self.base_fae.phys_hidden_channels
-#         pg_hidden_channels = self.base_fae.pg_hidden_channels
-#         self.replace_emb = nn.Embedding(
-#             comp_size, hidden_channels - phys_hidden_channels - 2 * pg_hidden_channels
-#         )
-#         self.base_fae.emb = self.replace_emb
+class Pyxtal_FAENet(nn.Module):
+    """FAENet model applied on Pyxtal data structures"""
 
-#     def forward(self, data, batch=None):
-#         node_level_preds = self.base_fae.energy_forward(data)["energy"]
-#         return global_mean_pool(node_level_preds, batch)
+    def __init__(self, frame_averaging, **kwargs):
+        super().__init__()
+        # self.submodels = nn.ModuleDict({'faenet': FAENet(**kwargs)})
+        self.faenet = FAENet(**kwargs)
+        self.frame_averaging = frame_averaging
 
-#     def __init__(self, config):
-#         super().__init__()
-#         self.fae = FAENet(config)
-
-#     def forward(self, x):
-#         x = self.fae(x)
-#         return fae_model_forward(x)
+    def forward(self, batch):
+        out = model_forward(
+            batch, self.faenet, frame_averaging=self.frame_averaging, mode="train", crystal_task=False
+        )
+        return out["forces"]
