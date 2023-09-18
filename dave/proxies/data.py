@@ -287,7 +287,7 @@ class CrystalGraph(InMemoryDataset):
         data.neighbors = compute_neighbors(data, data.edge_index)
         data.tags = 0
         if self.fa_transform is not None:
-            # Careful with pyxtal transofmrs too
+            # Careful with pyxtal transforms too
             data = self.fa_transform(data)
         if self.return_pyxtal:
             # Yellow graph

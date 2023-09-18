@@ -13,7 +13,7 @@ def make_loaders(config):
     root = copy(ROOT)
     model, data = config["config"].split("-")
     if not config.get("root"):
-        pass
+        config["root"] = "/network/scratch/s/schmidtv/crystals-proxys/data/materials_dataset_v3"
     else:
         root = Path(osp.expandvars(config["root"])).resolve()
 
@@ -26,10 +26,10 @@ def make_loaders(config):
     else:
         raise ValueError(f"Unknown config: {config['config']}")
 
-    if model in {"fae", "faecry", "sch"}:
+    if model in {"fae", "faecry", "sch", "pyxtal_faenet"}:
         load_class = GraphLoader
         trainset = CrystalGraph(
-            root=str(config["root"]),
+            root=config["root"],
             transform=config["scales"],
             pre_transform=None,
             pre_filter=None,
@@ -40,7 +40,7 @@ def make_loaders(config):
             subset="train",
         )
         valset = CrystalGraph(
-            root=str(config["root"]),
+            root=config["root"],
             transform=config["scales"],
             pre_transform=None,
             pre_filter=None,
