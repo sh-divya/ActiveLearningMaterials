@@ -141,7 +141,7 @@ class CrystalGraph(InMemoryDataset):
         self.data, self.slices = torch.load(self.processed_paths[0])
 
         self.fa_transform = None
-        if self.frame_averaging is not None:
+        if self.frame_averaging:
             assert self.fa_method is not None
             self.fa_transform = FrameAveraging(self.frame_averaging, self.fa_method)
 
