@@ -35,8 +35,8 @@ def make_loaders(config):
             pre_filter=None,
             name=name,
             frame_averaging=config.get("frame_averaging"),
-            fa_method=config.get("frame_averaging"),
-            return_pyxtal=config.get("frame_averaging"),
+            fa_method=config.get("fa_method"),
+            return_pyxtal=config.get("return_pyxtal"),
             subset="train",
         )
         valset = CrystalGraph(
