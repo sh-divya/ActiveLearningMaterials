@@ -273,6 +273,7 @@ class AtomsToGraphs:
 
 
 def make_a2g():
+    """ Convert periodic atomic structures to graphs """
     return AtomsToGraphs(
         max_neigh=50,
         radius=6.0,
@@ -318,18 +319,6 @@ def pymatgen_struct_to_pyxtal_to_graphs(struct, a2g=None, to_conventional=True, 
         )
         results.append(pymatgen_structure_to_graph(s.to_pymatgen(), a2g))
     return results
-
-
-def preprocess_training_data(batch, preproc_method):
-    if preproc_method == "graph":
-        x = batch
-        y = batch.y
-    elif preproc_method == "pyxtal":
-        x = batch
-        y = batch.pyxtal.y
-    else:
-        x, y = batch
-    return x, y
 
 
 if __name__ == "__main__":
