@@ -298,4 +298,7 @@ class CrystalGraph(InMemoryDataset):
                 n=self.n_pyxtal,
             )
             data.pyxtal_data_list = pyxtal_data_list
+        for datapoint in data.pyxtal_data_list:
+            datapoint.neighbors = compute_neighbors(datapoint, datapoint.edge_index)
+            datapoint.tags = 0
         return data
