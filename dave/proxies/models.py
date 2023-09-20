@@ -512,12 +512,25 @@ class Pyxtal_FAENet(nn.Module):
 
     def __init__(self, frame_averaging, **kwargs):
         super().__init__()
-        # self.submodels = nn.ModuleDict({'faenet': FAENet(**kwargs)})
         self.faenet = FAENet(**kwargs)
         self.frame_averaging = frame_averaging
+        # TODO: not needed anymore with new version of FAENet. Pass argument num_chemical_elements=100
+        self.faenet.embed_block.emb = nn.Embedding(
+            
+            100, kwargs["hidden_channels"] - kwargs["phys_hidden_channels"] - 2 * kwargs["pg_hidden_channels"]
+        )
 
-    def forward(self, batch):
+    def forward(self, data, **kwargs):
+        """data: data.Batch batch of graphs with attributes:
+        - pos: original atom positions
+        - batch: indices (to which graph in batch each atom belongs to)
+        - fa_pos, fa_cell, fa_rot: frame averaged positions, cell and rotation matrices
+        """
         out = model_forward(
-            batch, self.faenet, frame_averaging=self.frame_averaging, mode="train", crystal_task=False
+            data,
+            self.faenet,
+            frame_averaging=self.frame_averaging,
+            mode="train",
+            crystal_task=False,
         )
         return out["forces"]
