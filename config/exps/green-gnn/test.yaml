@@ -1,0 +1,12 @@
+job:
+  mem: 32GB
+  cpus: 4
+  gres: gpu:1
+  partition: long
+
+default: 
+  wandb_tags: "baselines"
+
+runs:
+  - config: pyxtal_faenet-mbform
+    wandb_note: "Test Pyxtal FAE-Net"
