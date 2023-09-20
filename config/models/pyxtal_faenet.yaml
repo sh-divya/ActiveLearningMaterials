@@ -32,7 +32,7 @@
         hidden_channels: 128
         norm: batch1d # batch1d, layer or null
   optim:
-    batch_size: 192
+    batch_size: 16
     lr: 0.0012
     epochs: 20
     es_patience: 7
