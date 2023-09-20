@@ -22,10 +22,8 @@ class ProxyModule(pl.LightningModule):
         self.active_logger = config.get("debug") is None
         self.preproc_method = False
         model = self.config["config"].split("-")[0]
-        if model in ["fae", "faecry", "sch"]:
+        if model in ["fae", "faecry", "sch", "pyxtal_faenet"]:
             self.preproc_method = "graph"
-        elif model in ["pyxtal_faenet"]:
-            self.preproc_method = "pyxtal"
 
     def training_step(self, batch, batch_idx):
         x, y = preprocess_data(batch, self.preproc_method)

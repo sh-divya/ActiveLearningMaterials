@@ -29,7 +29,7 @@ def custom_fit(model, train_dataloader, val_dataloader, criterion, max_epochs, o
         # Training loop
         for batch in tqdm(train_dataloader, desc=f"Epoch {epoch + 1}/ {max_epochs}"):
             batch = batch.to(device)
-            batch, y = preprocess_data(batch, "pyxtal")
+            batch, y = preprocess_data(batch, "graph")
             
             # Forward pass
             optimizer.zero_grad()
@@ -138,8 +138,8 @@ if __name__ == "__main__":
     # Start training
     s = time.time()
     # TODO: debug
-    optimizer = module.configure_optimizers()['optimizer']
-    custom_fit(model, loaders["train"], loaders["val"], criterion, config["optim"]["epochs"], optimizer, module.device)
+    # optimizer = module.configure_optimizers()['optimizer']
+    # custom_fit(model, loaders["train"], loaders["val"], criterion, config["optim"]["epochs"], optimizer, module.device)
 
     trainer.fit(
         model=module,

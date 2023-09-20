@@ -474,11 +474,6 @@ def preprocess_data(batch, preproc_method):
     if preproc_method == "graph":
         x = batch
         y = batch.y
-    elif preproc_method == "pyxtal":
-        x = batch.pyxtal_data_list[0]
-        y = batch.pos
-        if isinstance(x, list): 
-            x = x[0]
     else:
         x, y = batch
     return x, y

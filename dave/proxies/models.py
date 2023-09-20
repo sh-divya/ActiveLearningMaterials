@@ -516,11 +516,10 @@ class Pyxtal_FAENet(nn.Module):
         self.frame_averaging = frame_averaging
         # TODO: not needed anymore with new version of FAENet. Pass argument num_chemical_elements=100
         self.faenet.embed_block.emb = nn.Embedding(
-            
             100, kwargs["hidden_channels"] - kwargs["phys_hidden_channels"] - 2 * kwargs["pg_hidden_channels"]
         )
 
-    def forward(self, data, **kwargs):
+    def forward(self, data, batch_idx):
         """data: data.Batch batch of graphs with attributes:
         - pos: original atom positions
         - batch: indices (to which graph in batch each atom belongs to)

@@ -298,5 +298,11 @@ class CrystalGraph(InMemoryDataset):
             )
         for datapoint in pyxtal_data_list:
             datapoint.neighbors = compute_neighbors(datapoint, datapoint.edge_index)
-        data.pyxtal_data_list = pyxtal_data_list
+            datapoint.y = data.pos
+            datapoint.energy = data.y
+            # datapoint.initial = data
+        if data.natoms != datapoint.natoms:
+            print("Warning: natoms mismatch")
+        # Consider a single pyxtal sample for now
+        data = pyxtal_data_list[0]  # TODO
         return data
