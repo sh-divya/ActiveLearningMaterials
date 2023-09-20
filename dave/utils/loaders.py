@@ -13,7 +13,7 @@ def make_loaders(config):
     root = copy(ROOT)
     model, data = config["config"].split("-")
     if not config.get("root"):
-        pass
+        config["root"] = "/network/scratch/s/schmidtv/crystals-proxys/data/materials_dataset_v3"
     else:
         root = Path(osp.expandvars(config["root"])).resolve()
 
@@ -21,27 +21,26 @@ def make_loaders(config):
         name = "mp20"
     elif data == "mbform":
         name = "matbench_mp_e_form"
-        config["model"]["input_len"] = 101
     elif data == "mbgap":
-        config["model"]["input_len"] = 101
+        name = "matbench_mp_e_gap"
     else:
         raise ValueError(f"Unknown config: {config['config']}")
 
-    if model in {"fae", "faecry", "sch"}:
+    if model in {"fae", "faecry", "sch", "pyxtal_faenet"}:
         load_class = GraphLoader
         trainset = CrystalGraph(
-            root=str(config["root"]),
+            root=config["root"],
             transform=config["scales"],
             pre_transform=None,
             pre_filter=None,
             name=name,
             frame_averaging=config.get("frame_averaging"),
-            fa_method=config.get("frame_averaging"),
-            return_pyxtal=config.get("frame_averaging"),
+            fa_method=config.get("fa_method"),
+            return_pyxtal=config.get("return_pyxtal"),
             subset="train",
         )
         valset = CrystalGraph(
-            root=str(config["root"]),
+            root=config["root"],
             transform=config["scales"],
             pre_transform=None,
             pre_filter=None,

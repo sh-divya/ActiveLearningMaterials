@@ -273,6 +273,7 @@ class AtomsToGraphs:
 
 
 def make_a2g():
+    """ Convert periodic atomic structures to graphs """
     return AtomsToGraphs(
         max_neigh=50,
         radius=6.0,

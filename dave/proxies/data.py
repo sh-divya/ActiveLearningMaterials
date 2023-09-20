@@ -141,7 +141,7 @@ class CrystalGraph(InMemoryDataset):
         self.data, self.slices = torch.load(self.processed_paths[0])
 
         self.fa_transform = None
-        if self.frame_averaging is not None:
+        if self.frame_averaging:
             assert self.fa_method is not None
             self.fa_transform = FrameAveraging(self.frame_averaging, self.fa_method)
 
@@ -276,13 +276,18 @@ class CrystalGraph(InMemoryDataset):
                 sg=[23232],
                 struct=[23232] # pymatgen structure
             )
+        Returns: 
+            Data object with additional attributes:
+                data.pyxtal_data_list
+                data.neighbors
+                data.tags
         """
         # Blue graph
         data = super().get(idx)
         data.neighbors = compute_neighbors(data, data.edge_index)
         data.tags = 0
         if self.fa_transform is not None:
-            # Careful with pyxtal transofmrs too
+            # Careful with pyxtal transforms too
             data = self.fa_transform(data)
         if self.return_pyxtal:
             # Yellow graph
