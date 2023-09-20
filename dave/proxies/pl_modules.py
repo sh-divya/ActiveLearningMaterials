@@ -3,7 +3,7 @@ import torch.optim as optim
 import time
 from torchmetrics import MeanAbsoluteError, MeanSquaredError
 
-from dave.utils.misc import preprocess_training_data
+from dave.utils.misc import preprocess_data
 
 
 class ProxyModule(pl.LightningModule):
@@ -28,7 +28,7 @@ class ProxyModule(pl.LightningModule):
             self.preproc_method = "pyxtal"
 
     def training_step(self, batch, batch_idx):
-        x, y = preprocess_training_data(batch, self.preproc_method)
+        x, y = preprocess_data(batch, self.preproc_method)
         out = self.model(x, batch_idx).squeeze(-1)
         loss = self.criterion(out, y)
         mae = self.mae(out, y)
@@ -43,7 +43,7 @@ class ProxyModule(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        x, y = preprocess_training_data(batch, self.preproc_method)
+        x, y = preprocess_data(batch, self.preproc_method)
         out = self.model(x, batch_idx).squeeze(-1)
         loss = self.criterion(out, y)
         mae = self.mae(out, y)

@@ -460,7 +460,8 @@ def set_cpus_to_workers(config, silent=None):
             config["optim"]["num_workers"] = workers
     return config
 
-def preprocess_training_data(batch, preproc_method):
+
+def preprocess_data(batch, preproc_method):
     """Preprocess training data
 
     Args:
@@ -476,6 +477,8 @@ def preprocess_training_data(batch, preproc_method):
     elif preproc_method == "pyxtal":
         x = batch.pyxtal_data_list[0]
         y = batch.pos
+        if isinstance(x, list): 
+            x = x[0]
     else:
         x, y = batch
     return x, y

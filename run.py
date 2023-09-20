@@ -14,7 +14,57 @@ from dave.utils.callbacks import get_checkpoint_callback
 from dave.utils.loaders import make_loaders
 from dave.utils.misc import load_config, print_config, set_seeds
 
+from tqdm import tqdm
+import torch
+from dave.utils.misc import preprocess_data
+
 warnings.filterwarnings("ignore", ".*does not have many workers.*")
+
+
+def custom_fit(model, train_dataloader, val_dataloader, criterion, max_epochs, optimizer, device):
+    for epoch in range(max_epochs):
+        model.train()
+        train_loss = 0.0
+
+        # Training loop
+        for batch in tqdm(train_dataloader, desc=f"Epoch {epoch + 1}/ {max_epochs}"):
+            batch = batch.to(device)
+            batch, y = preprocess_data(batch, "pyxtal")
+            
+            # Forward pass
+            optimizer.zero_grad()
+            outputs = model(batch)
+            
+            # Compute loss
+            loss = criterion(outputs, y)  # Calculate your loss here
+            
+            # Backpropagation
+            loss.backward()
+            optimizer.step()
+            
+            # Update training loss
+            train_loss += loss.item()
+
+        # Calculate and log average training loss for the epoch
+        avg_train_loss = train_loss / len(train_dataloader)
+        print(f"Epoch {epoch + 1} - Avg. Training Loss: {avg_train_loss:.4f}")
+
+        # Validation loop
+        model.eval()
+        val_loss = 0.0
+
+        with torch.no_grad():
+            for batch in tqdm(val_dataloader):
+                batch = batch.to(device)
+                outputs = model(batch)
+                loss = criterion(outputs, batch.y)  # Calculate your validation loss here
+                val_loss += loss.item()
+
+        # Calculate and log validation loss
+        avg_val_loss = val_loss / len(val_dataloader)
+        print(f"Epoch {epoch + 1} - Avg. Validation Loss: {avg_val_loss:.4f}")
+
+    print("Training complete.")
 
 
 if __name__ == "__main__":
@@ -25,7 +75,7 @@ if __name__ == "__main__":
     args = sys.argv[1:]
     if all("config" not in arg for arg in args):
         args.append("--debug")
-        args.append("--config=mlp-mbform")
+        args.append("--config=pyxtal_faenet-mbform")
         # args.append("--optim.scheduler.name=StepLR")
         warnings.warn("No config file specified, using default !")
         sys.argv[1:] = args
@@ -87,6 +137,10 @@ if __name__ == "__main__":
 
     # Start training
     s = time.time()
+    # TODO: debug
+    optimizer = module.configure_optimizers()['optimizer']
+    custom_fit(model, loaders["train"], loaders["val"], criterion, config["optim"]["epochs"], optimizer, module.device)
+
     trainer.fit(
         model=module,
         train_dataloaders=loaders["train"],
