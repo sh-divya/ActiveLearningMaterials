@@ -276,7 +276,7 @@ class CrystalGraph(InMemoryDataset):
                 sg=[23232],
                 struct=[23232] # pymatgen structure
             )
-        Returns: 
+        Returns:
             Data object with additional attributes:
                 data.pyxtal_data_list
                 data.neighbors
@@ -301,8 +301,10 @@ class CrystalGraph(InMemoryDataset):
             datapoint.y = data.pos
             datapoint.energy = data.y
             # datapoint.initial = data
-        if data.natoms != datapoint.natoms:
-            print("Warning: natoms mismatch")
+        # if data.natoms != datapoint.natoms:
+        #     print("Warning: natoms mismatch")
+        # if not (data.atomic_numbers == datapoint.atomic_numbers).all():
+        #     print("Warning: atomic_numbers mismatch")
         # Consider a single pyxtal sample for now
         data = pyxtal_data_list[0]  # TODO
         return data
