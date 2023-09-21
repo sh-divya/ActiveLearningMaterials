@@ -3,7 +3,7 @@ import torch.optim as optim
 import time
 from torchmetrics import MeanAbsoluteError, MeanSquaredError
 
-from dave.utils.misc import preprocess_data
+from dave.utils.gnn import preprocess_data
 
 
 class ProxyModule(pl.LightningModule):
