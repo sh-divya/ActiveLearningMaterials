@@ -1,6 +1,5 @@
 import torch
 from tqdm import tqdm
-from dave.utils.gnn import preprocess_data
 
 
 class GaussianSmearing(torch.nn.Module):
