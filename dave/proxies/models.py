@@ -8,6 +8,7 @@ from torch_geometric.nn import models as graph_nn
 from torch_geometric.utils import to_dense_batch
 from faenet.model import FAENet
 from faenet.fa_forward import model_forward
+from dave.utils.gnn import GaussianSmearing
 
 
 def weights_init(m):
@@ -514,12 +515,38 @@ class Pyxtal_FAENet(nn.Module):
         super().__init__()
         self.faenet = FAENet(**kwargs)
         self.frame_averaging = frame_averaging
-        # TODO: not needed anymore with new version of FAENet. Pass argument num_chemical_elements=100
+        # TODO: REMOVE this two when FAENet package is updated
         self.faenet.embed_block.emb = nn.Embedding(
             100, kwargs["hidden_channels"] - kwargs["phys_hidden_channels"] - 2 * kwargs["pg_hidden_channels"]
         )
+        # self.faenet.distance_expansion = GaussianSmearing(0.0, self.faenet.cutoff, self.faenet.num_gaussians)
+        self.faenet.forward = self.faenet_forward
+    
+    def faenet_forward(self, data, mode="train", preproc=True):
+        """Main Forward pass.
 
-    def forward(self, data, batch_idx):
+        Args:
+            data (Data): input data object, with 3D atom positions (pos)
+            mode (str): train or inference mode
+            preproc (bool): Whether to preprocess (pbc, cutoff graph)
+                the input graph or point cloud. Default: True.
+
+        Returns:
+            (dict): predicted energy, forces and final atomic hidden states
+        """
+        # energy gradient w.r.t. positions will be computed
+        if mode == "train" or self.faenet.regress_forces == "from_energy":
+            data.pos.requires_grad_(True)
+
+        # predict energy
+        preds = self.faenet.energy_forward(data, preproc)
+
+        # Predict atom positions 
+        preds["forces"] = self.faenet.forces_forward(preds)
+
+        return preds
+
+    def forward(self, data, batch_idx=None):
         """data: data.Batch batch of graphs with attributes:
         - pos: original atom positions
         - batch: indices (to which graph in batch each atom belongs to)
