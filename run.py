@@ -25,7 +25,7 @@ if __name__ == "__main__":
     args = sys.argv[1:]
     if all("config" not in arg for arg in args):
         args.append("--debug")
-        args.append("--config=mlp-mbform")
+        args.append("--config=pyxtal_faenet-mbform")
         # args.append("--optim.scheduler.name=StepLR")
         warnings.warn("No config file specified, using default !")
         sys.argv[1:] = args
@@ -74,7 +74,8 @@ if __name__ == "__main__":
 
     # Make module
     criterion = nn.MSELoss()
-    module = ProxyModule(model, criterion, config)
+    # device = "cuda" if torch.cuda.is_available() else "cpu"
+    module = ProxyModule(model, criterion, config)  # .to(device)
 
     # Make PL trainer
     trainer = pl.Trainer(

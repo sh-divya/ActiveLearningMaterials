@@ -286,7 +286,6 @@ class CrystalGraph(InMemoryDataset):
         # Blue graph
         data = super().get(idx)
         data.neighbors = compute_neighbors(data, data.edge_index)
-        data.tags = 0
         if self.fa_transform is not None:
             # Careful with pyxtal transforms too
             data = self.fa_transform(data)
@@ -298,5 +297,15 @@ class CrystalGraph(InMemoryDataset):
                 to_conventional=True,
                 n=self.n_pyxtal,
             )
-            data.pyxtal_data_list = pyxtal_data_list
+        for datapoint in pyxtal_data_list:
+            datapoint.neighbors = compute_neighbors(datapoint, datapoint.edge_index)
+            datapoint.y = data.pos
+            datapoint.energy = data.y
+            # datapoint.initial = data
+        # if data.natoms != datapoint.natoms:
+        #     print("Warning: natoms mismatch")
+        # if not (data.atomic_numbers == datapoint.atomic_numbers).all():
+        #     print("Warning: atomic_numbers mismatch")
+        # Consider a single pyxtal sample for now
+        data = pyxtal_data_list[0]  # TODO
         return data

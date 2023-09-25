@@ -16,6 +16,8 @@ from tqdm import tqdm
 
 
 def compute_neighbors(data, edge_index):
+    if isinstance(data.natoms, int):
+        data.natoms = torch.LongTensor([data.natoms])
     # Get number of neighbors
     # segment_coo assumes sorted index
     ones = edge_index[1].new_ones(1).expand_as(edge_index[1])
