@@ -231,7 +231,7 @@ def load_scales(config):
 
     for scale, scale_conf in config["scales"].items():
         if "load" in scale_conf:
-            src = config["src"].replace("$root", str(ROOT))
+            src = config["src"].replace("$root", config["root"])
             if src.startswith("/"):
                 src = resolve(src)
             else:
