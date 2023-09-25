@@ -4,7 +4,7 @@ program: run.py
 method: bayes
 metric:
   goal: minimize
-  name: val_mae
+  name: total_val_mae
 
 parameters:
   model.hidden_channels:
