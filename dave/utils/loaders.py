@@ -18,7 +18,7 @@ def make_loaders(config):
         )
         config["root"] = data_root
         print("\nWarning, no data root specified, using default")
-        print(data_root + "\n")
+        print(str(data_root) + "\n")
     else:
         data_root = resolve(config["root"])
 
