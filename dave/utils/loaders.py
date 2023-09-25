@@ -6,21 +6,21 @@ from torch.utils.data import DataLoader
 from torch_geometric.loader import DataLoader as GraphLoader
 
 from dave.proxies.data import CrystalFeat, CrystalGraph
-from dave.utils.misc import ROOT
+from dave.utils.misc import ROOT, resolve
 
 
 def make_loaders(config):
     data_root = copy(ROOT)
     model, data = config["config"].split("-")
     if not config.get("root"):
-        data_root = (
+        data_root = resolve(
             "/network/scratch/s/schmidtv/crystals-proxys/data/materials_dataset_v3"
         )
         config["root"] = data_root
         print("\nWarning, no data root specified, using default")
         print(data_root + "\n")
     else:
-        data_root = Path(osp.expandvars(config["root"])).resolve()
+        data_root = resolve(config["root"])
 
     if data == "mp20":
         name = "mp20"
