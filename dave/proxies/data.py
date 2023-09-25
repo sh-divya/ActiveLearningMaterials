@@ -67,6 +67,7 @@ class CrystalFeat(Dataset):
             "Band Gap",
             "cif",
         ]
+        self.root = root
         self.xtransform = scalex
         self.ytransform = scaley
         data_df = pd.read_csv(osp.join(csv_path, subset + "_data.csv"))
@@ -276,7 +277,7 @@ class CrystalGraph(InMemoryDataset):
                 sg=[23232],
                 struct=[23232] # pymatgen structure
             )
-        Returns: 
+        Returns:
             Data object with additional attributes:
                 data.pyxtal_data_list
                 data.neighbors
