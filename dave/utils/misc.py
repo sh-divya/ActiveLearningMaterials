@@ -286,6 +286,13 @@ def load_config(args_overwrite={}) -> dict:
         config = load_scales(config)
 
     config = set_cpus_to_workers(config)
+    if "git_hash" not in config:
+        try:
+            config["git_hash"] = run_command("git rev-parse HEAD")
+            print("Storing current git hash:", config["git_hash"])
+        except subprocess.CalledProcessError as e:
+            config["git_hash"] = f"unknown: {e}"
+            print('💥 Could not get git hash. Set to "unknown".')
 
     return config
 
