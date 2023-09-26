@@ -1,5 +1,10 @@
 import torch
 from tqdm import tqdm
+import warnings
+
+from pymatgen.core.lattice import Lattice
+from pymatgen.core.structure import Structure
+from pymatgen.analysis.structure_matcher import StructureMatcher
 
 
 class GaussianSmearing(torch.nn.Module):
@@ -82,3 +87,34 @@ def custom_fit(
         print(f"Epoch {epoch + 1} - Avg. Validation Loss: {avg_val_loss:.4f}")
 
     print("Training complete.")
+
+
+class Pyxtal_loss:
+    def __init__(self):
+        super().__init__()
+        self.matcher = StructureMatcher(primitive_cell=False)
+
+    def __call__(self, pred, target, batch):
+        rmsd_distance = 0
+        loss = torch.nn.MSELoss()
+
+        for i in range(len(batch)):
+            # Compute pymatgen structure for predicted graph
+            lat = Lattice.from_parameters(*batch.lp[i].tolist())
+            s_pred = Structure(
+                lattice=lat,
+                species=batch.atomic_numbers[batch.batch == i].cpu(),
+                coords=pred[batch.batch == i].cpu(),
+            )  # coords_are_cartesian=True)
+            # Get pymatgen structure for target graph -- initial matbench
+            for item in batch.struct[i][0]:  # fix label issue 
+                item.label = None 
+            s_target = Structure.from_sites(batch.struct[i][0])
+            rmsd = self.matcher.get_rms_dist(s_pred, s_target)
+            if rmsd: 
+                rmsd_distance += rmsd
+            else: 
+                warnings.warn("RMSD not calculated for {i}th datapoint of the batch")
+                rmsd_distance += loss(target[batch.batch == i], pred[batch.batch == i])
+
+        return rmsd_distance / len(batch)

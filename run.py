@@ -13,6 +13,7 @@ from dave.proxies.pl_modules import ProxyModule
 from dave.utils.callbacks import get_checkpoint_callback
 from dave.utils.loaders import make_loaders
 from dave.utils.misc import load_config, print_config, set_seeds
+from dave.utils.gnn import Pyxtal_loss
 
 warnings.filterwarnings("ignore", ".*does not have many workers.*")
 
@@ -73,7 +74,10 @@ if __name__ == "__main__":
         ]
 
     # Make module
-    criterion = nn.MSELoss()
+    if config["config"].startswith("pyxtal"):
+        criterion = Pyxtal_loss()
+    else: 
+        criterion = nn.MSELoss()
     # device = "cuda" if torch.cuda.is_available() else "cpu"
     module = ProxyModule(model, criterion, config)  # .to(device)
 
