@@ -351,7 +351,9 @@ def find_ckpt(ckpt_path: dict, release: str) -> Path:
     return ckpts[0]
 
 
-def prepare_for_gfn(ckpt_path_dict, release, rescale_outputs, verbose=True):
+def prepare_for_gfn(
+    ckpt_path_dict, release, rescale_outputs, config_overrides={}, verbose=True
+):
     """
     Loads a checkpoint and prepares it for use in the GFlowNet.
 
@@ -360,10 +362,15 @@ def prepare_for_gfn(ckpt_path_dict, release, rescale_outputs, verbose=True):
         rescale_outputs (bool): Whether to rescale the inputs and outputs of the model.
             Inputs would be standardized and output would be rescaled to the original
             scale.
+        config_overrides (dict, optional): Overrides for the config. Defaults to {}.
         verbose (bool, optional): . Defaults to True.
 
     Returns:
-        _type_: _description_
+        tuple: (
+            model: nn.Module,
+            proxy_loaders: dict[str, DataLoader],
+            scales: dict[str, dict[str, Tensor]]
+        )
     """
     from dave.proxies.models import make_model
     from dave.utils.loaders import make_loaders
@@ -380,6 +387,7 @@ def prepare_for_gfn(ckpt_path_dict, release, rescale_outputs, verbose=True):
         assert scales is not None
         assert all(t in scales for t in ["x", "y"])
         assert all(u in scales[t] for t in ["x", "y"] for u in ["mean", "std"])
+    model_config = merge_dicts(model_config, config_overrides)
     # make model from ckpt config
     model = make_model(model_config)
     proxy_loaders = make_loaders(model_config)
@@ -393,11 +401,11 @@ def prepare_for_gfn(ckpt_path_dict, release, rescale_outputs, verbose=True):
         }
     )
     assert hasattr(model, "pred_inp_size")
-    model.n_elements = 89  # TEMPORARY for release `v0-dev-embeddings`
-    assert hasattr(model, "n_elements")
     model.eval()
     if verbose:
         print("Proxy ready.")
+
+    model.loaded_config = model_config
 
     return model, proxy_loaders, scales
 
@@ -459,3 +467,24 @@ def set_cpus_to_workers(config, silent=None):
 
             config["optim"]["num_workers"] = workers
     return config
+
+
+def preprocess_training_data(batch, preproc_method):
+    """Preprocess training data
+
+    Args:
+        batch (data): batch of data objects
+        preproc_method (str): name of preprocessing mehtod
+
+    Returns:
+        data, tensor: correct data and target
+    """
+    if preproc_method == "graph":
+        x = batch
+        y = batch.y
+    elif preproc_method == "pyxtal":
+        x = batch.pyxtal_data_list[0]
+        y = batch.pos
+    else:
+        x, y = batch
+    return x, y

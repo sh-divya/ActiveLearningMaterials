@@ -67,6 +67,7 @@ class CrystalFeat(Dataset):
             "Band Gap",
             "cif",
         ]
+        self.root = root
         self.xtransform = scalex
         self.ytransform = scaley
         data_df = pd.read_csv(osp.join(csv_path, subset + "_data.csv"))
