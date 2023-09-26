@@ -44,6 +44,7 @@ if __name__ == "__main__":
             notes=config["wandb_note"],
             tags=config["wandb_tags"],
         )
+        config["wandb_url"] = logger.experiment.url
     else:
         logger = DummyLogger()
         print(
