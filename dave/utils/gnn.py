@@ -104,7 +104,7 @@ class Pyxtal_loss:
             s_pred = Structure(
                 lattice=lat,
                 species=batch.atomic_numbers[batch.batch == i].cpu(),
-                coords=pred[batch.batch == i].cpu(),
+                coords=pred[batch.batch == i].detach().cpu(),
             )  # coords_are_cartesian=True)
             # Get pymatgen structure for target graph -- initial matbench
             for item in batch.struct[i][0]:  # fix label issue 
