@@ -12,10 +12,11 @@ import torch
 from pymatgen.core.periodic_table import Element
 
 if __name__ == "__main__":
-    csv_path = Path("./dave/proxies")
     parser = argparse.ArgumentParser()
-    parser.add_argument("name")
+    parser.add_argument("--name")
+    parser.add_argument("--csv_path", default="./dave/proxies")
     args = parser.parse_args().name
+    csv_path = Path(parser.parse_args().csv_path)
 
     targets = {
         "matbench_mp_e_form": "Eform",

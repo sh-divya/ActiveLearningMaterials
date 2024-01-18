@@ -30,7 +30,7 @@ class ProxyModule(pl.LightningModule):
         out = self.model(x, batch_idx).squeeze(-1)
         if self.model_name == "pyxtal_faenet":
             loss = self.criterion(out, y, batch)
-        else: 
+        else:
             loss = self.criterion(out, y)
         mae = self.mae(out, y)
         mse = self.mse(out, y)
@@ -48,7 +48,7 @@ class ProxyModule(pl.LightningModule):
         out = self.model(x, batch_idx).squeeze(-1)
         if self.model_name == "pyxtal_faenet":
             loss = self.criterion(out, y, batch)
-        else: 
+        else:
             loss = self.criterion(out, y)
         mae = self.mae(out, y)
         mse = self.mse(out, y)
@@ -80,14 +80,14 @@ class ProxyModule(pl.LightningModule):
             print(f"\nBest MAE: {self.best_mae}\n")
 
     def test_step(self, batch, batch_idx):
-        if self.graph:
+        if self.preproc_method == "graph":
             x = batch
         else:
             x, _ = batch
         # TODO: for pyxtal
         s = time.time()
         _ = self.model(x, batch_idx).squeeze(-1)
-        if self.graph:
+        if self.preproc_method == "graph":
             batch_size = batch.num_graphs
         else:
             batch_size = batch[0][0].shape[0]
