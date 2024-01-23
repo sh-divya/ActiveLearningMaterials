@@ -22,7 +22,6 @@ from torch.utils.data import Dataset
 from sklearn.metrics import pairwise_distances
 from pymatgen.core.structure import Structure
 
-from otdd.pytorch.distance import DatasetDistance
 from verstack.stratified_continuous_split import scsplit
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
@@ -132,7 +131,7 @@ def base_write_dataset_csv(read_path, write_base, data):
 @click.option("--write_path", default=None)
 @click.option("--verbose", is_flag=True, default=False)
 def split(base_path, data_select, strategy, write_path, verbose):
-    return split(base_path, data_select, strategy, write_path, verbose)
+    return base_split(base_path, data_select, strategy, write_path, verbose)
 
 
 def base_split(base_path, data_select, strategy, write_path, verbose):
@@ -327,36 +326,11 @@ def proportional(df, target, verbose):
         continuous=True,
     )
     if verbose:
-        trainds = DFdataset(train, target)
-        valds = DFdataset(val, target)
-        testds = DFdataset(test, target)
+        # trainds = DFdataset(train, target)
+        # valds = DFdataset(val, target)
+        # testds = DFdataset(test, target)
         print("Strategy: Stratifed split b/w Train, val and test")
         print("Split ratio: Train=0.6, Val=0.2, Test=0.2")
-        d = DatasetDistance(
-            trainds,
-            valds,
-            ignore_source_labels=True,
-            ignore_target_labels=True,
-            inner_ot_method="gaussian_approx",
-            debiased_loss=True,
-            p=2,
-            entreg=1e-1,
-            device="cpu",
-            # min_labelcount=0,
-        )
-        dist = d.distance(maxsamples=1000)
-        print("Train-Val OTDD:{dist}")
-        d = DatasetDistance(
-            trainds,
-            testds,
-            inner_ot_method="exact",
-            debiased_loss=True,
-            p=2,
-            entreg=1e-1,
-            device="cpu",
-        )
-        dist = d.distance(maxsamples=1000)
-        print("Train-Test OTDD:{dist}")
 
     return train, val, test
 
@@ -379,45 +353,12 @@ def ood(df, target, verbose):
 
     # doesn't work yet
     if verbose:
-        trainds = DFdataset(train, target)
-        id_valds = DFdataset(id_val, target)
-        od_valds = DFdataset(od_val, target)
-        testds = DFdataset(od_test, target)
+        # trainds = DFdataset(train, target)
+        # id_valds = DFdataset(id_val, target)
+        # od_valds = DFdataset(od_val, target)
+        # testds = DFdataset(od_test, target)
         print("Strategy: OOD split b/w Train, val and test")
         print("Split ratio: Train=0.6, Val=0.2, Test=0.2")
-        d = DatasetDistance(
-            trainds,
-            id_valds,
-            inner_ot_method="exact",
-            debiased_loss=True,
-            p=2,
-            entreg=1e-1,
-            device="cpu",
-        )
-        dist = d.distance()
-        print("Train-Val-ID OTDD:{dist}")
-        d = DatasetDistance(
-            trainds,
-            od_valds,
-            inner_ot_method="exact",
-            debiased_loss=True,
-            p=2,
-            entreg=1e-1,
-            device="cpu",
-        )
-        dist = d.distance(maxsamples=1000)
-        print("Train-Val-OD OTDD:{dist}")
-        d = DatasetDistance(
-            trainds,
-            testds,
-            inner_ot_method="exact",
-            debiased_loss=True,
-            p=2,
-            entreg=1e-1,
-            device="cpu",
-        )
-        dist = d.distance(maxsamples=1000)
-        print("Train-Test OTDD:{dist}")
 
     return train, id_val, od_val, od_test
 
@@ -498,6 +439,7 @@ if __name__ == "__main__":
     # )
     # OR
     # python dave/utils/mb_data_process.py --base_path=./dave/proxies --write_path="./data"
+    # write_dataset_csv()
     split()
     # c1 = {"Al": 2, "O": 3}
     # c2 = {"Na": 1, "Cl": 1}

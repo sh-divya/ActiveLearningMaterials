@@ -474,24 +474,3 @@ def set_cpus_to_workers(config, silent=None):
 
             config["optim"]["num_workers"] = workers
     return config
-
-
-def preprocess_training_data(batch, preproc_method):
-    """Preprocess training data
-
-    Args:
-        batch (data): batch of data objects
-        preproc_method (str): name of preprocessing mehtod
-
-    Returns:
-        data, tensor: correct data and target
-    """
-    if preproc_method == "graph":
-        x = batch
-        y = batch.y
-    elif preproc_method == "pyxtal":
-        x = batch.pyxtal_data_list[0]
-        y = batch.pos
-    else:
-        x, y = batch
-    return x, y

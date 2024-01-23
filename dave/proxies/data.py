@@ -301,11 +301,14 @@ class CrystalGraph(InMemoryDataset):
             datapoint.neighbors = compute_neighbors(datapoint, datapoint.edge_index)
             datapoint.y = data.pos
             datapoint.energy = data.y
-            # datapoint.initial = data
-        # if data.natoms != datapoint.natoms:
-        #     print("Warning: natoms mismatch")
+            datapoint.struct = [data.struct]
+            datapoint.lp = data.lp.unsqueeze(0)
+        
+        if data.natoms != datapoint.natoms:
+            print("Warning: natoms mismatch")
         # if not (data.atomic_numbers == datapoint.atomic_numbers).all():
         #     print("Warning: atomic_numbers mismatch")
+        
         # Consider a single pyxtal sample for now
         data = pyxtal_data_list[0]  # TODO
         return data

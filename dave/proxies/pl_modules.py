@@ -1,6 +1,7 @@
+import time
+
 import pytorch_lightning as pl
 import torch.optim as optim
-import time
 from torchmetrics import MeanAbsoluteError, MeanSquaredError
 
 from dave.utils.gnn import preprocess_data
@@ -21,14 +22,17 @@ class ProxyModule(pl.LightningModule):
         self.save_hyperparameters(config)
         self.active_logger = config.get("debug") is None
         self.preproc_method = False
-        model = self.config["config"].split("-")[0]
-        if model in ["fae", "faecry", "sch", "pyxtal_faenet"]:
+        self.model_name = self.config["config"].split("-")[0]
+        if self.model_name in ["fae", "faecry", "sch", "pyxtal_faenet"]:
             self.preproc_method = "graph"
 
     def training_step(self, batch, batch_idx):
         x, y = preprocess_data(batch, self.preproc_method)
         out = self.model(x, batch_idx).squeeze(-1)
-        loss = self.criterion(out, y)
+        if self.model_name == "pyxtal_faenet":
+            loss = self.criterion(out, y, batch)
+        else:
+            loss = self.criterion(out, y)
         mae = self.mae(out, y)
         mse = self.mse(out, y)
         lr = self.optimizers().param_groups[0]["lr"]
@@ -43,7 +47,10 @@ class ProxyModule(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         x, y = preprocess_data(batch, self.preproc_method)
         out = self.model(x, batch_idx).squeeze(-1)
-        loss = self.criterion(out, y)
+        if self.model_name == "pyxtal_faenet":
+            loss = self.criterion(out, y, batch)
+        else:
+            loss = self.criterion(out, y)
         mae = self.mae(out, y)
         mse = self.mse(out, y)
 
@@ -74,13 +81,13 @@ class ProxyModule(pl.LightningModule):
             print(f"\nBest MAE: {self.best_mae}\n")
 
     def test_step(self, batch, batch_idx):
-        if hasattr(self, "graph") and self.graph:
+        if self.preproc_method == "graph":
             x = batch
         else:
             x, _ = batch
         s = time.time()
         _ = self.model(x, batch_idx).squeeze(-1)
-        if hasattr(self, "graph") and self.graph:
+        if self.preproc_method == "graph":
             batch_size = batch.num_graphs
         else:
             batch_size = batch[0][0].shape[0]
