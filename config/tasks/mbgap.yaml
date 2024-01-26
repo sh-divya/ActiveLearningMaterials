@@ -1,4 +1,5 @@
-src: $root/dave/proxies/matbench_mp_gap
+root: /network/scratch/s/schmidtv/crystals-proxys/data/materials_dataset_v3/data/
+src: $root/matbench_mp_gap/
 target: Band Gap
 scales:
   x:
