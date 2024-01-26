@@ -407,7 +407,6 @@ def prepare_for_gfn(
             for k, v in ckpt["state_dict"].items()
         }
     )
-    assert hasattr(model, "pred_inp_size")
     model.eval()
     if verbose:
         print("Proxy ready.")
