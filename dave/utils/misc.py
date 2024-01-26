@@ -395,7 +395,7 @@ def prepare_for_gfn(
     ckpt = torch.load(str(ckpt_path), map_location="cpu")
     # extract config
     model_config = ckpt["hyper_parameters"]
-    breakpoint()
+
     scales = model_config.get("scales")
     if rescale_outputs:
         assert scales is not None
