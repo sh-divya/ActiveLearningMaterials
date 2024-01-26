@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --gres=gpu:1
 #SBATCH --ntasks=1
-#SBATCH --mem=32GB
+#SBATCH --mem=24GB
 #SBATCH --partition=long
-#SBATCH --cpus-per-task=3
+#SBATCH --cpus-per-task=4
 #SBATCH --output=/network/scratch/s/schmidtv/crystals-proxys/runs/sweeps/u2d6befj/output-%j.out
 #SBATCH --error=/network/scratch/s/schmidtv/crystals-proxys/runs/sweeps/u2d6befj/error-%j.out
 
