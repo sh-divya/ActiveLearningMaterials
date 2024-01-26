@@ -386,9 +386,16 @@ def prepare_for_gfn(
         print("  Making model...")
     # load the checkpoint
     ckpt_path = find_ckpt(ckpt_path_dict, release)
+
+    if release.startswith("0."):
+        print("    Loading Formation Energy model.")
+    elif release.startswith("1."):
+        print("    Loading Band Gap model.")
+
     ckpt = torch.load(str(ckpt_path), map_location="cpu")
     # extract config
     model_config = ckpt["hyper_parameters"]
+    breakpoint()
     scales = model_config.get("scales")
     if rescale_outputs:
         assert scales is not None
