@@ -1,6 +1,7 @@
+import time
+
 import pytorch_lightning as pl
 import torch.optim as optim
-import time
 from torchmetrics import MeanAbsoluteError, MeanSquaredError
 
 from dave.utils.gnn import preprocess_data
@@ -84,7 +85,6 @@ class ProxyModule(pl.LightningModule):
             x = batch
         else:
             x, _ = batch
-        # TODO: for pyxtal
         s = time.time()
         _ = self.model(x, batch_idx).squeeze(-1)
         if self.preproc_method == "graph":

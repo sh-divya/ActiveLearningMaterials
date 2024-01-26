@@ -231,7 +231,7 @@ def load_scales(config):
 
     for scale, scale_conf in config["scales"].items():
         if "load" in scale_conf:
-            src = config["src"].replace("$root", str(ROOT))
+            src = config["src"].replace("$root", config["root"])
             if src.startswith("/"):
                 src = resolve(src)
             else:
@@ -286,6 +286,13 @@ def load_config(args_overwrite={}) -> dict:
         config = load_scales(config)
 
     config = set_cpus_to_workers(config)
+    if "git_hash" not in config:
+        try:
+            config["git_hash"] = run_command("git rev-parse HEAD")
+            print("Storing current git hash:", config["git_hash"])
+        except subprocess.CalledProcessError as e:
+            config["git_hash"] = f"unknown: {e}"
+            print('💥 Could not get git hash. Set to "unknown".')
 
     return config
 
@@ -379,9 +386,16 @@ def prepare_for_gfn(
         print("  Making model...")
     # load the checkpoint
     ckpt_path = find_ckpt(ckpt_path_dict, release)
+
+    if release.startswith("0."):
+        print("    Loading Formation Energy model.")
+    elif release.startswith("1."):
+        print("    Loading Band Gap model.")
+
     ckpt = torch.load(str(ckpt_path), map_location="cpu")
     # extract config
     model_config = ckpt["hyper_parameters"]
+    breakpoint()
     scales = model_config.get("scales")
     if rescale_outputs:
         assert scales is not None
@@ -400,7 +414,6 @@ def prepare_for_gfn(
             for k, v in ckpt["state_dict"].items()
         }
     )
-    assert hasattr(model, "pred_inp_size")
     model.eval()
     if verbose:
         print("Proxy ready.")

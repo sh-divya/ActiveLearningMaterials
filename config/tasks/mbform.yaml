@@ -1,4 +1,5 @@
-src: $root/dave/proxies/matbench_mp_e_form
+root: /network/scratch/s/schmidtv/crystals-proxys/data/materials_dataset_v3
+src: $root/data/matbench_mp_e_form
 target: Eform
 scales:
   x:
