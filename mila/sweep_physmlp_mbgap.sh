@@ -16,4 +16,4 @@ echo "• Current working directory: $(pwd)"
 echo "• Current branch: $(git rev-parse --abbrev-ref HEAD)"
 echo "• Current commit: $(git rev-parse HEAD)"
 
-wandb agent --count 200 mila-ocp/Dave-MBform/u2d6befj
+wandb agent --count 100 mila-ocp/Dave-MBform/u2d6befj
