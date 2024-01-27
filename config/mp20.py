@@ -4,7 +4,7 @@ import torch
 
 base_config = {
     "root": "proxies/mp20",
-    "input_len": 96,
+    "input_len": 95,
     "hidden_layers": [512, 512],
     "lr": 1e-2,
     "batch_size": 32,

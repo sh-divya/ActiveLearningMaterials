@@ -5,8 +5,7 @@ job:
   partition: long
 
 default: 
-  comp_size: 89
-  wandb_tags: baselines
+  wandb_tags: "baselines"
 
 runs:
   - config: graph-mp20
@@ -15,3 +14,9 @@ runs:
     wandb_note: "MLP baseline"
   - config: physmlp-mp20
     wandb_note: "PhysMLP baseline"
+  - config: mlp-mbform
+    wandb_note: "MLP baseline Matbench"
+  - config: physmlp-mbform
+    wandb_note: "MLP baseline Matbench"
+  - config: graph-mbform
+    wandb_note: "MLP baseline Matbench"

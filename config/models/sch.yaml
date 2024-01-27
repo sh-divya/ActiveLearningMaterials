@@ -1,0 +1,15 @@
+model:
+  hidden_channels: 64
+  num_filters: 64
+  num_interactions: 2
+  readout: mean
+
+optim:
+  batch_size: 256
+  lr: 0.0012
+  epochs: 40
+  es_patience: 7
+  scheduler:
+    name: ""  # StepLR, ReduceLROnPlateau
+    step_size: 5000
+    decay_factor: 0.5

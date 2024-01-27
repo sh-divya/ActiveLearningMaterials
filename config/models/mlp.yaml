@@ -1,7 +1,8 @@
 model:
-  input_len: 96
+  input_len: 95
   hidden_channels: 384
   num_layers: 5
+  concat: True
 
 optim:
   batch_size: 64
@@ -9,6 +10,7 @@ optim:
   epochs: 50
   es_patience: 5
   scheduler:
-    name: ""  # StepLR, ReduceLROnPlateau
+    name: ReduceLROnPlateau
+    patience: 4
     step_size: 5000
     decay_factor: 0.5

@@ -1,36 +1,49 @@
+import argparse
 from pathlib import Path
 import sys
 from torch.utils.data import DataLoader
 import torch.nn as nn
 import torch
+import yaml
 
-sys.path.append(str(Path(__file__).resolve().parent.parent))
+BASE_PATH = Path(__file__).resolve().parent.parent
+sys.path.append(str(BASE_PATH))
 
-from config.mp20 import config
+from dave.utils.misc import load_scales
 from dave.proxies.data import CrystalFeat
 
 
 if __name__ == "__main__":
-    model_config = config["model_config"]
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--name")
+    parser.add_argument("--data_path", default=None)
+    args = parser.parse_args()
+    data = args.name
+    data_path = args.data_path
 
+    task_path = BASE_PATH / "config/tasks"
+    config = yaml.safe_load(open(str(task_path / f"{data}.yaml"), "r"))
+    config = load_scales(config)
+    if data_path:
+        root = config["src"].replace("$root/dave/proxies", data_path)
+    else:
+        root = config["src"].replace("$root", str(BASE_PATH))
     trainset = CrystalFeat(
-        root=model_config["root"],
-        target="formation_energy_per_atom",
+        root=root,
+        target=config["target"],
         subset="train",
-        scalex=config["xscale"],
-        scaley=config["yscale"],
+        scalex=config["scales"]["x"],
+        scaley=config["scales"]["y"],
     )
     valset = CrystalFeat(
-        root=model_config["root"],
+        root=root,
         target=config["target"],
         subset="val",
-        scalex=config["xscale"],
-        scaley=config["yscale"],
+        scalex=config["scales"]["x"],
+        scaley=config["scales"]["y"],
     )
-    trainloader = DataLoader(
-        trainset, batch_size=model_config["batch_size"], shuffle=True
-    )
-    valloader = DataLoader(valset, batch_size=model_config["batch_size"], shuffle=False)
+    trainloader = DataLoader(trainset, batch_size=32, shuffle=True)
+    valloader = DataLoader(valset, batch_size=32, shuffle=False)
 
     losses = {
         split: {

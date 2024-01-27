@@ -1,3 +1,5 @@
+entity: mila-ocp
+project: Dave-MP20
 program: run.py
 method: bayes
 metric:

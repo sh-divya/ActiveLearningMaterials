@@ -6,12 +6,14 @@ import pytorch_lightning as pl
 import torch.nn as nn
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning.loggers.logger import DummyLogger
 
 from dave.proxies.models import make_model
 from dave.proxies.pl_modules import ProxyModule
 from dave.utils.callbacks import get_checkpoint_callback
 from dave.utils.loaders import make_loaders
 from dave.utils.misc import load_config, print_config, set_seeds
+from dave.utils.gnn import Pyxtal_loss
 
 warnings.filterwarnings("ignore", ".*does not have many workers.*")
 
@@ -23,8 +25,8 @@ if __name__ == "__main__":
 
     args = sys.argv[1:]
     if all("config" not in arg for arg in args):
-        # args.append("--debug")
-        args.append("--config=mlp-mp20")
+        args.append("--debug")
+        args.append("--config=pyxtal_faenet-mbform")
         # args.append("--optim.scheduler.name=StepLR")
         warnings.warn("No config file specified, using default !")
         sys.argv[1:] = args
@@ -43,8 +45,9 @@ if __name__ == "__main__":
             notes=config["wandb_note"],
             tags=config["wandb_tags"],
         )
+        config["wandb_url"] = logger.experiment.url
     else:
-        logger = None
+        logger = DummyLogger()
         print(
             "\n🛑Debug mode: run dir was not created, checkpoints"
             + " will not be saved, and no logger will be used\n"
@@ -64,13 +67,20 @@ if __name__ == "__main__":
     if not config.get("debug"):
         callbacks += [
             get_checkpoint_callback(
-                config["run_dir"], logger, monitor="val_mae", mode=callbacks[0].mode
+                config["run_dir"],
+                logger,
+                monitor="total_val_mae",
+                mode=callbacks[0].mode,
             )
         ]
 
     # Make module
-    criterion = nn.MSELoss()
-    module = ProxyModule(model, criterion, config)
+    if config["config"].startswith("pyxtal"):
+        criterion = Pyxtal_loss()
+    else: 
+        criterion = nn.MSELoss()
+    # device = "cuda" if torch.cuda.is_available() else "cpu"
+    module = ProxyModule(model, criterion, config)  # .to(device)
 
     # Make PL trainer
     trainer = pl.Trainer(
