@@ -340,35 +340,39 @@ def find_ckpt(ckpt_path: dict, release: str) -> Path:
     if all(s.isdigit() for s in loc):
         loc = "mila"
     if loc not in ckpt_path:
-        raise ValueError(f"DAV proxy checkpoint path not found for location {loc}.")
+        raise ValueError(f"DAV proxy checkpoint path not found for location {loc}")
     path = resolve(ckpt_path[loc])
     if not path.exists():
-        raise ValueError(f"DAV proxy checkpoint not found at {str(path)}.")
+        raise ValueError(f"DAV proxy checkpoint not found at {str(path)}")
     if path.is_file():
         return path
     path = path / release
     ckpts = list(path.glob("*.ckpt"))
     if len(ckpts) == 0:
-        raise ValueError(f"No DAV proxy checkpoint found at {str(path)}.")
+        raise ValueError(f"No DAV proxy checkpoint found at {str(path)}")
     if len(ckpts) > 1:
         raise ValueError(
-            f"Multiple DAV proxy checkpoints found at {str(path)}. "
-            "Please specify the checkpoint explicitly."
+            f"Multiple DAV proxy checkpoints found at {str(path)} "
+            + "Please specify the checkpoint explicitly."
         )
     return ckpts[0]
 
 
 def prepare_for_gfn(
-    ckpt_path_dict, release, rescale_outputs, config_overrides={}, verbose=True
+    ckpt_path_dict={"mila": "/network/scratch/s/schmidtv/crystals-proxys/proxy-ckpts/"},
+    release=None,
+    rescale_outputs=None,
+    config_overrides={},
+    verbose=True,
 ):
     """
     Loads a checkpoint and prepares it for use in the GFlowNet.
 
     Args:
         ckpt_path_dict (dict): Dictionary mapping cluster names to checkpoint paths.
-        rescale_outputs (bool): Whether to rescale the inputs and outputs of the model.
-            Inputs would be standardized and output would be rescaled to the original
-            scale.
+        rescale_outputs (bool): If you expect to use `scales` to (de-)standardize inputs
+            or outputs, set this to `True` and it will ensure that the scales are loaded
+            and valid. Otherwise, scales may be `None`.
         config_overrides (dict, optional): Overrides for the config. Defaults to {}.
         verbose (bool, optional): . Defaults to True.
 
@@ -379,6 +383,12 @@ def prepare_for_gfn(
             scales: dict[str, dict[str, Tensor]]
         )
     """
+
+    assert release is not None, "Must specify str release (received `None`)."
+    assert (
+        rescale_outputs is not None
+    ), "Must specify bool rescale_outputs (received `None`)."
+
     from dave.proxies.models import make_model
     from dave.utils.loaders import make_loaders
 
@@ -387,14 +397,22 @@ def prepare_for_gfn(
     # load the checkpoint
     ckpt_path = find_ckpt(ckpt_path_dict, release)
 
-    if release.startswith("0."):
-        print("    Loading Formation Energy model.")
-    elif release.startswith("1."):
-        print("    Loading Band Gap model.")
-
     ckpt = torch.load(str(ckpt_path), map_location="cpu")
     # extract config
     model_config = ckpt["hyper_parameters"]
+
+    if release.startswith("0."):
+        assert "matbench_mp_e_form" in model_config["src"], (
+            f"Asking for {release} which should correspond to a formation"
+            f" energy model but the model config src is {model_config['src']}"
+        )
+        print("    Loading Formation Energy model.")
+    elif release.startswith("1."):
+        assert "matbench_mp_gap" in model_config["src"], (
+            f"Asking for {release} which should correspond to a band gap"
+            f" model but the model config src is {model_config['src']}"
+        )
+        print("    Loading Band Gap model.")
 
     scales = model_config.get("scales")
     if rescale_outputs:
