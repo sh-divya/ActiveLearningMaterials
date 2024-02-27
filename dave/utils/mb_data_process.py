@@ -8,6 +8,7 @@ BASE_PATH = Path(__file__).parent.parent
 script_path = BASE_PATH.parent / "scripts"
 sys.path.append(str(script_path))
 
+
 from dave.utils.cdvae_csv import feature_per_struc, FEATURE_KEYS
 from data_dist import plots_from_df
 
@@ -175,9 +176,13 @@ def base_split(base_path, data_select, strategy, write_path, verbose):
     Returns:
         None
     """
-    db_target = {"matbench_mp_e_form": "Eform", "matbench_mp_gap": "Band Gap"}
+    db_target = {
+        "matbench_mp_e_form": "Eform",
+        "matbench_mp_gap": "Band Gap",
+        "nrcc_ionic_conductivity": "IC",
+    }
     base_path = Path(base_path)
-    data_types = {k: np.int32 for k in FEATURE_KEYS}
+    data_types = {k: np.float32 for k in FEATURE_KEYS}
     data_types = {k: np.float32 for k in ["a", "b", "c", "alpha", "beta", "gamma"]}
     if not write_path:
         write_path = Path(base_path)

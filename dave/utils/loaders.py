@@ -28,6 +28,8 @@ def make_loaders(config):
         name = "matbench_mp_e_form"
     elif data == "mbgap":
         name = "matbench_mp_e_gap"
+    elif data == "ic":
+        name = "nrcc_ionic_conductivity"
     else:
         raise ValueError(f"Unknown config: {config['config']}")
 

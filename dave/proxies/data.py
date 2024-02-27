@@ -21,6 +21,7 @@ from torch_geometric.data import Data, InMemoryDataset, download_url
 from torch_geometric.loader import DataLoader as GraphLoader
 from tqdm import tqdm
 
+
 from dave.utils.atoms_to_graph import (
     collate,
     compute_neighbors,
@@ -43,6 +44,7 @@ def composition_df_to_z_tensor(comp_df, max_z=-1):
     table = table.set_index("symbol")
     if max_z == -1:
         max_z = table.loc[comp_df.columns[-1], "atomic_number"]
+    print(max_z)
     z = np.zeros((len(comp_df), max_z + 1))
     for col in comp_df.columns:
         z[:, table.loc[col, "atomic_number"]] = comp_df[col].values
@@ -65,6 +67,7 @@ class CrystalFeat(Dataset):
             "energy_per_atom",
             "Eform",
             "Band Gap",
+            "IC",
             "cif",
         ]
         self.root = root
@@ -303,12 +306,12 @@ class CrystalGraph(InMemoryDataset):
             datapoint.energy = data.y
             datapoint.struct = [data.struct]
             datapoint.lp = data.lp.unsqueeze(0)
-        
+
         if data.natoms != datapoint.natoms:
             print("Warning: natoms mismatch")
         # if not (data.atomic_numbers == datapoint.atomic_numbers).all():
         #     print("Warning: atomic_numbers mismatch")
-        
+
         # Consider a single pyxtal sample for now
         data = pyxtal_data_list[0]  # TODO
         return data
