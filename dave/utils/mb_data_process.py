@@ -10,8 +10,13 @@ script_path = BASE_PATH.parent / "scripts"
 sys.path.append(str(proxy_path))
 sys.path.append(str(script_path))
 
+<<<<<<< HEAD
 from cdvae_csv import feature_per_struc, FEATURE_KEYS
 from data import CrystalFeat
+=======
+
+from dave.utils.cdvae_csv import feature_per_struc, FEATURE_KEYS
+>>>>>>> 173b7864 (Add condcutivity functionaltiy)
 from data_dist import plots_from_df
 
 import torch
@@ -85,9 +90,61 @@ def write_dataset_csv(read_path, write_base, data):
 @click.option("--write_path", default=None)
 @click.option("--verbose", is_flag=True, default=False)
 def split(base_path, data_select, strategy, write_path, verbose):
+<<<<<<< HEAD
     db_target = {"matbench_mp_e_form": "Eform", "matbench_mp_gap": "Band Gap"}
+=======
+    return base_split(base_path, data_select, strategy, write_path, verbose)
+
+
+def base_split(base_path, data_select, strategy, write_path, verbose):
+    """
+    Splits data into training, validation, and test sets based on specified strategy.
+
+    Args:
+        base_path (str): Base directory containing the input CSV files. Default is "./proxies".
+        data_select (str): Selection identifier for the dataset. Default is "01".
+        strategy (str): Strategy for data splitting. Default is "stratify".
+        write_path (str): Directory path to write the output files. If not provided, the base_path is used.
+        verbose (bool): Whether to enable verbose output. Default is False.
+
+    Directory Structure:
+        - The input CSV files should be located in the `base_path` directory.
+        - The input CSV file names should correspond to the database names in the `db_target` dictionary.
+        - The output files will be written in the `write_path` directory.
+        - If `write_path` is not provided, the base_path will be used for writing the output files.
+        - Within the `write_path` directory, there will be subdirectories corresponding to each database.
+        - The subdirectories will be named based on the respective database names.
+        - The output files will have different names and extensions depending on the selected strategy.
+
+        {base_path}/
+            {db_name[0]}/
+                data/
+                    {db_name[0]}.csv
+                train_data.csv
+                val_data.csv
+                test_data.csv
+                {data_select[0]}_{strategy}.png
+
+            {db_name[1]}/
+                data/
+                    {db_name[1]}.csv
+                train_data.csv
+                val_data.csv
+                test_data.csv
+                {data_select[1]}_{strategy}.png
+
+
+    Returns:
+        None
+    """
+    db_target = {
+        "matbench_mp_e_form": "Eform",
+        "matbench_mp_gap": "Band Gap",
+        "nrcc_ionic_conductivity": "IC",
+    }
+>>>>>>> 173b7864 (Add condcutivity functionaltiy)
     base_path = Path(base_path)
-    data_types = {k: np.int32 for k in FEATURE_KEYS}
+    data_types = {k: np.float32 for k in FEATURE_KEYS}
     data_types = {k: np.float32 for k in ["a", "b", "c", "alpha", "beta", "gamma"]}
     if not write_path:
         write_path = Path(base_path)
