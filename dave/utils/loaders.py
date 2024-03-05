@@ -2,7 +2,8 @@ import os.path as osp
 from copy import copy
 from pathlib import Path
 
-from torch.utils.data import DataLoader
+import torch
+from torch.utils.data import DataLoader, random_split
 from torch_geometric.loader import DataLoader as GraphLoader
 
 from dave.proxies.data import CrystalFeat, CrystalGraph
@@ -73,6 +74,63 @@ def make_loaders(config):
             scalex=config["scales"]["x"],
             scaley=config["scales"]["y"],
         )
+
+    if config.get("crossval"):
+        folds = config["crossval"]
+        seed = config.get("seed", 99)
+        gen = torch.Generator().manual_seed(seed)
+
+        num_samples = len(trainset)
+        trainset, valset = random_split(trainset, [folds - 1, 1], generator=gen)
+        folds = folds - 1
+        train_subsets = []
+        while folds > 0:
+            trainset, tmpset = random_split(trainset, [folds - 1, 1], generator=gen)
+            train_subsets.append(tmpset)
+            folds = folds - 1
+
+        valoader = load_class(
+            valset,
+            batch_size=config["optim"]["batch_size"],
+            shuffle=False,
+            pin_memory=True,
+            num_workers=config.get("num_workers", 0),
+        )
+
+        tr_loaders = []
+        for sub in train_subsets:
+            tr_loaders.append(
+                load_class(
+                    sub,
+                    batch_size=config["optim"]["batch_size"],
+                    shuffle=False,
+                    pin_memory=True,
+                    num_workers=config.get("num_workers", 0),
+                )
+            )
+        return {"train": tr_loaders, "val": valoader}
+
+    else:
+        if isinstance(trainset, CrystalFeat):
+            valset = CrystalFeat(
+                root=config["src"].replace("$root", str(data_root)),
+                target=config["target"],
+                subset="val",
+                scalex=config["scales"]["x"],
+                scaley=config["scales"]["y"],
+            )
+        else:
+            valset = CrystalGraph(
+                root=config["root"],
+                transform=config["scales"],
+                pre_transform=None,
+                pre_filter=None,
+                name=name,
+                frame_averaging=config.get("frame_averaging"),
+                fa_method=config.get("fa_method"),
+                return_pyxtal=config.get("return_pyxtal"),
+                subset="val",
+            )
 
     return {
         "train": load_class(
