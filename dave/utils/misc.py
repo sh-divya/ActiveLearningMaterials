@@ -229,13 +229,17 @@ def load_scales(config):
 
     scales = {s: {} for s in config["scales"]}
 
+    if config.get("root"):
+        data_root = resolve(config["root"]) / "data"
+    else:
+        data_root = copy.copy(ROOT)
     for scale, scale_conf in config["scales"].items():
         if "load" in scale_conf:
-            src = config["src"].replace("$root", str(ROOT))
+            src = config["src"].replace("$root", str(data_root))
             if src.startswith("/"):
                 src = resolve(src)
             else:
-                src = ROOT / src
+                src = data_root / src
             assert "mean" in scale_conf and "std" in scale_conf
             if scale_conf["load"] == "torch":
                 scales[scale]["mean"] = torch.load(

@@ -76,7 +76,7 @@ if __name__ == "__main__":
     # Make module
     if config["config"].startswith("pyxtal"):
         criterion = Pyxtal_loss()
-    else: 
+    else:
         criterion = nn.MSELoss()
     # device = "cuda" if torch.cuda.is_available() else "cpu"
     module = ProxyModule(model, criterion, config)  # .to(device)

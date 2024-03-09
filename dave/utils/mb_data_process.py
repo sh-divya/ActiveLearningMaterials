@@ -177,7 +177,7 @@ def base_split(base_path, data_select, strategy, write_path, verbose):
     """
     db_target = {"matbench_mp_e_form": "Eform", "matbench_mp_gap": "Band Gap"}
     base_path = Path(base_path)
-    data_types = {k: np.int32 for k in FEATURE_KEYS}
+    data_types = {k: np.float32 for k in FEATURE_KEYS}
     data_types = {k: np.float32 for k in ["a", "b", "c", "alpha", "beta", "gamma"]}
     if not write_path:
         write_path = Path(base_path)

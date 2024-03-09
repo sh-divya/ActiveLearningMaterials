@@ -20,7 +20,7 @@ def make_loaders(config):
         print("\nWarning, no data root specified, using default")
         print(str(data_root) + "\n")
     else:
-        data_root = resolve(config["root"])
+        data_root = resolve(config["root"] / "data")
 
     if data == "mp20":
         name = "mp20"
