@@ -5,6 +5,7 @@ from pathlib import Path
 import pandas as pd
 import torch
 from torch.utils.data import DataLoader
+import pyxtal as pyx
 from pyxtal import pyxtal
 from pyxtal.lattice import Lattice
 
@@ -64,7 +65,7 @@ def relaxed_predictions(df, num_gen, proxy_col, device):
 
     for row in df.iterrows():
 
-        comp = row[1][all_cols[7:-2]]
+        comp = row[1][all_cols[7:-3]]
         form = [(comp.index[k], i) for k, i in enumerate(comp) if i > 0]
         elems, count = zip(*form)
         sg = row[1][all_cols[0]]
@@ -75,8 +76,18 @@ def relaxed_predictions(df, num_gen, proxy_col, device):
 
         s = pyxtal()
         minE = 1000
-        for i in range(num_gen):
-            s.from_random(3, sg, elems, count, lattice=lattice)
+        num = 0
+        while num < num_gen:
+            try:
+                s.from_random(3, sg, elems, count, lattice=lattice)
+            except RuntimeError:
+                continue
+            except pyx.msg.Comp_CompatibilityError:
+                print(elems)
+                print(count)
+                break
+            num += 1
+            # continue
             pmg = s.to_pymatgen()
             pmg = pmg.relax(verbose=False, steps=100)
             eform = predict.predict_structure(pmg)
@@ -85,8 +96,9 @@ def relaxed_predictions(df, num_gen, proxy_col, device):
                 minE = delta
                 relE = eform
                 relS = pmg
-        rel_vals.append(relE.cpu())
-        rel_str.append(relS)
+
+        rel_vals.append(relE.cpu().item())
+        rel_str.append(relS.to(fmt="cif"))
 
     return rel_vals, rel_str
 
@@ -154,9 +166,18 @@ if __name__ == "__main__":
     else:
         config["num_gen"] = int(config["num_gen"])
 
-    df = df.iloc[:2]
+    if not config.get("subset"):
+        config["subset"] = len(df)
+    else:
+        config["subset"] = int(config["subset"]) / len(df)
+
+    df = df.sample(frac=config["subset"])
 
     torch.set_default_device(device)
+
+    # relaxed_predictions(
+    #     df, config["num_gen"], f"{target}_proxy", device
+    # )
 
     vals, structs = relaxed_predictions(
         df, config["num_gen"], f"{target}_proxy", device
@@ -164,3 +185,5 @@ if __name__ == "__main__":
 
     df[f"{target}_relax"] = vals
     df["rel_str"] = structs
+    csv = config.get("csv", "train")
+    df.to_csv(f"{csv}_relax.csv")
