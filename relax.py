@@ -54,7 +54,7 @@ def proxy_predictions(loader, model, yscale, device):
     return preds
 
 
-def relaxed_predictions(df, num_gen, proxy_col, device):
+def relaxed_predictions(df, num_gen, proxy_col, verbose):
     GetASE = AseAtomsAdaptor()
     # relax = matgl.load_model("M3GNet-MP-2021.2.8-PES")
     # relax = Relaxer(relax)
@@ -77,6 +77,9 @@ def relaxed_predictions(df, num_gen, proxy_col, device):
         s = pyxtal()
         minE = 1000
         num = 0
+        diffE = []
+        relE = []
+        relS = []
         while num < num_gen:
             try:
                 s.from_random(3, sg, elems, count, lattice=lattice)
@@ -92,13 +95,16 @@ def relaxed_predictions(df, num_gen, proxy_col, device):
             pmg = pmg.relax(verbose=False, steps=100)
             eform = predict.predict_structure(pmg)
             delta = eform - row[1][proxy_col]
-            if delta < minE:
-                minE = delta
-                relE = eform
-                relS = pmg
-
-        rel_vals.append(relE.cpu().item())
-        rel_str.append(relS.to(fmt="cif"))
+            relE.append(eform.cpu().item())
+            diffE.append(delta.cpu().item())
+            relS.append(pmg.to(fmt="cif"))
+        if not verbose:
+            idx = min([(j, 1) for i, j in enumerate(diffE)])[1]
+            rel_vals.append(relE[idx])
+            rel_str.append(relS[idx])
+        else:
+            rel_vals.append(relE)
+            rel_str.append(relS)
 
     return rel_vals, rel_str
 
@@ -167,23 +173,35 @@ if __name__ == "__main__":
         config["num_gen"] = int(config["num_gen"])
 
     if not config.get("subset"):
-        config["subset"] = len(df)
+        config["subset"] = ""
     else:
-        config["subset"] = int(config["subset"]) / len(df)
-
-    df = df.sample(frac=config["subset"])
+        subset = int(config["subset"]) / len(df)
+        df = df.sample(frac=subset)
 
     torch.set_default_device(device)
 
-    # relaxed_predictions(
-    #     df, config["num_gen"], f"{target}_proxy", device
-    # )
+    if config.get("verbose"):
+        verbose = True
+    else:
+        verbose = False
 
     vals, structs = relaxed_predictions(
-        df, config["num_gen"], f"{target}_proxy", device
+        df, config["num_gen"], f"{target}_proxy", verbose
     )
 
-    df[f"{target}_relax"] = vals
-    df["rel_str"] = structs
+    if config.get("prefix"):
+        prefix = config["prefix"] + "_"
+    else:
+        prefix = ""
+
+    if verbose:
+        structs = list(zip(*(structs)))
+        vals = list(zip(*(vals)))
+        for i, v in enumerate(vals):
+            df[f"{target}_relax{str(i)}"] = v
+            df[f"rel_str{str(i)}"] = structs[i]
+    else:
+        df[f"{target}_relax"] = vals
+        df["rel_str"] = structs
     csv = config.get("csv", "train")
-    df.to_csv(f"{csv}_relax.csv")
+    df.to_csv(f"{prefix}{csv}{config['subset']}_relax.csv")
