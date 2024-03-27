@@ -44,7 +44,6 @@ def composition_df_to_z_tensor(comp_df, max_z=-1):
     table = table.set_index("symbol")
     if max_z == -1:
         max_z = table.loc[comp_df.columns[-1], "atomic_number"]
-    print(max_z)
     z = np.zeros((len(comp_df), max_z + 1))
     for col in comp_df.columns:
         z[:, table.loc[col, "atomic_number"]] = comp_df[col].values
