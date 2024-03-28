@@ -62,6 +62,7 @@ def relaxed_predictions(df, num_gen, proxy_col, verbose):
     all_cols = df.columns
     rel_vals = []
     rel_str = []
+    relC = []
 
     for row in df.iterrows():
 
@@ -80,6 +81,7 @@ def relaxed_predictions(df, num_gen, proxy_col, verbose):
         diffE = []
         relE = []
         relS = []
+        numG = 0
         while num < num_gen:
             try:
                 s.from_random(3, sg, elems, count, lattice=lattice)
@@ -95,18 +97,26 @@ def relaxed_predictions(df, num_gen, proxy_col, verbose):
             pmg = pmg.relax(verbose=False, steps=100)
             eform = predict.predict_structure(pmg)
             delta = eform - row[1][proxy_col]
+
             relE.append(eform.cpu().item())
             diffE.append(delta.cpu().item())
             relS.append(pmg.to(fmt="cif"))
+
+            if not verbose:
+                if abs(delta) <= 0.1:
+                    break
+                else:
+                    numG += 1
         if not verbose:
-            idx = min([(j, 1) for i, j in enumerate(diffE)])[1]
+            idx = min([(abs(j), 1) for i, j in enumerate(diffE)])[1]
             rel_vals.append(relE[idx])
             rel_str.append(relS[idx])
+            relC.append(numG)
         else:
             rel_vals.append(relE)
             rel_str.append(relS)
 
-    return rel_vals, rel_str
+    return rel_vals, rel_str, relC
 
 
 def load_data(config):
@@ -185,7 +195,7 @@ if __name__ == "__main__":
     else:
         verbose = False
 
-    vals, structs = relaxed_predictions(
+    vals, structs, counts = relaxed_predictions(
         df, config["num_gen"], f"{target}_proxy", verbose
     )
 
@@ -203,5 +213,6 @@ if __name__ == "__main__":
     else:
         df[f"{target}_relax"] = vals
         df["rel_str"] = structs
+        df["Counts"] = counts
     csv = config.get("csv", "train")
     df.to_csv(f"{prefix}{csv}{config['subset']}_relax.csv")
