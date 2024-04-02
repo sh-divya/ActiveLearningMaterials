@@ -5,11 +5,12 @@ from pathlib import Path
 import torch
 from torch.utils.data import DataLoader, random_split, ConcatDataset, Subset
 
-# from pytorch_lightning.utilities.combined_loader import CombinedLoader
 from torch_geometric.loader import DataLoader as GraphLoader
 
 from dave.proxies.data import CrystalFeat
 from dave.utils.misc import ROOT, resolve
+
+import numpy as np
 
 
 def update_loaders(trainloader, valloader):
@@ -19,7 +20,9 @@ def update_loaders(trainloader, valloader):
     vset = valloader.dataset
     tset = ConcatDataset([tset, vset])
     vindx = list(range(len(vset)))
+    tindx = list(range(len(vset), len(tset)))
     vset = Subset(tset, vindx)
+    tset = Subset(tset, tindx)
 
     trainloader = DataLoader(
         tset,
@@ -61,6 +64,7 @@ def make_loaders(config):
         name = "matbench_mp_e_gap"
     elif data == "ic":
         name = "nrcc_ionic_conductivity"
+
     else:
         raise ValueError(f"Unknown config: {config['config']}")
 
@@ -95,6 +99,7 @@ def make_loaders(config):
         num_samples = len(trainset)
         split = num_samples // folds
         num_samples = num_samples - split
+
         split = [num_samples, split]
         trainset, valset = random_split(trainset, split)
         folds = folds - 1
