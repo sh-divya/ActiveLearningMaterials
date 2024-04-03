@@ -5,7 +5,45 @@ import pandas as pd
 import torch
 from mendeleev.fetch import fetch_table
 from torch.utils.data import Dataset
+import re
 
+from pathlib import Path
+import sys
+BASE_PATH = Path(__file__).parent.parent.parent
+sys.path.append(str(BASE_PATH))
+
+def parse_sample(data):
+	parsed_data = []
+	elem_df = fetch_table("elements")	
+	all_elems = elem_df['symbol']
+	pat = re.compile("|".join(all_elems.tolist()))
+	
+	for s, sample in data.iterrows():
+		comp = sample["Formulae"]	
+		match = re.findall(pat, comp)
+		stoich = re.split(pat, comp)[1:]
+		dix = {}
+		dix["Space Group"] = sample["Space Group"]
+		dix["a"] = sample["a"]
+		dix["b"] = sample["b"]
+		dix["c"] = sample["c"]
+		dix["alpha"] = sample["alpha"]
+		dix["beta"] = sample["beta"]
+		dix["gamma"] = sample["gamma"]
+		
+		for e in all_elems:
+			dix[e] = 0
+			for e, f in zip(match, stoich):
+				match = re.match(r"([a-z]+)([0-9]+)", f, re.I)
+				if match:
+					items = match.groups()
+					dix[e + items[0]] = float(items[1])
+				else:
+					dix[e] = float(f)
+			dix["IC"] = float(sample["Ionic conductivity (S cm-1)"])
+			parsed_data.append(dix)
+			
+	return pd.DataFrame(parsed_data)
 
 def composition_df_to_z_tensor(comp_df, max_z=-1):
     """
@@ -42,6 +80,7 @@ class CrystalFeat(Dataset):
             "energy_per_atom",
             "Eform",
             "Band Gap",
+            "IC",
             "cif",
         ]
         self.root = root
@@ -49,6 +88,7 @@ class CrystalFeat(Dataset):
         self.ytransform = scaley
         data_df = pd.read_csv(osp.join(csv_path, subset + "_data.csv"))
         self.y = torch.tensor(data_df[target].values, dtype=torch.float32)
+        data_df = parse_sample(data_df)
         sub_cols = [
             col for col in data_df.columns if col not in set(self.cols_of_interest)
         ]
@@ -84,3 +124,20 @@ class CrystalFeat(Dataset):
                 torch.float32
             )
         return (comp, sg, lat), target
+    
+if __name__ == "__main__":
+    root = Path("/home/minion/Documents") / "materials_dataset_v3"
+    name = "matbench_mp_e_form"
+    tmp_root = root / "data" / name
+    sub = "train"
+    trans = {
+        "x": {
+            "mean": torch.load(str(tmp_root / "x.mean")),
+            "std": torch.load(str(tmp_root / "x.std")),
+        },
+        "y": {
+            "mean": torch.load(str(tmp_root / "y.mean")),
+            "std": torch.load(str(tmp_root / "y.std")),
+        },
+    }
+    temp = CrystalFeat(str(tmp_root), target="Eform", subset=sub, scalex=trans["x"], scaley=trans["y"])
