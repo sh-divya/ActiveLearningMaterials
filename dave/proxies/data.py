@@ -4,6 +4,8 @@ import torch
 import pandas as pd
 import os.path as osp
 from torch.utils.data import Dataset, DataLoader
+import numpy as np
+from mendeleev.fetch import fetch_table
 
 def composition_df_to_z_tensor(comp_df, max_z=-1):
     """
