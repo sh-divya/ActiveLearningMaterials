@@ -10,13 +10,8 @@ script_path = BASE_PATH.parent / "scripts"
 sys.path.append(str(proxy_path))
 sys.path.append(str(script_path))
 
-<<<<<<< HEAD
-from cdvae_csv import feature_per_struc, FEATURE_KEYS
-from data import CrystalFeat
-=======
 
 from dave.utils.cdvae_csv import feature_per_struc, FEATURE_KEYS
->>>>>>> 173b7864 (Add condcutivity functionaltiy)
 from data_dist import plots_from_df
 
 import torch
@@ -90,9 +85,6 @@ def write_dataset_csv(read_path, write_base, data):
 @click.option("--write_path", default=None)
 @click.option("--verbose", is_flag=True, default=False)
 def split(base_path, data_select, strategy, write_path, verbose):
-<<<<<<< HEAD
-    db_target = {"matbench_mp_e_form": "Eform", "matbench_mp_gap": "Band Gap"}
-=======
     return base_split(base_path, data_select, strategy, write_path, verbose)
 
 
@@ -142,7 +134,6 @@ def base_split(base_path, data_select, strategy, write_path, verbose):
         "matbench_mp_gap": "Band Gap",
         "nrcc_ionic_conductivity": "IC",
     }
->>>>>>> 173b7864 (Add condcutivity functionaltiy)
     base_path = Path(base_path)
     data_types = {k: np.float32 for k in FEATURE_KEYS}
     data_types = {k: np.float32 for k in ["a", "b", "c", "alpha", "beta", "gamma"]}
