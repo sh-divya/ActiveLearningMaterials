@@ -1,4 +1,4 @@
-src: $root/dave/proxies/nrcc_ionic_conductivity
+src: $root/nrcc_ionic_conductivity
 crossval: 5
 target: IC
 scales:

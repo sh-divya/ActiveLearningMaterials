@@ -229,11 +229,14 @@ def load_scales(config):
 
     for scale, scale_conf in config["scales"].items():
         if "load" in scale_conf:
-            src = config["src"].replace("$root", str(ROOT))
-            if src.startswith("/"):
-                src = resolve(src)
+            if config.get("root"):
+                src = config["src"].replace("$root", config["root"])
             else:
-                src = ROOT / src
+                src = config["src"].replace("$root", str(ROOT))
+                if src.startswith("/"):
+                    src = resolve(src)
+                else:
+                    src = ROOT / src
             assert "mean" in scale_conf and "std" in scale_conf
             if scale_conf["load"] == "torch":
                 scales[scale]["mean"] = torch.load(

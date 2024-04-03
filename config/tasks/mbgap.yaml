@@ -1,4 +1,4 @@
-src: $root/dave/proxies/matbench_mp_gap
+src: $root/matbench_mp_gap
 target: Band Gap
 scales:
   x:
