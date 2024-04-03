@@ -5,8 +5,6 @@ from pathlib import Path
 import torch
 from torch.utils.data import DataLoader, random_split, ConcatDataset, Subset
 
-from torch_geometric.loader import DataLoader as GraphLoader
-
 from dave.proxies.data import CrystalFeat
 from dave.utils.misc import ROOT, resolve
 
@@ -68,29 +66,15 @@ def make_loaders(config):
     else:
         raise ValueError(f"Unknown config: {config['config']}")
 
-    if model in {"fae", "faecry", "sch", "pyxtal_faenet"}:
-        load_class = GraphLoader
-        trainset = CrystalGraph(
-            root=config["root"],
-            transform=config["scales"],
-            pre_transform=None,
-            pre_filter=None,
-            name=name,
-            frame_averaging=config.get("frame_averaging"),
-            fa_method=config.get("fa_method"),
-            return_pyxtal=config.get("return_pyxtal"),
-            subset="train",
-        )
 
-    else:
-        load_class = DataLoader
-        trainset = CrystalFeat(
-            root=config["src"].replace("$root", str(data_root)),
-            target=config["target"],
-            subset="train",
-            scalex=config["scales"]["x"],
-            scaley=config["scales"]["y"],
-        )
+    load_class = DataLoader
+    trainset = CrystalFeat(
+        root=config["src"].replace("$root", str(data_root)),
+        target=config["target"],
+        subset="train",
+        scalex=config["scales"]["x"],
+        scaley=config["scales"]["y"],
+    )
 
     if config.get("crossval"):
 
@@ -129,32 +113,19 @@ def make_loaders(config):
         return {"train": tr_loader, "val": valoader}
 
     else:
-        if isinstance(trainset, CrystalFeat):
-            valset = CrystalFeat(
-                root=config["src"].replace("$root", str(data_root)),
-                target=config["target"],
-                subset="val",
-                scalex=config["scales"]["x"],
-                scaley=config["scales"]["y"],
-            )
-        else:
-            valset = CrystalGraph(
-                root=config["root"],
-                transform=config["scales"],
-                pre_transform=None,
-                pre_filter=None,
-                name=name,
-                frame_averaging=config.get("frame_averaging"),
-                fa_method=config.get("fa_method"),
-                return_pyxtal=config.get("return_pyxtal"),
-                subset="val",
-            )
+        valset = CrystalFeat(
+            root=config["src"].replace("$root", str(data_root)),
+            target=config["target"],
+            subset="val",
+            scalex=config["scales"]["x"],
+            scaley=config["scales"]["y"],
+        )
 
-    return {
-        "train": DataLoader(
-            trainset, batch_size=config["optim"]["batch_size"], shuffle=True
-        ),
-        "val": DataLoader(
-            valset, batch_size=config["optim"]["batch_size"], shuffle=False
-        ),
-    }
+        return {
+            "train": load_class(
+                trainset, batch_size=config["optim"]["batch_size"], shuffle=True
+            ),
+            "val": load_class(
+                valset, batch_size=config["optim"]["batch_size"], shuffle=False
+            ),
+        }
