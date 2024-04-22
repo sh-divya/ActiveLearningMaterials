@@ -1,4 +1,4 @@
-src: $root/dave/proxies/mp20
+src: $root/mp20
 target: formation_energy_per_atom
 scales:
   x:

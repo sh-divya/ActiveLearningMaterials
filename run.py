@@ -6,11 +6,12 @@ import pytorch_lightning as pl
 import torch.nn as nn
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning.loggers.logger import DummyLogger
 
 from dave.proxies.models import make_model
 from dave.proxies.pl_modules import ProxyModule
 from dave.utils.callbacks import get_checkpoint_callback
-from dave.utils.loaders import make_loaders
+from dave.utils.loaders import make_loaders, update_loaders
 from dave.utils.misc import load_config, print_config, set_seeds
 
 warnings.filterwarnings("ignore", ".*does not have many workers.*")
@@ -44,7 +45,7 @@ if __name__ == "__main__":
             tags=config["wandb_tags"],
         )
     else:
-        logger = None
+        logger = DummyLogger()
         print(
             "\n🛑Debug mode: run dir was not created, checkpoints"
             + " will not be saved, and no logger will be used\n"
@@ -70,7 +71,9 @@ if __name__ == "__main__":
 
     # Make module
     criterion = nn.MSELoss()
-    module = ProxyModule(model, criterion, config)
+    # device = "cuda" if torch.cuda.is_available() else "cpu"
+    module = ProxyModule(model, criterion, config)  # .to(device)
+    crossval = int(config.get("crossval", 1))
 
     # Make PL trainer
     trainer = pl.Trainer(
@@ -83,11 +86,17 @@ if __name__ == "__main__":
 
     # Start training
     s = time.time()
-    trainer.fit(
-        model=module,
-        train_dataloaders=loaders["train"],
-        val_dataloaders=loaders["val"],
-    )
+
+    for _ in range(crossval):
+        trainer.fit(
+            model=module,
+            train_dataloaders=loaders["train"],
+            val_dataloaders=loaders["val"],
+        )
+        if crossval > 1:
+            trainer.fit_loop.epoch_progress.reset_on_run()
+            loaders = update_loaders(loaders["train"], loaders["val"])
+
     t = time.time() - s
 
     # Inference time
