@@ -12,25 +12,22 @@ import torch
 from pymatgen.core.periodic_table import Element
 
 if __name__ == "__main__":
-    csv_path = Path("./dave/proxies")
     parser = argparse.ArgumentParser()
-    parser.add_argument("name")
-    args = parser.parse_args().name
+    parser.add_argument("--name")
+    parser.add_argument("--csv_path")
+    args = parser.parse_args()
+    csv_path = Path(args.csv_path).resolve()
+    args = args.name
 
     targets = {
         "matbench_mp_e_form": "Eform",
         "matbench_mp_gap": "Band Gap",
         "mp20": "formation_energy_per_atom",
-        "nrcc_ionic_conductivity": "IC",
+        "nrcc_ionic_conductivity": "Ionic conductivity (S cm-1)",
     }
 
     csv = csv_path / args
 
-    with open(csv / "data" / (args + ".csv")) as f:
-        els = f.readline().split(",")[8:-1]
-        print(len(els))
-        for e in els:
-            print(Element(e).Z)
     data = CrystalFeat(csv, targets[args], subset="train")
     loader = DataLoader(data, batch_size=len(data))
     for x, y in loader:

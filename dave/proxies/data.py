@@ -23,7 +23,10 @@ def parse_sample(data, target):
         match = re.findall(pat, comp)
         stoich = re.split(pat, comp)[1:]
         dix = {}
-        dix["Space Group"] = sample["Space Group"]
+        try:
+            dix["Space Group"] = sample["Space Group"]
+        except KeyError:
+            dix["Space Group"] = sample["Space group number"]
         dix["a"] = sample["a"]
         dix["b"] = sample["b"]
         dix["c"] = sample["c"]
@@ -79,13 +82,14 @@ class CrystalFeat(Dataset):
             "energy_per_atom",
             "Eform",
             "Band Gap",
-            "IC",
+            "Ionic conductivity (S cm-1)",
             "cif",
+            "DOI"
         ]
         self.root = root
         self.xtransform = scalex
         self.ytransform = scaley
-        data_df = pd.read_csv(osp.join(csv_path, subset + "_data.csv")).iloc[:25]
+        data_df = pd.read_csv(osp.join(csv_path, subset + "_data.csv"))
         self.y = torch.tensor(data_df[target].values, dtype=torch.float32)
         data_df = parse_sample(data_df, target)
         sub_cols = [

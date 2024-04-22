@@ -54,6 +54,7 @@ if __name__ == "__main__":
     # create dataloaders and model
     loaders = make_loaders(config)
     model = make_model(config)
+    crossval = int(config.get("crossval", 1))
 
     # setup PL callbacks
     callbacks = []
@@ -73,11 +74,11 @@ if __name__ == "__main__":
     criterion = nn.MSELoss()
     # device = "cuda" if torch.cuda.is_available() else "cpu"
     module = ProxyModule(model, criterion, config)  # .to(device)
-    crossval = int(config.get("crossval", 1))
+    epochs = config["optim"]["epochs"] if crossval == 1 else 1
 
     # Make PL trainer
     trainer = pl.Trainer(
-        max_epochs=config["optim"]["epochs"],
+        max_epochs=epochs,
         logger=logger,
         log_every_n_steps=1,
         callbacks=callbacks,
@@ -87,15 +88,23 @@ if __name__ == "__main__":
     # Start training
     s = time.time()
 
-    for _ in range(crossval):
+    if epochs > 1:
         trainer.fit(
-            model=module,
-            train_dataloaders=loaders["train"],
-            val_dataloaders=loaders["val"],
-        )
-        if crossval > 1:
-            trainer.fit_loop.epoch_progress.reset_on_run()
-            loaders = update_loaders(loaders["train"], loaders["val"])
+                    model=module,
+                    train_dataloaders=loaders["train"],
+                    val_dataloaders=loaders["val"],
+                )
+    else:
+        epochs = config["optim"]["epochs"]
+        for _ in range(epochs):
+            trainer.fit(
+                model=module,
+                train_dataloaders=loaders["train"],
+                val_dataloaders=loaders["val"],
+            )
+            if crossval > 1:
+                trainer.fit_loop.epoch_progress.reset_on_run()
+                loaders = update_loaders(loaders["train"], loaders["val"])
 
     t = time.time() - s
 

@@ -1,6 +1,6 @@
 src: $root/nrcc_ionic_conductivity
 crossval: 5
-target: IC
+target: Ionic conductivity (S cm-1)
 scales:
   x:
     load: torch
