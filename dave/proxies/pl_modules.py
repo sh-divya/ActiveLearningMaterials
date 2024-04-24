@@ -1,6 +1,7 @@
+import time
+
 import pytorch_lightning as pl
 import torch.optim as optim
-import time
 from torchmetrics import MeanAbsoluteError, MeanSquaredError
 
 
