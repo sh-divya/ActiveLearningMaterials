@@ -12,7 +12,7 @@ from dave.proxies.models import make_model
 from dave.proxies.pl_modules import ProxyModule
 from dave.utils.callbacks import get_checkpoint_callback
 from dave.utils.loaders import make_loaders, update_loaders
-from dave.utils.misc import load_config, print_config, set_seeds
+from dave.utils.misc import load_config, parse_tags, print_config, set_seeds
 
 warnings.filterwarnings("ignore", ".*does not have many workers.*")
 
@@ -42,7 +42,7 @@ if __name__ == "__main__":
             name=config["wandb_run_name"],
             entity=config["wandb_entity"],
             notes=config["wandb_note"],
-            tags=config["wandb_tags"],
+            tags=parse_tags(config["wandb_tags"]),
         )
     else:
         logger = DummyLogger()

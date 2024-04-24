@@ -398,3 +398,19 @@ def prepare_for_gfn(ckpt_path_dict, release, rescale_outputs, verbose=True):
         print("Proxy ready.")
 
     return model, proxy_loaders, scales
+
+
+def parse_tags(wandb_tags):
+    """
+    Parse wandb tags from a string or return the input list.
+    Return the input as-is if not a string.
+
+    Args:
+        wandb_tags (str): Comma-separated string of tags.
+
+    Returns:
+        list: List of tags.
+    """
+    if isinstance(wandb_tags, str):
+        return wandb_tags.split(",")
+    return wandb_tags
