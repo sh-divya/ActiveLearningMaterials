@@ -2,7 +2,7 @@ program: run.py
 method: bayes
 metric:
   goal: minimize
-  name: epoch_val_mae
+  name: full_val_mae
 
 parameters:
   model.hidden_channels:

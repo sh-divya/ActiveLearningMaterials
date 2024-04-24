@@ -13,4 +13,4 @@ module load anaconda/3 cuda/11.7
 conda activate crystal-proxy
 cp -r /home/mila/s/schmidtv/ocp-project/ActiveLearningMaterials $SLURM_TMPDIR
 cd $SLURM_TMPDIR/ActiveLearningMaterials
-wandb agent --count 75 mila-ocp/Dave-MBform/1vvgrwkt  # sweep_id
+wandb agent --count 75 mila-ocp/Dave-MBform/53cyyr67  # sweep_id

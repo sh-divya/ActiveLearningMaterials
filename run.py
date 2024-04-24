@@ -60,7 +60,7 @@ if __name__ == "__main__":
     callbacks = []
     callbacks += [
         EarlyStopping(
-            monitor="epoch_val_mae", patience=config["optim"]["es_patience"], mode="min"
+            monitor="full_val_mae", patience=config["optim"]["es_patience"], mode="min"
         )
     ]
     if not config.get("debug"):
@@ -68,7 +68,7 @@ if __name__ == "__main__":
             get_checkpoint_callback(
                 config["run_dir"],
                 logger,
-                monitor="epoch_val_mae",
+                monitor="full_val_mae",
                 mode=callbacks[0].mode,
             )
         ]
