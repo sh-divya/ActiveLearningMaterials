@@ -1,6 +1,6 @@
-import warnings
 import sys
 import time
+import warnings
 
 import pytorch_lightning as pl
 import torch.nn as nn
@@ -90,10 +90,10 @@ if __name__ == "__main__":
 
     if epochs > 1:
         trainer.fit(
-                    model=module,
-                    train_dataloaders=loaders["train"],
-                    val_dataloaders=loaders["val"],
-                )
+            model=module,
+            train_dataloaders=loaders["train"],
+            val_dataloaders=loaders["val"],
+        )
     else:
         epochs = config["optim"]["epochs"]
         for _ in range(epochs):
@@ -115,6 +115,7 @@ if __name__ == "__main__":
 
     # End of training
     if logger:
-        logger.experiment.summary["trainer-time"] = t
-        logger.experiment.summary["inference-time"] = inf_t
+        if isinstance(logger.experiment.summary, dict):
+            logger.experiment.summary["trainer-time"] = t
+            logger.experiment.summary["inference-time"] = inf_t
         logger.experiment.finish()
