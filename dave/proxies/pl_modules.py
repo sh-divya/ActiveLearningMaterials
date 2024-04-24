@@ -15,8 +15,8 @@ class ProxyModule(pl.LightningModule):
         self.config = config
         self.mae = MeanAbsoluteError()
         self.mse = MeanSquaredError()
-        self.best_mae = 10e6
-        self.best_mse = 10e6
+        self.best_epoch_mae = 10e6
+        self.best_epoch_mse = 10e6
         self.save_hyperparameters(config)
         self.active_logger = config.get("debug") is None
 
@@ -50,19 +50,22 @@ class ProxyModule(pl.LightningModule):
     def on_validation_epoch_end(self):
         epoch_val_mae = self.mae.compute()
         epoch_val_mse = self.mse.compute()
-        if epoch_val_mae < self.best_mae:
-            self.best_mae = epoch_val_mae
-        if epoch_val_mse < self.best_mse:
-            self.best_mse = epoch_val_mse
+        if epoch_val_mae < self.best_epoch_mae:
+            self.best_epoch_mae = epoch_val_mae
+        if epoch_val_mse < self.best_epoch_mse:
+            self.best_epoch_mse = epoch_val_mse
+
+        self.log("epoch_val_mae", epoch_val_mae)
+        self.log("epoch_val_mse", epoch_val_mse)
         self.mae.reset()
         self.mse.reset()
 
     def on_validation_end(self) -> None:
         if self.active_logger:
-            self.logger.experiment.summary["Best MAE"] = self.best_mae
-            self.logger.experiment.summary["Best MSE"] = self.best_mse
+            self.logger.experiment.summary["Best MAE"] = self.best_epoch_mae
+            self.logger.experiment.summary["Best MSE"] = self.best_epoch_mse
         else:
-            print(f"\nBest MAE: {self.best_mae}\n")
+            print(f"\nBest MAE: {self.best_epoch_mae}\n")
 
     def test_step(self, batch, batch_idx):
         x, _ = batch
