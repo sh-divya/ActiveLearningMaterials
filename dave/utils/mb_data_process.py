@@ -1,31 +1,30 @@
+import json
 import os
 import sys
-import json
 from pathlib import Path
+
+import click
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import scipy as sp
+import sklearn
+import torch
+from pymatgen.core.structure import Structure
+from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+from sklearn.metrics import pairwise_distances
+from torch.utils.data import Dataset
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 BASE_PATH = Path(__file__).parent.parent
-proxy_path = BASE_PATH / "proxies"
 script_path = BASE_PATH.parent / "scripts"
-sys.path.append(str(proxy_path))
 sys.path.append(str(script_path))
 
-
-from dave.utils.cdvae_csv import feature_per_struc, FEATURE_KEYS
 from data_dist import plots_from_df
-
-import torch
-import click
-import scipy as sp
-import sklearn
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-from torch.utils.data import Dataset
-from sklearn.metrics import pairwise_distances
-from pymatgen.core.structure import Structure
-from otdd.pytorch.distance import DatasetDistance
 from verstack.stratified_continuous_split import scsplit
+
+from dave.utils.cdvae_csv import FEATURE_KEYS, feature_per_struc
+
 
 SG_DIX = np.load(BASE_PATH / "utils" / "sg_decomp.npy")
 
@@ -53,28 +52,75 @@ class DFdataset(Dataset):
 @click.option("--write_base", default="./dave/proxies")
 @click.option("--data", default="0")
 def write_dataset_csv(read_path, write_base, data):
+    return base_write_dataset_csv(read_path, write_base, data)
+
+
+def base_write_dataset_csv(read_path, write_base, data):
+    """
+    Reads JSON files and extracts relevant features.
+
+    Args:
+        read_path (str): Path to the directory containing JSON files.
+        Default is "./data".
+        write_base (str): Base directory for writing output CSV files.
+        Default is "./dave/proxies".
+        data (str): Data source identifier. Default is "0".
+
+    Directory Structure:
+        - The JSON files should be located in the `read_path` directory.
+        - The JSON file names should correspond to the values in the `db_name` list,
+          with the `.json` extension.
+        - The output CSV files will be written in the `write_base` directory.
+        - Within the `write_base` directory, there will be subdirectories for each
+          database name in the `db_name` list.
+        - Within each database subdirectory, there will be a subdirectory named `data`,
+          where the output CSV files will be written.
+        - The output CSV file names will be the same as the respective database names,
+          but with the `.csv` extension.
+
+        {read_path}/
+            matbench_mp_e_form.json
+            matbench_mp_gap.json
+
+        {write_base}/
+            {db_name[0]}/
+                data/
+                    {db_name[0]}.csv
+
+            {db_name[1]}/
+                data/
+                    {db_name[1]}.csv
+
+    Returns:
+        None
+    """
     db_path = Path(read_path)
     write_base = Path(write_base)
     db_name = ["matbench_mp_e_form", "matbench_mp_gap"]
     targets = ["Eform", "Band Gap"]
 
     for i, db in enumerate(db_name):
-        if i in [int(d) for d in data]:
+        if i in set([int(d) for d in data]):
             y = []
             proxy_features = {key: [] for key in FEATURE_KEYS}
             cif_str = []
+            mb_ids = []
             json_file = db_path / (db + ".json")
             with open(json_file, "r") as fobj:
                 jobj = json.load(fobj)
                 for j in jobj["data"]:
                     struc = Structure.from_dict(j[0])
+                    SGA = SpacegroupAnalyzer(struc)
+                    struc = SGA.get_conventional_standard_structure()
                     proxy_features = feature_per_struc(struc, proxy_features)
                     cif_str.append(struc.to(None, fmt="cif"))
                     y.append(j[1])
             proxy_features[targets[i]] = y
             proxy_features["cif"] = cif_str
             df = pd.DataFrame.from_dict(proxy_features)
-            df = df.loc[:, (df != 0).any()]
+            df = df.iloc[
+                :, : df.columns.get_loc(df.columns[(df != 0).any()][-3]) + 1
+            ].join(df.iloc[:, -2:])
             df.to_csv(write_base / db / "data" / (db + ".csv"))
 
 
@@ -284,36 +330,11 @@ def proportional(df, target, verbose):
         continuous=True,
     )
     if verbose:
-        trainds = DFdataset(train, target)
-        valds = DFdataset(val, target)
-        testds = DFdataset(test, target)
+        # trainds = DFdataset(train, target)
+        # valds = DFdataset(val, target)
+        # testds = DFdataset(test, target)
         print("Strategy: Stratifed split b/w Train, val and test")
         print("Split ratio: Train=0.6, Val=0.2, Test=0.2")
-        d = DatasetDistance(
-            trainds,
-            valds,
-            ignore_source_labels=True,
-            ignore_target_labels=True,
-            inner_ot_method="gaussian_approx",
-            debiased_loss=True,
-            p=2,
-            entreg=1e-1,
-            device="cpu",
-            # min_labelcount=0,
-        )
-        dist = d.distance(maxsamples=1000)
-        print("Train-Val OTDD:{dist}")
-        d = DatasetDistance(
-            trainds,
-            testds,
-            inner_ot_method="exact",
-            debiased_loss=True,
-            p=2,
-            entreg=1e-1,
-            device="cpu",
-        )
-        dist = d.distance(maxsamples=1000)
-        print("Train-Test OTDD:{dist}")
 
     return train, val, test
 
@@ -336,45 +357,12 @@ def ood(df, target, verbose):
 
     # doesn't work yet
     if verbose:
-        trainds = DFdataset(train, target)
-        id_valds = DFdataset(id_val, target)
-        od_valds = DFdataset(od_val, target)
-        testds = DFdataset(od_test, target)
+        # trainds = DFdataset(train, target)
+        # id_valds = DFdataset(id_val, target)
+        # od_valds = DFdataset(od_val, target)
+        # testds = DFdataset(od_test, target)
         print("Strategy: OOD split b/w Train, val and test")
         print("Split ratio: Train=0.6, Val=0.2, Test=0.2")
-        d = DatasetDistance(
-            trainds,
-            id_valds,
-            inner_ot_method="exact",
-            debiased_loss=True,
-            p=2,
-            entreg=1e-1,
-            device="cpu",
-        )
-        dist = d.distance()
-        print("Train-Val-ID OTDD:{dist}")
-        d = DatasetDistance(
-            trainds,
-            od_valds,
-            inner_ot_method="exact",
-            debiased_loss=True,
-            p=2,
-            entreg=1e-1,
-            device="cpu",
-        )
-        dist = d.distance(maxsamples=1000)
-        print("Train-Val-OD OTDD:{dist}")
-        d = DatasetDistance(
-            trainds,
-            testds,
-            inner_ot_method="exact",
-            debiased_loss=True,
-            p=2,
-            entreg=1e-1,
-            device="cpu",
-        )
-        dist = d.distance(maxsamples=1000)
-        print("Train-Test OTDD:{dist}")
 
     return train, id_val, od_val, od_test
 
@@ -383,6 +371,19 @@ def split_from_swaps(train, test, target, n_swaps=100, swaps_per_iter=20, histor
     """
     Function adapted from
     https://github.com/Confusezius/Characterizing_Generalization_in_DeepMetricLearning
+    Performs data swapping between train and test sets based on distance metrics.
+
+    Args:
+        train (pd.DataFrame): Training dataset.
+        test (pd.DataFrame): Test dataset.
+        target (str): Name of the target column.
+        n_swaps (int): Number of swapping iterations. Default is 100.
+        swaps_per_iter (int): Number of swaps per iteration. Default is 20.
+        history (int): Number of previous swaps to consider for preventing duplicate swaps. Default is 10.
+
+    Returns:
+        pd.DataFrame: Modified training dataset after swapping.
+        pd.DataFrame: Modified test dataset after swapping.
     """
     train_hist, test_hist = [], []
     feat_cols = train.columns[train.columns != target]
@@ -442,6 +443,7 @@ if __name__ == "__main__":
     # )
     # OR
     # python dave/utils/mb_data_process.py --base_path=./dave/proxies --write_path="./data"
+    # write_dataset_csv()
     split()
     # c1 = {"Al": 2, "O": 3}
     # c2 = {"Na": 1, "Cl": 1}

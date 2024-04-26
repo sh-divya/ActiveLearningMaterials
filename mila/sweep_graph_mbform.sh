@@ -10,4 +10,4 @@ module load python/3.9
 source $HOME/venvs/materials/bin/activate
 cp -r $SCRATCH/ActiveLearningMaterials $SLURM_TMPDIR
 cd $SLURM_TMPDIR/ActiveLearningMaterials
-wandb agent --count 75 mila-ocp/Dave-MBform/focb5z39  # sweep_id
+wandb agent --count 40 mila-ocp/Dave-MBform/mxw7fy6l  # sweep_id
