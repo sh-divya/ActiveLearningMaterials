@@ -9,7 +9,7 @@ scales:
     load: torch
     mean: $src/y.mean
     std: $src/y.std
-comp_size: 84
+comp_size: 94
 lat_size: 6
 alphabet: [
   1,

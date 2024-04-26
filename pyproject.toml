@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dave"
-version = "2.0.0"
+version = "2.0.0" # ionic = 2.x | BG = 1.X | Eform = 0.X
 description = "DAVE proxy for the Crystals GFlowNet - Conventional cell @ MatBench Eform"
 authors = [
     "vict0rsch <vsch@pm.me>",

@@ -2,13 +2,13 @@ import os.path as osp
 from copy import copy
 from pathlib import Path
 
-import torch
-from torch.utils.data import DataLoader, random_split, ConcatDataset, Subset
-
-from dave.proxies.data import CrystalFeat
-from dave.utils.misc import ROOT, resolve
-
 import numpy as np
+import torch
+from torch.utils.data import ConcatDataset, DataLoader, Subset, random_split
+from torch_geometric.loader import DataLoader as GraphLoader
+
+from dave.proxies.data import CrystalFeat, CrystalGraph
+from dave.utils.misc import ROOT, resolve
 
 
 def update_loaders(trainloader, valloader):
@@ -66,15 +66,41 @@ def make_loaders(config):
     else:
         raise ValueError(f"Unknown config: {config['config']}")
 
+    valset = trainset = load_class = None
 
-    load_class = DataLoader
-    trainset = CrystalFeat(
-        root=config["src"].replace("$root", str(data_root)),
-        target=config["target"],
-        subset="train",
-        scalex=config["scales"]["x"],
-        scaley=config["scales"]["y"],
-    )
+    if model in {"fae", "faecry", "sch", "pyxtal_faenet"}:
+        load_class = GraphLoader
+        trainset = CrystalGraph(
+            root=config["root"],
+            transform=config["scales"],
+            pre_transform=None,
+            pre_filter=None,
+            name=name,
+            frame_averaging=config.get("frame_averaging"),
+            fa_method=config.get("fa_method"),
+            return_pyxtal=config.get("return_pyxtal"),
+            subset="train",
+        )
+        valset = CrystalGraph(
+            root=config["root"],
+            transform=config["scales"],
+            pre_transform=None,
+            pre_filter=None,
+            name=name,
+            frame_averaging=config.get("frame_averaging"),
+            fa_method=config.get("fa_method"),
+            return_pyxtal=config.get("return_pyxtal"),
+            subset="val",
+        ) # TO ADAPT TO CROSS-VAL IF NEED BE
+    else:
+        load_class = DataLoader
+        trainset = CrystalFeat(
+            root=config["src"].replace("$root", str(data_root)),
+            target=config["target"],
+            subset="train",
+            scalex=config["scales"]["x"],
+            scaley=config["scales"]["y"],
+        )
 
     if config.get("crossval"):
 
@@ -121,11 +147,19 @@ def make_loaders(config):
             scaley=config["scales"]["y"],
         )
 
-        return {
-            "train": load_class(
-                trainset, batch_size=config["optim"]["batch_size"], shuffle=True
-            ),
-            "val": load_class(
-                valset, batch_size=config["optim"]["batch_size"], shuffle=False
-            ),
-        }
+    return {
+        "train": load_class(
+            trainset,
+            batch_size=config["optim"]["batch_size"],
+            shuffle=True,
+            pin_memory=True,
+            num_workers=config["optim"].get("num_workers", 0),
+        ),
+        "val": load_class(
+            valset,
+            batch_size=config["optim"]["batch_size"],
+            shuffle=False,
+            pin_memory=True,
+            num_workers=config["optim"].get("num_workers", 0),
+        ),
+    }
