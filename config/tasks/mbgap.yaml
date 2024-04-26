@@ -1,3 +1,4 @@
+root: /network/projects/crystalgfn/data/materials_dataset_v4/data/
 src: $root/matbench_mp_gap
 target: Band Gap
 scales:

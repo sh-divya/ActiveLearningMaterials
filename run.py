@@ -1,6 +1,6 @@
-import warnings
 import sys
 import time
+import warnings
 
 import pytorch_lightning as pl
 import torch.nn as nn
@@ -12,7 +12,7 @@ from dave.proxies.models import make_model
 from dave.proxies.pl_modules import ProxyModule
 from dave.utils.callbacks import get_checkpoint_callback
 from dave.utils.loaders import make_loaders, update_loaders
-from dave.utils.misc import load_config, print_config, set_seeds
+from dave.utils.misc import load_config, parse_tags, print_config, set_seeds
 
 warnings.filterwarnings("ignore", ".*does not have many workers.*")
 
@@ -42,7 +42,7 @@ if __name__ == "__main__":
             name=config["wandb_run_name"],
             entity=config["wandb_entity"],
             notes=config["wandb_note"],
-            tags=config["wandb_tags"],
+            tags=parse_tags(config["wandb_tags"]),
         )
     else:
         logger = DummyLogger()
@@ -60,13 +60,16 @@ if __name__ == "__main__":
     callbacks = []
     callbacks += [
         EarlyStopping(
-            monitor="val_mae", patience=config["optim"]["es_patience"], mode="min"
+            monitor="full_val_mae", patience=config["optim"]["es_patience"], mode="min"
         )
     ]
     if not config.get("debug"):
         callbacks += [
             get_checkpoint_callback(
-                config["run_dir"], logger, monitor="val_mae", mode=callbacks[0].mode
+                config["run_dir"],
+                logger,
+                monitor="full_val_mae",
+                mode=callbacks[0].mode,
             )
         ]
 
@@ -90,10 +93,10 @@ if __name__ == "__main__":
 
     if epochs > 1:
         trainer.fit(
-                    model=module,
-                    train_dataloaders=loaders["train"],
-                    val_dataloaders=loaders["val"],
-                )
+            model=module,
+            train_dataloaders=loaders["train"],
+            val_dataloaders=loaders["val"],
+        )
     else:
         epochs = config["optim"]["epochs"]
         for _ in range(epochs):
@@ -115,6 +118,7 @@ if __name__ == "__main__":
 
     # End of training
     if logger:
-        logger.experiment.summary["trainer-time"] = t
-        logger.experiment.summary["inference-time"] = inf_t
+        if isinstance(logger.experiment.summary, dict):
+            logger.experiment.summary["trainer-time"] = t
+            logger.experiment.summary["inference-time"] = inf_t
         logger.experiment.finish()

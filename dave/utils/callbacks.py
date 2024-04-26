@@ -5,7 +5,7 @@ from uuid import uuid4
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 from pytorch_lightning.loggers import Logger
 
-from .misc import resolve
+from dave.utils.misc import resolve
 
 
 def get_checkpoint_callback(
