@@ -22,6 +22,7 @@ if __name__ == "__main__":
         "matbench_mp_e_form": "Eform",
         "matbench_mp_gap": "Band Gap",
         "mp20": "formation_energy_per_atom",
+        "nrcc_ionic_conductivity": "IC",
     }
 
     csv = csv_path / args

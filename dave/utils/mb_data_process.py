@@ -1,29 +1,29 @@
+import json
 import os
 import sys
-import json
 from pathlib import Path
+
+import click
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import scipy as sp
+import sklearn
+import torch
+from pymatgen.core.structure import Structure
+from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+from sklearn.metrics import pairwise_distances
+from torch.utils.data import Dataset
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 BASE_PATH = Path(__file__).parent.parent
 script_path = BASE_PATH.parent / "scripts"
 sys.path.append(str(script_path))
 
-from dave.utils.cdvae_csv import feature_per_struc, FEATURE_KEYS
 from data_dist import plots_from_df
-
-import torch
-import click
-import scipy as sp
-import sklearn
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-from torch.utils.data import Dataset
-from sklearn.metrics import pairwise_distances
-from pymatgen.core.structure import Structure
-
 from verstack.stratified_continuous_split import scsplit
-from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+
+from dave.utils.cdvae_csv import FEATURE_KEYS, feature_per_struc
 
 
 SG_DIX = np.load(BASE_PATH / "utils" / "sg_decomp.npy")
@@ -175,9 +175,13 @@ def base_split(base_path, data_select, strategy, write_path, verbose):
     Returns:
         None
     """
-    db_target = {"matbench_mp_e_form": "Eform", "matbench_mp_gap": "Band Gap"}
+    db_target = {
+        "matbench_mp_e_form": "Eform",
+        "matbench_mp_gap": "Band Gap",
+        "nrcc_ionic_conductivity": "IC",
+    }
     base_path = Path(base_path)
-    data_types = {k: np.int32 for k in FEATURE_KEYS}
+    data_types = {k: np.float32 for k in FEATURE_KEYS}
     data_types = {k: np.float32 for k in ["a", "b", "c", "alpha", "beta", "gamma"]}
     if not write_path:
         write_path = Path(base_path)

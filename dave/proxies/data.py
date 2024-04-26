@@ -30,6 +30,7 @@ from dave.utils.atoms_to_graph import (
 )
 
 
+
 def composition_df_to_z_tensor(comp_df, max_z=-1):
     """
     Transforms a dataframe with missing species to a complete tensor with composition
@@ -106,6 +107,7 @@ class CrystalFeat(Dataset):
             target = ((target - self.ytransform["mean"]) / self.ytransform["std"]).to(
                 torch.float32
             )
+
         return (comp, sg, lat), target
 
 
