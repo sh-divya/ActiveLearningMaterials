@@ -1,3 +1,5 @@
+entity: mila-ocp
+project: Dave-MP20
 program: run.py
 method: bayes
 metric:
@@ -20,7 +22,7 @@ parameters:
   model.comp_hidden_channels:
     values: [32, 64, 128, 196]
   model.comp_phys_embeds.use:
-    values: [True, False]
+    values: [True]
   model.comp_phys_embeds.z_emb_size:
     values: [16, 32, 64, 128]
   model.comp_phys_embeds.period_emb_size:
@@ -40,9 +42,9 @@ parameters:
   model.conv.dropout:
     values: [0.0, 0.25, 0.5]
   model.conv.concat:
-    values: [True, False]
+    values: [True]
   model.conv.add_to_node:
-    values: [True, False]
+    values: [False]
 
   optim.batch_size:
     values: [16, 32, 64, 128, 256]

@@ -1,5 +1,6 @@
 from pymatgen.ext.matproj import MPRester
 import os.path as osp
+import click
 
 
 def download(queryObj, criteria, properties, save_dir):

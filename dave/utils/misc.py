@@ -231,7 +231,7 @@ def load_scales(config):
 
     for scale, scale_conf in config["scales"].items():
         if "load" in scale_conf:
-            src = config["src"].replace("$root", str(ROOT))
+            src = config["src"].replace("$root", config["root"])
             if src.startswith("/"):
                 src = resolve(src)
             else:
@@ -252,12 +252,12 @@ def load_scales(config):
     return config
 
 
-def load_config() -> dict:
+def load_config(args_overwrite={}) -> dict:
     # 1. parse command-line args
-    cli_conf = parse_args_to_dict()
+    cli_conf = {**parse_args_to_dict(), **args_overwrite}
     cli_conf["cmd"] = " ".join(sys.argv)
     assert (
-        "config" in cli_conf
+        "config" in cli_conf and cli_conf["config"] is not None
     ), "Must specify config string as `--config={task}-{model}`"
     # 2. load config files
     model, task = cli_conf["config"].split("-")
@@ -286,6 +286,13 @@ def load_config() -> dict:
         config = load_scales(config)
 
     config = set_cpus_to_workers(config)
+    if "git_hash" not in config:
+        try:
+            config["git_hash"] = run_command("git rev-parse HEAD")
+            print("Storing current git hash:", config["git_hash"])
+        except subprocess.CalledProcessError as e:
+            config["git_hash"] = f"unknown: {e}"
+            print('💥 Could not get git hash. Set to "unknown".')
 
     return config
 
@@ -333,38 +340,55 @@ def find_ckpt(ckpt_path: dict, release: str) -> Path:
     if all(s.isdigit() for s in loc):
         loc = "mila"
     if loc not in ckpt_path:
-        raise ValueError(f"DAV proxy checkpoint path not found for location {loc}.")
+        raise ValueError(f"DAV proxy checkpoint path not found for location {loc}")
     path = resolve(ckpt_path[loc])
     if not path.exists():
-        raise ValueError(f"DAV proxy checkpoint not found at {str(path)}.")
+        raise ValueError(f"DAV proxy checkpoint not found at {str(path)}")
     if path.is_file():
         return path
     path = path / release
     ckpts = list(path.glob("*.ckpt"))
     if len(ckpts) == 0:
-        raise ValueError(f"No DAV proxy checkpoint found at {str(path)}.")
+        raise ValueError(f"No DAV proxy checkpoint found at {str(path)}")
     if len(ckpts) > 1:
         raise ValueError(
-            f"Multiple DAV proxy checkpoints found at {str(path)}. "
-            "Please specify the checkpoint explicitly."
+            f"Multiple DAV proxy checkpoints found at {str(path)} "
+            + "Please specify the checkpoint explicitly."
         )
     return ckpts[0]
 
 
-def prepare_for_gfn(ckpt_path_dict, release, rescale_outputs, verbose=True):
+def prepare_for_gfn(
+    ckpt_path_dict={"mila": "/network/scratch/s/schmidtv/crystals-proxys/proxy-ckpts/"},
+    release=None,
+    rescale_outputs=None,
+    config_overrides={},
+    verbose=True,
+):
     """
     Loads a checkpoint and prepares it for use in the GFlowNet.
 
     Args:
         ckpt_path_dict (dict): Dictionary mapping cluster names to checkpoint paths.
-        rescale_outputs (bool): Whether to rescale the inputs and outputs of the model.
-            Inputs would be standardized and output would be rescaled to the original
-            scale.
+        rescale_outputs (bool): If you expect to use `scales` to (de-)standardize inputs
+            or outputs, set this to `True` and it will ensure that the scales are loaded
+            and valid. Otherwise, scales may be `None`.
+        config_overrides (dict, optional): Overrides for the config. Defaults to {}.
         verbose (bool, optional): . Defaults to True.
 
     Returns:
-        _type_: _description_
+        tuple: (
+            model: nn.Module,
+            proxy_loaders: dict[str, DataLoader],
+            scales: dict[str, dict[str, Tensor]]
+        )
     """
+
+    assert release is not None, "Must specify str release (received `None`)."
+    assert (
+        rescale_outputs is not None
+    ), "Must specify bool rescale_outputs (received `None`)."
+
     from dave.proxies.models import make_model
     from dave.utils.loaders import make_loaders
 
@@ -372,14 +396,30 @@ def prepare_for_gfn(ckpt_path_dict, release, rescale_outputs, verbose=True):
         print("  Making model...")
     # load the checkpoint
     ckpt_path = find_ckpt(ckpt_path_dict, release)
+
     ckpt = torch.load(str(ckpt_path), map_location="cpu")
     # extract config
     model_config = ckpt["hyper_parameters"]
+
+    if release.startswith("0."):
+        assert "matbench_mp_e_form" in model_config["src"], (
+            f"Asking for {release} which should correspond to a formation"
+            f" energy model but the model config src is {model_config['src']}"
+        )
+        print("    Loading Formation Energy model.")
+    elif release.startswith("1."):
+        assert "matbench_mp_gap" in model_config["src"], (
+            f"Asking for {release} which should correspond to a band gap"
+            f" model but the model config src is {model_config['src']}"
+        )
+        print("    Loading Band Gap model.")
+
     scales = model_config.get("scales")
     if rescale_outputs:
         assert scales is not None
         assert all(t in scales for t in ["x", "y"])
         assert all(u in scales[t] for t in ["x", "y"] for u in ["mean", "std"])
+    model_config = merge_dicts(model_config, config_overrides)
     # make model from ckpt config
     model = make_model(model_config)
     proxy_loaders = make_loaders(model_config)
@@ -392,12 +432,11 @@ def prepare_for_gfn(ckpt_path_dict, release, rescale_outputs, verbose=True):
             for k, v in ckpt["state_dict"].items()
         }
     )
-    assert hasattr(model, "pred_inp_size")
-    model.n_elements = 89  # TEMPORARY for release `v0-dev-embeddings`
-    assert hasattr(model, "n_elements")
     model.eval()
     if verbose:
         print("Proxy ready.")
+
+    model.loaded_config = model_config
 
     return model, proxy_loaders, scales
 
