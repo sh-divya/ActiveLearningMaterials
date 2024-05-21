@@ -33,11 +33,11 @@ from dave.utils.atoms_to_graph import (
 
 def parse_sample(data, target):
     parsed_data = []
-    elem_df = fetch_table("elements")	
-    all_elems = elem_df['symbol']
+    elem_df = fetch_table("elements")
+    all_elems = elem_df["symbol"]
 
     pat = re.compile("|".join(all_elems.tolist()))
-    
+
     for s, sample in data.iterrows():
         try:
             comp = sample["Formulae"]
@@ -57,7 +57,7 @@ def parse_sample(data, target):
         dix["alpha"] = sample["alpha"]
         dix["beta"] = sample["beta"]
         dix["gamma"] = sample["gamma"]
-        
+
         for e in all_elems:
             dix[e] = 0
         for e, f in zip(match, stoich):
@@ -68,8 +68,9 @@ def parse_sample(data, target):
             else:
                 dix[e] = float(f)
         parsed_data.append(dix)
-            
+
     return pd.DataFrame(parsed_data)
+
 
 def composition_df_to_z_tensor(comp_df, max_z=-1):
     """
@@ -108,7 +109,7 @@ class CrystalFeat(Dataset):
             "Band Gap",
             "Ionic conductivity (S cm-1)",
             "cif",
-            "DOI"
+            "DOI",
         ]
         self.root = root
         self.xtransform = scalex
@@ -348,12 +349,12 @@ class CrystalGraph(InMemoryDataset):
             datapoint.energy = data.y
             datapoint.struct = [data.struct]
             datapoint.lp = data.lp.unsqueeze(0)
-        
+
         if data.natoms != datapoint.natoms:
             print("Warning: natoms mismatch")
         # if not (data.atomic_numbers == datapoint.atomic_numbers).all():
         #     print("Warning: atomic_numbers mismatch")
-        
+
         # Consider a single pyxtal sample for now
         data = pyxtal_data_list[0]  # TODO
         return data

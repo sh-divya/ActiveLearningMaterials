@@ -27,7 +27,7 @@ def update_loaders(trainloader, valloader):
         batch_size=batch_size,
         num_workers=num_workers,
         pin_memory=True,
-        shuffle=False,
+        shuffle=True,
     )
 
     valloader = DataLoader(
@@ -91,7 +91,7 @@ def make_loaders(config):
             fa_method=config.get("fa_method"),
             return_pyxtal=config.get("return_pyxtal"),
             subset="val",
-        ) # TO ADAPT TO CROSS-VAL IF NEED BE
+        )  # TO ADAPT TO CROSS-VAL IF NEED BE
     else:
         load_class = DataLoader
         trainset = CrystalFeat(
@@ -131,7 +131,7 @@ def make_loaders(config):
         tr_loader = load_class(
             trainset,
             batch_size=config["optim"]["batch_size"],
-            shuffle=False,
+            shuffle=True,
             pin_memory=True,
             num_workers=config.get("num_workers", 0),
         )

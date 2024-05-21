@@ -6,6 +6,8 @@ from torchmetrics import MeanAbsoluteError, MeanSquaredError
 
 from dave.utils.gnn import preprocess_data
 
+# from dave.utils.transforms import init_transform, apply_transform
+
 
 class ProxyModule(pl.LightningModule):
     def __init__(self, proxy, loss, config):
@@ -25,8 +27,11 @@ class ProxyModule(pl.LightningModule):
         self.model_name = self.config["config"].split("-")[0]
         if self.model_name in ["fae", "faecry", "sch", "pyxtal_faenet"]:
             self.preproc_method = "graph"
+        # self.transforms = init_transform(config)
 
     def training_step(self, batch, batch_idx):
+        # _, ypre = batch
+        # batch = apply_transform(self.transforms, batch, 1)
         x, y = preprocess_data(batch, self.preproc_method)
         out = self.model(x, batch_idx).squeeze(-1)
         if self.model_name == "pyxtal_faenet":
@@ -34,6 +39,8 @@ class ProxyModule(pl.LightningModule):
         else:
             loss = self.criterion(out, y)
         mae = self.mae(out, y)
+        # _, y = apply_transform(self.transforms, (x, y), 0)
+        # _, out = apply_transform(self.transforms, (x, out), 0)
         mse = self.mse(out, y)
         lr = self.optimizers().param_groups[0]["lr"]
 
@@ -45,6 +52,8 @@ class ProxyModule(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
+        # _, ypre = batch
+        # batch = apply_transform(self.transforms, batch, 1)
         x, y = preprocess_data(batch, self.preproc_method)
         out = self.model(x, batch_idx).squeeze(-1)
         if self.model_name == "pyxtal_faenet":
@@ -52,6 +61,8 @@ class ProxyModule(pl.LightningModule):
         else:
             loss = self.criterion(out, y)
         mae = self.mae(out, y)
+        # _, ypre = apply_transform(self.transforms, (x, y), 0)
+        # _, out = apply_transform(self.transforms, (x, out), 0)
         mse = self.mse(out, y)
 
         self.log("val_loss", loss)
@@ -81,6 +92,7 @@ class ProxyModule(pl.LightningModule):
             print(f"\nBest MAE: {self.best_mae}\n")
 
     def test_step(self, batch, batch_idx):
+        # batch = apply_transform(self.transforms, batch, 1)
         if self.preproc_method == "graph":
             x = batch
         else:

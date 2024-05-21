@@ -102,16 +102,19 @@ def print_config(config: dict) -> None:
     """
     config = copy.deepcopy(config)
     for scale, scale_dict in config.get("scales", {}).items():
-        if "mean" in scale_dict:
-            if isinstance(scale_dict["mean"], torch.Tensor):
-                config["scales"][scale]["mean"] = "Tensor with shape " + str(
-                    scale_dict["mean"].shape
-                )
-        if "std" in scale_dict:
-            if isinstance(scale_dict["std"], torch.Tensor):
-                config["scales"][scale]["std"] = "Tensor with shape " + str(
-                    scale_dict["std"].shape
-                )
+        if isinstance(scale_dict, dict):
+            if "mean" in scale_dict:
+                if isinstance(scale_dict["mean"], torch.Tensor):
+                    config["scales"][scale]["mean"] = "Tensor with shape " + str(
+                        scale_dict["mean"].shape
+                    )
+            if "std" in scale_dict:
+                if isinstance(scale_dict["std"], torch.Tensor):
+                    config["scales"][scale]["std"] = "Tensor with shape " + str(
+                        scale_dict["std"].shape
+                    )
+            else:
+                config["scales"][scale] = f"Scaling values not specified for {scale}"
     print()
     print("#" * 50)
     print("#" * 50)
@@ -230,23 +233,24 @@ def load_scales(config):
     scales = {s: {} for s in config["scales"]}
 
     for scale, scale_conf in config["scales"].items():
-        if "load" in scale_conf:
-            if config.get("root"):
-                src = config["src"].replace("$root", config["root"])
-            else:
-                src = config["src"].replace("$root", str(ROOT))
-                if src.startswith("/"):
-                    src = resolve(src)
+        if isinstance(scale_conf, dict):
+            if "load" in scale_conf:
+                if config.get("root"):
+                    src = config["src"].replace("$root", config["root"])
                 else:
-                    src = ROOT / src
-            assert "mean" in scale_conf and "std" in scale_conf
-            if scale_conf["load"] == "torch":
-                scales[scale]["mean"] = torch.load(
-                    scale_conf["mean"].replace("$src", str(src))
-                )
-                scales[scale]["std"] = torch.load(
-                    scale_conf["std"].replace("$src", str(src))
-                )
+                    src = config["src"].replace("$root", str(ROOT))
+                    if src.startswith("/"):
+                        src = resolve(src)
+                    else:
+                        src = ROOT / src
+                assert "mean" in scale_conf and "std" in scale_conf
+                if scale_conf["load"] == "torch":
+                    scales[scale]["mean"] = torch.load(
+                        scale_conf["mean"].replace("$src", str(src))
+                    )
+                    scales[scale]["std"] = torch.load(
+                        scale_conf["std"].replace("$src", str(src))
+                    )
         else:
             scales[scale] = scale_conf
 
@@ -398,7 +402,10 @@ def prepare_for_gfn(
     if verbose:
         print("  Making model...")
     # load the checkpoint
-    ckpt_path = find_ckpt(ckpt_path_dict, release)
+    if isinstance(ckpt_path_dict, dict):
+        ckpt_path = find_ckpt(ckpt_path_dict, release)
+    else:
+        ckpt_path = Path(ckpt_path_dict)
 
     ckpt = torch.load(str(ckpt_path), map_location="cpu")
     # extract config
@@ -416,6 +423,11 @@ def prepare_for_gfn(
             f" model but the model config src is {model_config['src']}"
         )
         print("    Loading Band Gap model.")
+    elif release.startswith("2."):
+        assert "nrcc_ionic_conductivity" in model_config["src"], (
+            f"Asking for {release} which should correspond to an ionic-conductivity"
+            f" model but the model config src is {model_config['src']}"
+        )
 
     scales = model_config.get("scales")
     if rescale_outputs:
@@ -423,6 +435,7 @@ def prepare_for_gfn(
         assert all(t in scales for t in ["x", "y"])
         assert all(u in scales[t] for t in ["x", "y"] for u in ["mean", "std"])
     model_config = merge_dicts(model_config, config_overrides)
+    print(model_config)
     # make model from ckpt config
     model = make_model(model_config)
     proxy_loaders = make_loaders(model_config)

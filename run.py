@@ -8,7 +8,7 @@ from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.loggers.logger import DummyLogger
 
-from dave.proxies.models import make_model
+from dave.proxies.models import make_model, weights_init
 from dave.proxies.pl_modules import ProxyModule
 from dave.utils.callbacks import get_checkpoint_callback
 from dave.utils.loaders import make_loaders, update_loaders
@@ -37,43 +37,11 @@ if __name__ == "__main__":
         config["wandb_run_name"] = config["run_dir"].split("/")[-1]
 
     print_config(config)
-    if not config.get("debug"):
-        logger = WandbLogger(
-            project=config["wandb_project"],
-            name=config["wandb_run_name"],
-            entity=config["wandb_entity"],
-            notes=config["wandb_note"],
-            tags=config["wandb_tags"],
-        )
-        config["wandb_url"] = logger.experiment.url
-    else:
-        logger = DummyLogger()
-        print(
-            "\n🛑Debug mode: run dir was not created, checkpoints"
-            + " will not be saved, and no logger will be used\n"
-        )
 
     # create dataloaders and model
     loaders = make_loaders(config)
     model = make_model(config)
     crossval = int(config.get("crossval", 1))
-
-    # setup PL callbacks
-    callbacks = []
-    callbacks += [
-        EarlyStopping(
-            monitor="val_mae", patience=config["optim"]["es_patience"], mode="min"
-        )
-    ]
-    if not config.get("debug"):
-        callbacks += [
-            get_checkpoint_callback(
-                config["run_dir"],
-                logger,
-                monitor="total_val_mae",
-                mode=callbacks[0].mode,
-            )
-        ]
 
     # Make module
     criterion = nn.MSELoss()
@@ -81,38 +49,75 @@ if __name__ == "__main__":
         criterion = Pyxtal_loss()
     # device = "cuda" if torch.cuda.is_available() else "cpu"
     module = ProxyModule(model, criterion, config)  # .to(device)
-    epochs = config["optim"]["epochs"] if crossval == 1 else 1
 
-    # Make PL trainer
-    trainer = pl.Trainer(
-        max_epochs=epochs,
-        logger=logger,
-        log_every_n_steps=1,
-        callbacks=callbacks,
-        min_epochs=1,
-    )
-
-    # Start training
-    s = time.time()
-
-    if epochs > 1:
-        trainer.fit(
-                    model=module,
-                    train_dataloaders=loaders["train"],
-                    val_dataloaders=loaders["val"],
-                )
-    else:
-        epochs = config["optim"]["epochs"]
-        for _ in range(epochs):
-            trainer.fit(
-                model=module,
-                train_dataloaders=loaders["train"],
-                val_dataloaders=loaders["val"],
+    avg_best_mae = 0
+    for i in range(crossval):
+        # setup PL callbacks
+        if not config.get("debug"):
+            logger = WandbLogger(
+                project=config["wandb_project"],
+                name=f'{config["wandb_run_name"]}{str(i) if i > 0 else ""}',
+                entity=config["wandb_entity"],
+                notes=config["wandb_note"],
+                tags=config["wandb_tags"],
             )
-            if crossval > 1:
-                trainer.fit_loop.epoch_progress.reset_on_run()
-                loaders = update_loaders(loaders["train"], loaders["val"])
+            config["wandb_url"] = logger.experiment.url
+        else:
+            logger = DummyLogger()
+            print(
+                "\n🛑Debug mode: run dir was not created, checkpoints"
+                + " will not be saved, and no logger will be used\n"
+            )
+        callbacks = []
+        try:
+            if config["model"]["callback"]:
+                raise KeyError
+            else:
+                pass
+        except KeyError:
+            callbacks += [
+                EarlyStopping(
+                    monitor="val_mae",
+                    patience=config["optim"]["es_patience"],
+                    mode="min",
+                )
+            ]
+            if not config.get("debug"):
+                callbacks += [
+                    get_checkpoint_callback(
+                        config["run_dir"],
+                        logger,
+                        monitor="total_val_mae",
+                        mode=callbacks[0].mode,
+                    )
+                ]
 
+        # Make PL trainer
+        trainer = pl.Trainer(
+            max_epochs=config["optim"]["epochs"],
+            logger=logger,
+            log_every_n_steps=1,
+            callbacks=callbacks,
+            min_epochs=1,
+        )
+
+        # Start training
+        s = time.time()
+
+        trainer.fit(
+            model=module,
+            train_dataloaders=loaders["train"],
+            val_dataloaders=loaders["val"],
+        )
+        if crossval > 1:
+            avg_best_mae += module.best_mae
+            module.model.apply(weights_init)
+            loaders = update_loaders(loaders["train"], loaders["val"])
+            if i + 1 < crossval:
+                logger.experiment.finish()
+
+    if crossval > 1:
+        logger.experiment.summary["Avg Best MAE"] = avg_best_mae / crossval
     t = time.time() - s
 
     # Inference time
