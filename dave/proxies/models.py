@@ -23,6 +23,8 @@ def make_model(config):
             in_feat=config["model"]["input_len"],
             num_layers=config["model"]["num_layers"],
             hidden_channels=config["model"]["hidden_channels"],
+            drop=config["model"].get("drop", True),
+            norm=config["model"].get("norm", True),
             concat=config["model"]["concat"],
         )
         model.apply(weights_init)
@@ -166,11 +168,14 @@ class ProxyMLP(nn.Module):
             and lattice to the composition. Defaults to True.
     """
 
-    def __init__(self, in_feat, num_layers, hidden_channels, concat=True):
+    def __init__(
+        self, in_feat, num_layers, hidden_channels, drop=0.5, norm=True, concat=True
+    ):
         super(ProxyMLP, self).__init__()
         self.concat = concat
         self.hidden_act = nn.LeakyReLU(0.2)
-        self.dropout = nn.Dropout(p=0.5)
+        self.dropout = nn.Dropout(p=drop) if drop else False
+        self.norm = norm
         self.final_act = nn.Identity()  # nn.Tanh()
         if self.concat:
             in_feat += 7  # space group + lattice params
@@ -181,7 +186,11 @@ class ProxyMLP(nn.Module):
                 self.nn_layers.append(nn.Linear(in_feat, hidden_channels))
             else:
                 self.nn_layers.append(nn.Linear(hidden_channels, hidden_channels))
-            self.nn_layers.append(nn.BatchNorm1d(hidden_channels))
+            # self.nn_layers.append(nn.BatchNorm1d(hidden_channels))
+            if self.norm:
+                self.nn_layers.append(nn.BatchNorm1d(hidden_channels))
+            else:
+                continue
         if num_layers < 1:
             hidden_channels = in_feat
         self.nn_layers.append(nn.Linear(hidden_channels, 1))
@@ -197,8 +206,11 @@ class ProxyMLP(nn.Module):
             x = layer(x)
             if i == len(self.nn_layers) - 1:
                 x = self.final_act(x)
-            if i % 2 == 1:
-                x = self.hidden_act(x)
+            if self.norm:
+                if i % 2 == 0:
+                    continue
+            x = self.hidden_act(x)
+            if self.dropout:
                 x = self.dropout(x)
         return x
 
@@ -517,11 +529,14 @@ class Pyxtal_FAENet(nn.Module):
         self.frame_averaging = frame_averaging
         # TODO: REMOVE this two when FAENet package is updated
         self.faenet.embed_block.emb = nn.Embedding(
-            100, kwargs["hidden_channels"] - kwargs["phys_hidden_channels"] - 2 * kwargs["pg_hidden_channels"]
+            100,
+            kwargs["hidden_channels"]
+            - kwargs["phys_hidden_channels"]
+            - 2 * kwargs["pg_hidden_channels"],
         )
         # self.faenet.distance_expansion = GaussianSmearing(0.0, self.faenet.cutoff, self.faenet.num_gaussians)
         self.faenet.forward = self.faenet_forward
-    
+
     def faenet_forward(self, data, mode="train", preproc=True):
         """Main Forward pass.
 
@@ -541,7 +556,7 @@ class Pyxtal_FAENet(nn.Module):
         # predict energy
         preds = self.faenet.energy_forward(data, preproc)
 
-        # Predict atom positions 
+        # Predict atom positions
         preds["forces"] = self.faenet.forces_forward(preds)
 
         return preds

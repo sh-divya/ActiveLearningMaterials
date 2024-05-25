@@ -1,6 +1,7 @@
 import gzip
 import os
 import os.path as osp
+import re
 import sys
 import tempfile
 from pathlib import Path
@@ -13,6 +14,7 @@ import torch
 from faenet.transforms import FrameAveraging
 from mendeleev.fetch import fetch_table
 from pymatgen.core.structure import Structure
+from pymatgen.core import Composition
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pyxtal import pyxtal
 from pyxtal.lattice import Lattice
@@ -29,6 +31,49 @@ from dave.utils.atoms_to_graph import (
     pymatgen_structure_to_graph,
 )
 
+
+def parse_sample(data, target):
+    parsed_data = []
+    elem_df = fetch_table("elements")
+    all_elems = elem_df["symbol"]
+
+    pat = re.compile("|".join(all_elems.tolist()))
+
+    for s, sample in data.iterrows():
+        try:
+            comp = sample["Formulae"]
+            print(comp)
+        except KeyError:
+            comp = sample["Composition"]
+        # match = re.findall(pat, comp)
+        # stoich = re.split(pat, comp)[1:]
+        dix = {}
+        try:
+            dix["Space Group"] = sample["Space Group"]
+        except KeyError:
+            dix["Space Group"] = sample["Space group number"]
+        dix["a"] = sample["a"]
+        dix["b"] = sample["b"]
+        dix["c"] = sample["c"]
+        dix["alpha"] = sample["alpha"]
+        dix["beta"] = sample["beta"]
+        dix["gamma"] = sample["gamma"]
+
+        for e in all_elems:
+            dix[e] = 0
+        # for e, f in zip(match, stoich):
+        #     tmp = re.match(r"([a-z]+)([0-9]+)", f, re.I)
+        comp = Composition(comp).get_el_amt_dict()
+        for k, v in comp.items():
+            dix[k] = v
+            # if tmp:
+            #     items = tmp.groups()
+            #     dix[e + items[0]] = float(items[1])
+            # else:
+            #     dix[e] = float(f)
+        parsed_data.append(dix)
+    # type_dict = {d: float for d in float}
+    return pd.DataFrame(parsed_data)
 
 
 def composition_df_to_z_tensor(comp_df, max_z=-1):
@@ -47,7 +92,7 @@ def composition_df_to_z_tensor(comp_df, max_z=-1):
     z = np.zeros((len(comp_df), max_z + 1))
     for col in comp_df.columns:
         z[:, table.loc[col, "atomic_number"]] = comp_df[col].values
-    return torch.tensor(z, dtype=torch.int32)
+    return torch.tensor(z, dtype=torch.float32)
 
 
 class CrystalFeat(Dataset):
@@ -66,13 +111,16 @@ class CrystalFeat(Dataset):
             "energy_per_atom",
             "Eform",
             "Band Gap",
+            "Ionic conductivity (S cm-1)",
             "cif",
+            "DOI",
         ]
         self.root = root
         self.xtransform = scalex
         self.ytransform = scaley
         data_df = pd.read_csv(osp.join(csv_path, subset + "_data.csv"))
         self.y = torch.tensor(data_df[target].values, dtype=torch.float32)
+        data_df = parse_sample(data_df, target)
         sub_cols = [
             col for col in data_df.columns if col not in set(self.cols_of_interest)
         ]
@@ -305,12 +353,12 @@ class CrystalGraph(InMemoryDataset):
             datapoint.energy = data.y
             datapoint.struct = [data.struct]
             datapoint.lp = data.lp.unsqueeze(0)
-        
+
         if data.natoms != datapoint.natoms:
             print("Warning: natoms mismatch")
         # if not (data.atomic_numbers == datapoint.atomic_numbers).all():
         #     print("Warning: atomic_numbers mismatch")
-        
+
         # Consider a single pyxtal sample for now
         data = pyxtal_data_list[0]  # TODO
         return data
