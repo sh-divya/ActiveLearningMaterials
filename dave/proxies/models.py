@@ -209,7 +209,6 @@ class ProxyMLP(nn.Module):
             if self.norm:
                 if i % 2 == 0:
                     continue
-            # if i % 2 == 1:
             x = self.hidden_act(x)
             if self.dropout:
                 x = self.dropout(x)

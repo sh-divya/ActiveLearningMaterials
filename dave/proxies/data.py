@@ -14,6 +14,7 @@ import torch
 from faenet.transforms import FrameAveraging
 from mendeleev.fetch import fetch_table
 from pymatgen.core.structure import Structure
+from pymatgen.core import Composition
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pyxtal import pyxtal
 from pyxtal.lattice import Lattice
@@ -44,8 +45,8 @@ def parse_sample(data, target):
             print(comp)
         except KeyError:
             comp = sample["Composition"]
-        match = re.findall(pat, comp)
-        stoich = re.split(pat, comp)[1:]
+        # match = re.findall(pat, comp)
+        # stoich = re.split(pat, comp)[1:]
         dix = {}
         try:
             dix["Space Group"] = sample["Space Group"]
@@ -60,15 +61,18 @@ def parse_sample(data, target):
 
         for e in all_elems:
             dix[e] = 0
-        for e, f in zip(match, stoich):
-            tmp = re.match(r"([a-z]+)([0-9]+)", f, re.I)
-            if tmp:
-                items = tmp.groups()
-                dix[e + items[0]] = float(items[1])
-            else:
-                dix[e] = float(f)
+        # for e, f in zip(match, stoich):
+        #     tmp = re.match(r"([a-z]+)([0-9]+)", f, re.I)
+        comp = Composition(comp).get_el_amt_dict()
+        for k, v in comp.items():
+            dix[k] = v
+            # if tmp:
+            #     items = tmp.groups()
+            #     dix[e + items[0]] = float(items[1])
+            # else:
+            #     dix[e] = float(f)
         parsed_data.append(dix)
-
+    # type_dict = {d: float for d in float}
     return pd.DataFrame(parsed_data)
 
 
@@ -88,7 +92,7 @@ def composition_df_to_z_tensor(comp_df, max_z=-1):
     z = np.zeros((len(comp_df), max_z + 1))
     for col in comp_df.columns:
         z[:, table.loc[col, "atomic_number"]] = comp_df[col].values
-    return torch.tensor(z, dtype=torch.int32)
+    return torch.tensor(z, dtype=torch.float32)
 
 
 class CrystalFeat(Dataset):

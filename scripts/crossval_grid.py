@@ -1,13 +1,10 @@
 import warnings
-import sys
-import time
 from yaml import safe_load
 from pathlib import Path
 import subprocess
 import json
 from functools import partial
 
-import itertools
 import optuna
 
 warnings.filterwarnings("ignore", ".*does not have many workers.*")
@@ -25,9 +22,13 @@ def read_sweep(yptr):
 
 
 def objective(trial, cfg, cmd):
+    new_cfg = {}
     for k, v in cfg.items():
-        cfg[k] = trial.suggest_categorical(k, v)
-    for k, v in cfg.items():
+        if len(v) > 0:
+            new_cfg[k] = trial.suggest_categorical(k, v)
+        else:
+            new_cfg[k] = v[0]
+    for k, v in new_cfg.items():
         cmd = cmd + [f"--{k}={v}"]
     subprocess.call(cmd)
     wandb_run = BASE_PATH / "wandb" / "latest-run" / "files" / "wandb-summary.json"
@@ -36,9 +37,9 @@ def objective(trial, cfg, cmd):
 
 def run(sweep_yaml):
     prms, base_cmd = read_sweep(sweep_yaml)
-    cmd = ["python", str((BASE_PATH / "run.py").resolve())] + base_cmd[3:]
+    cmd = ["python", str((BASE_PATH / "run.py").resolve())] + base_cmd[3:-1]
     study = optuna.create_study(direction="minimize")
-    study.optimize(partial(objective, cfg=prms, cmd=cmd), n_trials=600, timeout=900)
+    study.optimize(partial(objective, cfg=prms, cmd=cmd), n_trials=600, timeout=9000)
     print("Number of finished trials: {}".format(len(study.trials)))
 
     print("Best trial:")
