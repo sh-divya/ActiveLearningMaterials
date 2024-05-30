@@ -3,45 +3,41 @@ import os.path as osp
 import numpy as np
 import pandas as pd
 import torch
+from pymatgen.core import Composition
 from mendeleev.fetch import fetch_table
 from torch.utils.data import Dataset
 import re
 
 def parse_sample(data, target):
     parsed_data = []
-    elem_df = fetch_table("elements")	
-    all_elems = elem_df['symbol']
+    elem_df = fetch_table("elements")
+    all_elems = elem_df["symbol"]
 
     pat = re.compile("|".join(all_elems.tolist()))
-    
+
     for s, sample in data.iterrows():
         try:
             comp = sample["Formulae"]
-            print(comp)
         except KeyError:
             comp = sample["Composition"]
-        match = re.findall(pat, comp)
-        stoich = re.split(pat, comp)[1:]
         dix = {}
-        dix["Space Group"] = sample["Space Group"]
+        try:
+            dix["Space Group"] = sample["Space Group"]
+        except KeyError:
+            dix["Space Group"] = sample["Space group number"]
         dix["a"] = sample["a"]
         dix["b"] = sample["b"]
         dix["c"] = sample["c"]
         dix["alpha"] = sample["alpha"]
         dix["beta"] = sample["beta"]
         dix["gamma"] = sample["gamma"]
-        
+
         for e in all_elems:
             dix[e] = 0
-        for e, f in zip(match, stoich):
-            tmp = re.match(r"([a-z]+)([0-9]+)", f, re.I)
-            if tmp:
-                items = tmp.groups()
-                dix[e + items[0]] = float(items[1])
-            else:
-                dix[e] = float(f)
+        comp = Composition(comp).get_el_amt_dict()
+        for k, v in comp.items():
+            dix[k] = v
         parsed_data.append(dix)
-            
     return pd.DataFrame(parsed_data)
 
 def composition_df_to_z_tensor(comp_df, max_z=-1):
