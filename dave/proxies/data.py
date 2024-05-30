@@ -4,6 +4,7 @@ import re
 import numpy as np
 import pandas as pd
 import torch
+from pymatgen.core import Composition
 from mendeleev.fetch import fetch_table
 from torch.utils.data import Dataset
 
@@ -20,8 +21,6 @@ def parse_sample(data, target):
             comp = sample["Formulae"]
         except KeyError:
             comp = sample["Composition"]
-        match = re.findall(pat, comp)
-        stoich = re.split(pat, comp)[1:]
         dix = {}
         try:
             dix["Space Group"] = sample["Space Group"]
@@ -36,15 +35,10 @@ def parse_sample(data, target):
 
         for e in all_elems:
             dix[e] = 0
-        for e, f in zip(match, stoich):
-            tmp = re.match(r"([a-z]+)([0-9]+)", f, re.I)
-            if tmp:
-                items = tmp.groups()
-                dix[e + items[0]] = float(items[1])
-            else:
-                dix[e] = float(f)
+        comp = Composition(comp).get_el_amt_dict()
+        for k, v in comp.items():
+            dix[k] = v
         parsed_data.append(dix)
-
     return pd.DataFrame(parsed_data)
 
 
