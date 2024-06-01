@@ -31,8 +31,8 @@ if __name__ == "__main__":
     data = CrystalFeat(csv, targets[args], subset="train")
     loader = DataLoader(data, batch_size=len(data))
     for x, y in loader:
-        m1 = x[-1].mean(dim=0)
-        s1 = x[-1].std(dim=0)
+        m1 = x[-2].mean(dim=0)
+        s1 = x[-2].std(dim=0)
         torch.save(m1, csv / "x.mean")
         torch.save(s1, csv / "x.std")
 
@@ -43,3 +43,4 @@ if __name__ == "__main__":
         print(x[0].shape)
         print(x[1].shape)
         print(x[2].shape)
+        print(x[3].shape)

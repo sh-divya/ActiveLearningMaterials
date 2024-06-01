@@ -160,6 +160,7 @@ class ProxyMLP(nn.Module):
         self.nn_layers.append(nn.Linear(hidden_channels, 1))
 
     def forward(self, x):
+        x, _ = x
         if self.concat:
             x[1] = x[1].unsqueeze(dim=-1)
             x = torch.cat(x, dim=-1)
@@ -236,7 +237,7 @@ class ProxyEmbeddingModel(nn.Module):
         self.register_buffer("alphabet", self._alphabet)
 
     def forward(self, x):
-        comp_x, sg_x, lat_x = x
+        comp_x, sg_x, lat_x, _ = x
         # comp_x -> batch_size x n_elements=89
         # sg_x -> batch_size, int
         # lat_x -> batch_size x 6
@@ -384,7 +385,7 @@ class ProxyGraphModel(nn.Module):
         return self.prediction_head(x)
 
 
-base = "/network/projects/crystalgfn/data/temporary_files/gflownet-dev-yamls"
+base = "/home/minion/Documents/proxies/crystallograpy/yaml"
 FILES = {
     "ps": str(Path(base) / "point_symmetries.yaml"),
     "cls": str(Path(base) / "crystal_lattice_systems.yaml"),

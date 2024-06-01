@@ -14,7 +14,7 @@ def parse_sample(data, target):
     elem_df = fetch_table("elements")
     all_elems = elem_df["symbol"]
 
-    pat = re.compile("|".join(all_elems.tolist()))
+    # pat = re.compile("|".join(all_elems.tolist()))
 
     for s, sample in data.iterrows():
         try:
@@ -32,7 +32,10 @@ def parse_sample(data, target):
         dix["alpha"] = sample["alpha"]
         dix["beta"] = sample["beta"]
         dix["gamma"] = sample["gamma"]
-
+        try:
+            dix["Wyckoff"] = sample["Wyckoff"]
+        except KeyError:
+            pass
         for e in all_elems:
             dix[e] = 0
         comp = Composition(comp).get_el_amt_dict()
@@ -61,6 +64,22 @@ def composition_df_to_z_tensor(comp_df, max_z=-1):
     return torch.tensor(z, dtype=torch.int32)
 
 
+def parse_wyckoff(wyckoff):
+    table = fetch_table("elements").loc[:, ["atomic_number", "symbol"]]
+    table = table.set_index("symbol")
+    new_wyck = []
+    wyckoff = wyckoff.split("-")
+    for item in wyckoff:
+        item = item.strip("()").split(",")
+        z = table.at[item[0], "atomic_number"]
+        w = int(item[1])
+        new_wyck.append([z, w])
+
+    for _ in range(1278 - len(wyckoff)):
+        new_wyck.append([0, 0])
+    return new_wyck
+
+
 class CrystalFeat(Dataset):
     def __init__(
         self, root, target, write=False, subset="train", scalex=False, scaley=False
@@ -80,6 +99,7 @@ class CrystalFeat(Dataset):
             "Ionic conductivity (S cm-1)",
             "cif",
             "DOI",
+            "Wyckoff",
         ]
         self.root = root
         self.xtransform = scalex
@@ -98,6 +118,10 @@ class CrystalFeat(Dataset):
             data_df[["a", "b", "c", "alpha", "beta", "gamma"]].values,
             dtype=torch.float32,
         )
+        try:
+            self.wyckoff = data_df["Wyckoff"]
+        except KeyError:
+            self.wyckoff = None
         # N x (max_z + 1) -> H is index 1
         self.composition = composition_df_to_z_tensor(data_df[sub_cols[H_index:]])
 
@@ -113,6 +137,12 @@ class CrystalFeat(Dataset):
         lat = self.lattice[idx]
         comp = self.composition[idx]
         target = self.y[idx]
+        if self.wyckoff is not None:
+            wyck = torch.tensor(
+                parse_wyckoff(self.wyckoff.iloc[idx]), dtype=torch.int32
+            )
+        else:
+            wyck = None
         if self.xtransform:
             lat = ((lat - self.xtransform["mean"]) / self.xtransform["std"]).to(
                 torch.float32
@@ -121,4 +151,4 @@ class CrystalFeat(Dataset):
             target = ((target - self.ytransform["mean"]) / self.ytransform["std"]).to(
                 torch.float32
             )
-        return (comp, sg, lat), target
+        return (comp, sg, lat, wyck), target
