@@ -46,6 +46,7 @@ def make_model(config):
             comp_phys_embeds=config["model"]["comp_phys_embeds"],
             alphabet=config["alphabet"],
             sg_encoder_config=config["model"].get("sg_encoder", {}),
+            wyckoff_config=config["model"].get("wyck_encoder", {}),
         )
         model.apply(weights_init)
         return model
@@ -160,10 +161,10 @@ class ProxyMLP(nn.Module):
         self.nn_layers.append(nn.Linear(hidden_channels, 1))
 
     def forward(self, x):
-        x, _ = x
+        # x, _ = x
         if self.concat:
             x[1] = x[1].unsqueeze(dim=-1)
-            x = torch.cat(x, dim=-1)
+            x = torch.cat(x[:, :3], dim=-1)
         for i, layer in enumerate(self.nn_layers):
             x = layer(x)
             if i == len(self.nn_layers) - 1:
@@ -189,6 +190,7 @@ class ProxyEmbeddingModel(nn.Module):
         sg_emb_size: int,
         alphabet: list = [],
         sg_encoder_config: dict = {},
+        wyckoff_config: dict = {},
     ):
         super().__init__()
         self.use_comp_phys_embeds = comp_phys_embeds["use"]
@@ -210,11 +212,45 @@ class ProxyEmbeddingModel(nn.Module):
 
         # Symmetry-based embeddings for space groups
         if sg_encoder_config.get("use"):
-            self.sg_emb = SpaceGroupEncoder(**sg_encoder_config)
+            if sg_encoder_config.get("sg_yaml"):
+                base = sg_encoder_config["sg_yaml"]
+                pointsymms = safe_load(open(str(Path(base) / "point_symmetries.yaml")))
+                cryslatsys = safe_load(
+                    open(str(Path(base) / "crystal_lattice_systems.yaml"))
+                )
+            else:
+                try:
+                    from crystallograpy import pointsymms, cryslatsys
+                except ImportError:
+                    print(
+                        "Please configure crystallograpy repo or pass the path to the relevant YAML files"
+                    )
+                    raise ImportError
+            # sg_encoder_config["sg_to_ps_dict"] = pointsymms
+            # sg_encoder_config["sg_to_cls_dict"] = cryslatsys
+            self.sg_emb = SpaceGroupEncoder(
+                **sg_encoder_config, sg_to_ps_dict=pointsymms, sg_to_cls_dict=cryslatsys
+            )
             sg_emb_size = self.sg_emb.output_size
         else:
             # basic space groups embedding
             self.sg_emb = nn.Embedding(231, sg_emb_size)
+
+        if wyckoff_config.get("use"):
+            self.use_wyck_embeds = wyckoff_config["use"]
+        else:
+            self.use_wyck_embeds = False
+            wyck_emb_size = 0
+
+        if self.use_wyck_embeds:
+            wyck_emb_size = wyckoff_config["wyck_embed_size"]
+            base = wyckoff_config.get("wyck_lm_yaml")
+            if base:
+                base = Path(base)
+                wyck_dix = safe_load(open(str(base / "wyckoff_lm_embeddings.yaml")))
+            else:
+                wyck_dix = {}
+            self.wyck_emb = WyckoffEncoder(wyck_emb_size, wyck_dix)
 
         # lattice parameters MLP
         self.lat_emb_mlp = mlp_from_layers(
@@ -222,7 +258,9 @@ class ProxyEmbeddingModel(nn.Module):
         )
 
         # compute full embedding size
-        self.pred_inp_size = comp_hidden_channels + sg_emb_size + lat_hidden_channels
+        self.pred_inp_size = (
+            comp_hidden_channels + wyck_emb_size + sg_emb_size + lat_hidden_channels
+        )
 
         # output MLP
         self.prediction_head = ProxyMLP(
@@ -237,7 +275,7 @@ class ProxyEmbeddingModel(nn.Module):
         self.register_buffer("alphabet", self._alphabet)
 
     def forward(self, x):
-        comp_x, sg_x, lat_x, _ = x
+        comp_x, sg_x, lat_x, wy_x = x
         # comp_x -> batch_size x n_elements=89
         # sg_x -> batch_size, int
         # lat_x -> batch_size x 6
@@ -259,6 +297,10 @@ class ProxyEmbeddingModel(nn.Module):
             comp_h = scatter(comp_x, batch_mask, dim=0, reduce="mean")
         else:
             comp_h = self.comp_emb_mlp(comp_x)
+
+        if self.use_wyck_embeds:
+            wy_h = self.wyck_emb(wy_x)
+            comp_h = torch.cat((comp_h, wy_h), dim=-1)
 
         # Process the space group
         sg_h = self.sg_emb(sg_x).squeeze(1)
@@ -385,13 +427,6 @@ class ProxyGraphModel(nn.Module):
         return self.prediction_head(x)
 
 
-base = "/home/minion/Documents/proxies/crystallograpy/yaml"
-FILES = {
-    "ps": str(Path(base) / "point_symmetries.yaml"),
-    "cls": str(Path(base) / "crystal_lattice_systems.yaml"),
-}
-
-
 class SpaceGroupEncoder(nn.Module):
     def __init__(
         self,
@@ -400,6 +435,8 @@ class SpaceGroupEncoder(nn.Module):
         space_group_size=16,
         point_symmetry_size=16,
         cl_system_size=16,
+        sg_to_ps_dict={},
+        sg_to_cls_dict={},
         **kwargs,
     ):
         """
@@ -462,7 +499,7 @@ class SpaceGroupEncoder(nn.Module):
         )
 
         # Make tensor that maps space groups to point symmetries
-        sg_to_ps_dict = safe_load(open(FILES["ps"]))
+        # sg_to_ps_dict = safe_load(open(FILES["ps"]))
         sg_to_ps_dict = {
             sg: ps for ps, psd in sg_to_ps_dict.items() for sg in psd["space_groups"]
         }
@@ -472,7 +509,7 @@ class SpaceGroupEncoder(nn.Module):
         self.register_buffer("sg_to_ps", sg_to_ps)
 
         # Make tensor that maps space groups to crystal lattice systems
-        sg_to_cls_dict = safe_load(open(FILES["cls"]))
+        # sg_to_cls_dict = safe_load(open(FILES["cls"]))
         sg_to_cls_dict = {
             sg: cls
             for cls, clsd in sg_to_cls_dict.items()
@@ -621,3 +658,33 @@ class SpaceGroupEncoder(nn.Module):
         if as_dict:
             return embeddings
         return torch.cat([h for h in embeddings.values() if h is not None], -1)
+
+
+class WyckoffEncoder(nn.Module):
+    def __init__(
+        self,
+        emb_size: int = 64,
+        wyckoff_dix: dict = {},
+    ):
+        super(WyckoffEncoder, self).__init__()
+        if wyckoff_dix:
+            pretrained = torch.zeros((64, 1))
+            for keys, values in wyckoff_dix.items():
+                embed = torch.FloatTensor(values["mean"]).unsqueeze(-1)
+                pretrained = torch.cat((pretrained, embed), dim=-1)
+            pretrained = pretrained.transpose(0, 1)
+            self.embedding_layer = nn.Embedding.from_pretrained(pretrained)
+        else:
+            self.embedding_layer = nn.Embedding(991, emb_size)
+
+    def forward(self, wyck_x):
+        wyck_i = wyck_x[:, -1]
+        wyck_h = self.embedding_layer(wyck_i)
+        return wyck_h.mean(dim=1)
+
+
+if __name__ == "__main__":
+    lm_path = Path("/home/minion/Documents/proxies/crystallograpy/crystallograpy/yaml")
+    lm_dix = safe_load(open(str(lm_path / "wyckoff_lm_embeddings.yaml")))
+    test = WyckoffEncoder(64, lm_dix)
+    print(test.embedding_layer.weight.data.shape)

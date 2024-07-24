@@ -14,12 +14,16 @@ model:
     properties_proj_size: 16
     n_elements: 90
   sg_encoder:
-    use: True # defaults to a simple Embedding(sg_emb_size) if this is False instead of SpaceGroupEncoder
+    use: False # defaults to a simple Embedding(sg_emb_size) if this is False instead of SpaceGroupEncoder
     symmetries_hiddens: [128, 16] # hidden layers of the symmetry vectors encoder
     symmetries_aggregation: "mean" # aggregation method for the symmetry vectors ; see SpaceGroupEncoder.aggregate_symmetry_embeddings
     space_group_size: 16 # embedding size of the space group's free embedding
     point_symmetry_size: 16 # embedding size of the space group's point symmetry's free embedding
     cl_system_size: 16 # embedding size of the space group's crystal lattice system's free embedding
+  wyck_encoder:
+    use: True
+    wyck_embed_size: 64
+    # wyck_lm_yaml: path to dir that contains wyckoff LM embeddings
 
 optim:
   batch_size: 196
