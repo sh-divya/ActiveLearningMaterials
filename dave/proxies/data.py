@@ -123,8 +123,6 @@ class CrystalFeat(Dataset):
             dtype=torch.float32,
         )
         try:
-            # data_df["Wyckoff"] = data_df["Wyckoff"].map(parse_wyckoff)
-            # print(data_df["Wyckoff"])
             self.wyckoff = torch.from_numpy(parse_wyckoff(data_df["Wyckoff"]))
         except KeyError:
             self.wyckoff = None
@@ -144,9 +142,6 @@ class CrystalFeat(Dataset):
         comp = self.composition[idx]
         target = self.y[idx]
         if self.wyckoff is not None:
-            # wyck = torch.tensor(
-            #     parse_wyckoff(self.wyckoff.iloc[idx]), dtype=torch.int32
-            # )
             wyck = self.wyckoff[idx]
         else:
             wyck = None

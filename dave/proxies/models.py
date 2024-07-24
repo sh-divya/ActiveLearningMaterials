@@ -681,10 +681,3 @@ class WyckoffEncoder(nn.Module):
         wyck_i = wyck_x[:, -1]
         wyck_h = self.embedding_layer(wyck_i)
         return wyck_h.mean(dim=1)
-
-
-if __name__ == "__main__":
-    lm_path = Path("/home/minion/Documents/proxies/crystallograpy/crystallograpy/yaml")
-    lm_dix = safe_load(open(str(lm_path / "wyckoff_lm_embeddings.yaml")))
-    test = WyckoffEncoder(64, lm_dix)
-    print(test.embedding_layer.weight.data.shape)
