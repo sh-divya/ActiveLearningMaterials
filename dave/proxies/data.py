@@ -67,17 +67,21 @@ def composition_df_to_z_tensor(comp_df, max_z=-1):
 def parse_wyckoff(wyckoff):
     table = fetch_table("elements").loc[:, ["atomic_number", "symbol"]]
     table = table.set_index("symbol")
-    new_wyck = []
-    wyckoff = wyckoff.split("-")
-    for item in wyckoff:
-        item = item.strip("()").split(",")
-        z = table.at[item[0], "atomic_number"]
-        w = int(item[1])
-        new_wyck.append([z, w])
+    all_wyck = []
+    for r, row in wyckoff.items():
+        new_wyck = []
+        parse_row = row.split("-")
+        for item in parse_row:
+            item = item.strip("()").split(",")
+            z = table.at[item[0], "atomic_number"]
+            w = int(item[1])
+            new_wyck.append((z, w))
 
-    for _ in range(1278 - len(wyckoff)):
-        new_wyck.append([0, 0])
-    return new_wyck
+        for _ in range(1278 - len(parse_row)):
+            new_wyck.append((0, 0))
+
+        all_wyck.append(np.array(new_wyck))
+    return np.stack(all_wyck, axis=0).astype(np.int32)
 
 
 class CrystalFeat(Dataset):
@@ -119,7 +123,7 @@ class CrystalFeat(Dataset):
             dtype=torch.float32,
         )
         try:
-            self.wyckoff = data_df["Wyckoff"]
+            self.wyckoff = torch.from_numpy(parse_wyckoff(data_df["Wyckoff"]))
         except KeyError:
             self.wyckoff = None
         # N x (max_z + 1) -> H is index 1
@@ -138,9 +142,7 @@ class CrystalFeat(Dataset):
         comp = self.composition[idx]
         target = self.y[idx]
         if self.wyckoff is not None:
-            wyck = torch.tensor(
-                parse_wyckoff(self.wyckoff.iloc[idx]), dtype=torch.int32
-            )
+            wyck = self.wyckoff[idx]
         else:
             wyck = None
         if self.xtransform:
