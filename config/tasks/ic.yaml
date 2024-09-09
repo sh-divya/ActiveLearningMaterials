@@ -1,5 +1,5 @@
 src: $root/nrcc_ionic_conductivity
-crossval: 5
+crossval: 3
 target: Ionic conductivity (S cm-1)
 scales:
   x:

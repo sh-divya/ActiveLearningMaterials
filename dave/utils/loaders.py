@@ -7,7 +7,7 @@ import torch
 from torch.utils.data import ConcatDataset, DataLoader, Subset, random_split
 from torch_geometric.loader import DataLoader as GraphLoader
 
-from dave.proxies.data import CrystalFeat, CrystalGraph
+from dave.proxies.data import CrystalFeat, CrystalGraph, CrystalMOD
 from dave.utils.misc import ROOT, resolve
 
 
@@ -62,7 +62,8 @@ def make_loaders(config):
         name = "matbench_mp_e_gap"
     elif data == "ic":
         name = "nrcc_ionic_conductivity"
-
+    elif data == "icmod":
+        name = "mod_feat"
     else:
         raise ValueError(f"Unknown config: {config['config']}")
 
@@ -92,6 +93,15 @@ def make_loaders(config):
             return_pyxtal=config.get("return_pyxtal"),
             subset="val",
         )  # TO ADAPT TO CROSS-VAL IF NEED BE
+    elif data in ["icmod"]:
+        load_class = DataLoader
+        trainset = CrystalMOD(
+            root=config["src"].replace("$root", str(data_root)),
+            target=config["target"],
+            subset="train",
+            scalex=config["scales"]["x"],
+            scaley=config["scales"]["y"],
+        )
     else:
         load_class = DataLoader
         trainset = CrystalFeat(

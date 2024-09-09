@@ -23,9 +23,10 @@ if __name__ == "__main__":
 
     task_path = BASE_PATH / "config/tasks"
     config = yaml.safe_load(open(str(task_path / f"{data}.yaml"), "r"))
+    config["root"] = data_path
     config = load_scales(config)
     if data_path:
-        root = config["src"].replace("$root/dave/proxies", data_path)
+        root = config["src"].replace("$root", data_path)
     else:
         root = config["src"].replace("$root", str(BASE_PATH))
     trainset = CrystalFeat(
@@ -51,8 +52,10 @@ if __name__ == "__main__":
             for loss in ["mae", "mse"]
         }
         for split in ["train", "val"]
+        # for split in ["train"]
     }
     loaders = {"train": trainloader, "val": valloader}
+    # loaders = {"train": trainloader}
     mae = nn.L1Loss(reduction="none")
     mse = nn.MSELoss(reduction="none")
     loss_funcs = {"mae": mae, "mse": mse}

@@ -20,7 +20,6 @@ from pyxtal import pyxtal
 from pyxtal.lattice import Lattice
 from torch.utils.data import DataLoader, Dataset
 from torch_geometric.data import Data, InMemoryDataset, download_url
-from torch_geometric.loader import DataLoader as GraphLoader
 from tqdm import tqdm
 
 from dave.utils.atoms_to_graph import (
@@ -37,16 +36,11 @@ def parse_sample(data, target):
     elem_df = fetch_table("elements")
     all_elems = elem_df["symbol"]
 
-    pat = re.compile("|".join(all_elems.tolist()))
-
     for s, sample in data.iterrows():
         try:
             comp = sample["Formulae"]
-            print(comp)
         except KeyError:
             comp = sample["Composition"]
-        # match = re.findall(pat, comp)
-        # stoich = re.split(pat, comp)[1:]
         dix = {}
         try:
             dix["Space Group"] = sample["Space Group"]
@@ -61,18 +55,10 @@ def parse_sample(data, target):
 
         for e in all_elems:
             dix[e] = 0
-        # for e, f in zip(match, stoich):
-        #     tmp = re.match(r"([a-z]+)([0-9]+)", f, re.I)
         comp = Composition(comp).get_el_amt_dict()
         for k, v in comp.items():
             dix[k] = v
-            # if tmp:
-            #     items = tmp.groups()
-            #     dix[e + items[0]] = float(items[1])
-            # else:
-            #     dix[e] = float(f)
         parsed_data.append(dix)
-    # type_dict = {d: float for d in float}
     return pd.DataFrame(parsed_data)
 
 
@@ -157,6 +143,73 @@ class CrystalFeat(Dataset):
             )
 
         return (comp, sg, lat), target
+
+
+class CrystalMOD(Dataset):
+    def __init__(
+        self, root, target, write=False, subset="train", scalex=False, scaley=False
+    ):
+        csv_path = root
+        self.subsets = {}
+        self.cols_of_interest = [
+            "id",
+            "material_id",
+            "heat_all",
+            "heat_ref",
+            "formation_energy_per_atom",
+            "band_gap",
+            "e_above_hull",
+            "energy_per_atom",
+            "Eform",
+            "Band Gap",
+            "Ionic conductivity (S cm-1)",
+            "cif",
+            "DOI",
+            "Space Group",
+            "a",
+            "b",
+            "c",
+            "alpha",
+            "beta",
+            "gamma",
+        ]
+        self.root = root
+        self.xtransform = scalex
+        self.ytransform = scaley
+        data_df = pd.read_csv(osp.join(csv_path, subset + "_data.csv"), index_col=0)
+        sub_cols = [
+            col for col in data_df.columns if col not in set(self.cols_of_interest)
+        ]
+        self.features = torch.tensor(data_df[sub_cols].values, dtype=torch.float32)
+        self.y = torch.tensor(data_df[target].values, dtype=torch.float32)
+        self.sg = torch.tensor(data_df["Space Group"].values, dtype=torch.int32)
+        # N x 6
+        self.lattice = torch.tensor(
+            data_df[["a", "b", "c", "alpha", "beta", "gamma"]].values,
+            dtype=torch.float32,
+        )
+
+    def __len__(self):
+        return self.sg.shape[0]
+
+    def __getitem__(self, idx):
+        sg = self.sg[idx]
+        lat = self.lattice[idx]
+        feat = self.features[idx]
+        target = self.y[idx]
+        if self.xtransform:
+            flen = feat.shape[-1]
+            ma, mb, mc = torch.tensor_split(self.xtransform["mean"], (flen, flen + 1), dim=-1)
+            sa, sb, sc = torch.tensor_split(self.xtransform["std"], (flen, flen + 1), dim=-1)
+            sg = ((sg - mb) / sb).to(torch.int32).squeeze(-1)
+            lat = ((lat - mc) / sc).to(torch.float32)
+            feat = ((feat - ma) / sa).to(torch.float32)
+        if self.ytransform:
+            target = ((target - self.ytransform["mean"]) / self.ytransform["std"]).to(
+                torch.float32
+            )
+
+        return (feat, sg, lat), target
 
 
 class CrystalGraph(InMemoryDataset):
@@ -362,3 +415,5 @@ class CrystalGraph(InMemoryDataset):
         # Consider a single pyxtal sample for now
         data = pyxtal_data_list[0]  # TODO
         return data
+
+

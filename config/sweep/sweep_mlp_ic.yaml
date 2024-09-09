@@ -1,0 +1,36 @@
+entity: sh-divya
+project: test
+program: run.py
+method: grid
+
+parameters:
+  model.hidden_channels:
+    values: [128, 196]
+  model.num_layers:
+    values: [2, 3]
+  model.callback:
+    values: [False]
+  model.drop:
+    values: [0.2]
+  model.norm:
+    values: [True]
+  optim.batch_size:
+    values: [128, 256, 344]
+  optim.lr:
+    values: [0.3, 0.1, 0.03, 0.01, 0.003]
+  optim.epochs:
+    values: [40, 50]
+  optim.scheduler.name:
+    values: ["StepLR", "ReduceLROnPlateau", ""] 
+
+
+command:
+  - ${env}
+  - ${interpreter}
+  - ${program}
+  - "--config=mlp-ic"
+  - "--wandb_entity=sh-divya"
+  - "--wandb_project=test"
+  - "--root=/home/minion/Downloads/ic_data"
+  - "--model.input_len=119"
+  - ${args}
