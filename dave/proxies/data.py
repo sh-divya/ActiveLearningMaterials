@@ -1,10 +1,6 @@
 import gzip
-import os
 import os.path as osp
-import sys
-import tempfile
 from pathlib import Path
-from typing import Any, Callable, List, Sequence
 
 import numpy as np
 import pandas as pd
@@ -12,23 +8,19 @@ import requests
 import torch
 from faenet.transforms import FrameAveraging
 from mendeleev.fetch import fetch_table
+from pymatgen.core import Composition
 from pymatgen.core.structure import Structure
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
-from pyxtal import pyxtal
-from pyxtal.lattice import Lattice
-from torch.utils.data import DataLoader, Dataset
-from torch_geometric.data import Data, InMemoryDataset, download_url
-from torch_geometric.loader import DataLoader as GraphLoader
+from torch.utils.data import Dataset
+from torch_geometric.data import InMemoryDataset, download_url
 from tqdm import tqdm
 
 from dave.utils.atoms_to_graph import (
-    collate,
     compute_neighbors,
     make_a2g,
     pymatgen_struct_to_pyxtal_to_graphs,
     pymatgen_structure_to_graph,
 )
-
 
 
 def composition_df_to_z_tensor(comp_df, max_z=-1):
