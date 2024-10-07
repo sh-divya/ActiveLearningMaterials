@@ -81,7 +81,9 @@ class CrystalFeat(Dataset):
 
         # To directly handle missing atomic numbers
         # missing_atoms = torch.zeros(x.shape[0], 5)
-        # self.composition = torch.cat((x[:, 8:92].to(torch.int32), missing_atoms, x[:, 92:]), dim=-1)
+        # self.composition = torch.cat(
+        #   (x[:, 8:92].to(torch.int32), missing_atoms, x[:, 92:]), dim=-1
+        # )
 
     def __len__(self):
         return self.sg.shape[0]
@@ -165,25 +167,19 @@ class CrystalGraph(InMemoryDataset):
         if self.name == "mp20":
             from dave.utils.cdvae_csv import write_data_csv
 
-            download_url(
-                f"https://raw.githubusercontent.com/txie-93/cdvae/main/data/mp_20/train.csv",
-                temp_raw,
-            )
-            download_url(
-                f"https://raw.githubusercontent.com/txie-93/cdvae/main/data/mp_20/val.csv",
-                temp_raw,
-            )
-            download_url(
-                f"https://raw.githubusercontent.com/txie-93/cdvae/main/data/mp_20/test.csv",
-                temp_raw,
-            )
+            base_url = "https://raw.githubusercontent.com/txie-93/cdvae/main/data/mp_20"
+            download_url(f"{base_url}/train.csv", temp_raw)
+            download_url(f"{base_url}/val.csv", temp_raw)
+            download_url(f"{base_url}/test.csv", temp_raw)
             write_data_csv(self.raw_dir)
+
         if self.name == "matbench_mp_e_form":
             from dave.utils.mb_data_process import base_split, base_write_dataset_csv
 
             json_file = raw_parent / "matbench_mp_e_form.json"
             if not json_file.is_file():
-                json_url = "https://ml.materialsproject.org/projects/matbench_mp_e_form.json.gz"
+                base_url = "https://ml.materialsproject.org/projects"
+                json_url = f"{base_url}/matbench_mp_e_form.json.gz"
                 print("Downloading from " + json_url)
                 with open(str(json_file), "wb") as j:
                     r = requests.get(json_url)
@@ -297,12 +293,12 @@ class CrystalGraph(InMemoryDataset):
             datapoint.energy = data.y
             datapoint.struct = [data.struct]
             datapoint.lp = data.lp.unsqueeze(0)
-        
+
         if data.natoms != datapoint.natoms:
             print("Warning: natoms mismatch")
         # if not (data.atomic_numbers == datapoint.atomic_numbers).all():
         #     print("Warning: atomic_numbers mismatch")
-        
+
         # Consider a single pyxtal sample for now
         data = pyxtal_data_list[0]  # TODO
         return data
