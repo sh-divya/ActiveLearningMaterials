@@ -42,6 +42,53 @@ def composition_df_to_z_tensor(comp_df, max_z=-1):
     return torch.tensor(z, dtype=torch.int32)
 
 
+def formulae_to_z_tensor(formulae, max_z=-1):
+    """
+    Transforms a list of formulae to a complete tensor with composition.
+
+    Note that the atomic number of the elements is used as the index in the
+    tensor.
+
+    Example:
+
+    .. code-block:: python
+
+        >>> formulae = ["H2O", "Li2O"]
+        >>> formulae_to_z_tensor(formulae)
+        tensor([[0., 2., 0., 0., 0., 0., 0., 0., 1.],
+                [0., 0., 0., 2., 0., 0., 0., 0., 1.]])
+
+    Args:
+        formulae (list): List of formulae
+        max_z (int, optional): Maximum atomic number in the data set. Defaults
+            to -1, which will be inferred from the formulae.
+
+    Raises:
+        AssertionError: If the maximum atomic number in the data is greater than
+            the provided ``max_z``.
+
+    Returns
+        torch.Tensor: An ``int32`` tensor with the composition of the formulae of shape
+            (n_formulae, max_z + 1).
+    """
+    table = fetch_table("elements").loc[:, ["atomic_number", "symbol"]]
+    table = table.set_index("symbol")
+    compositions = [Composition(f).as_dict() for f in formulae]
+    elements = list(set([el for comp in compositions for el in comp.keys()]))
+    max_z_data = table.loc[elements, "atomic_number"].max()
+    if max_z == -1:
+        max_z = max_z_data
+    else:
+        assert (
+            max_z >= max_z_data
+        ), "max_z is smaller than the maximum atomic number in the data"
+    comp_tensor = torch.zeros(len(formulae), max_z + 1)
+    for idx, comp in enumerate(compositions):
+        for el, amt in comp.items():
+            comp_tensor[idx, table.loc[el, "atomic_number"]] = amt
+    return comp_tensor.to(torch.int32)
+
+
 class CrystalFeat(Dataset):
     def __init__(
         self, root, target, write=False, subset="train", scalex=False, scaley=False
@@ -65,10 +112,16 @@ class CrystalFeat(Dataset):
         self.ytransform = scaley
         data_df = pd.read_csv(osp.join(csv_path, subset + "_data.csv"))
         self.y = torch.tensor(data_df[target].values, dtype=torch.float32)
-        sub_cols = [
-            col for col in data_df.columns if col not in set(self.cols_of_interest)
-        ]
-        H_index = sub_cols.index("H")  # should be 8
+        if "Formulae" in data_df.columns:
+            # N x (max_z + 1) -> H is index 1
+            self.composition = formulae_to_z_tensor(data_df["Formulae"].values)
+        else:
+            sub_cols = [
+                col for col in data_df.columns if col not in set(self.cols_of_interest)
+            ]
+            H_index = sub_cols.index("H")  # should be 8
+            # N x (max_z + 1) -> H is index 1
+            self.composition = composition_df_to_z_tensor(data_df[sub_cols[H_index:]])
         # N
         self.sg = torch.tensor(data_df["Space Group"].values, dtype=torch.int32)
         # N x 6
@@ -76,8 +129,6 @@ class CrystalFeat(Dataset):
             data_df[["a", "b", "c", "alpha", "beta", "gamma"]].values,
             dtype=torch.float32,
         )
-        # N x (max_z + 1) -> H is index 1
-        self.composition = composition_df_to_z_tensor(data_df[sub_cols[H_index:]])
 
         # To directly handle missing atomic numbers
         # missing_atoms = torch.zeros(x.shape[0], 5)
