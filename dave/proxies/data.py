@@ -1,10 +1,6 @@
 import gzip
-import os
 import os.path as osp
-import sys
-import tempfile
 from pathlib import Path
-from typing import Any, Callable, List, Sequence
 
 import numpy as np
 import pandas as pd
@@ -12,23 +8,19 @@ import requests
 import torch
 from faenet.transforms import FrameAveraging
 from mendeleev.fetch import fetch_table
+from pymatgen.core import Composition
 from pymatgen.core.structure import Structure
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
-from pyxtal import pyxtal
-from pyxtal.lattice import Lattice
-from torch.utils.data import DataLoader, Dataset
-from torch_geometric.data import Data, InMemoryDataset, download_url
-from torch_geometric.loader import DataLoader as GraphLoader
+from torch.utils.data import Dataset
+from torch_geometric.data import InMemoryDataset, download_url
 from tqdm import tqdm
 
 from dave.utils.atoms_to_graph import (
-    collate,
     compute_neighbors,
     make_a2g,
     pymatgen_struct_to_pyxtal_to_graphs,
     pymatgen_structure_to_graph,
 )
-
 
 
 def composition_df_to_z_tensor(comp_df, max_z=-1):
@@ -48,6 +40,53 @@ def composition_df_to_z_tensor(comp_df, max_z=-1):
     for col in comp_df.columns:
         z[:, table.loc[col, "atomic_number"]] = comp_df[col].values
     return torch.tensor(z, dtype=torch.int32)
+
+
+def formulae_to_z_tensor(formulae, max_z=-1):
+    """
+    Transforms a list of formulae to a complete tensor with composition.
+
+    Note that the atomic number of the elements is used as the index in the
+    tensor.
+
+    Example:
+
+    .. code-block:: python
+
+        >>> formulae = ["H2O", "Li2O"]
+        >>> formulae_to_z_tensor(formulae)
+        tensor([[0., 2., 0., 0., 0., 0., 0., 0., 1.],
+                [0., 0., 0., 2., 0., 0., 0., 0., 1.]])
+
+    Args:
+        formulae (list): List of formulae
+        max_z (int, optional): Maximum atomic number in the data set. Defaults
+            to -1, which will be inferred from the formulae.
+
+    Raises:
+        AssertionError: If the maximum atomic number in the data is greater than
+            the provided ``max_z``.
+
+    Returns
+        torch.Tensor: An ``int32`` tensor with the composition of the formulae of shape
+            (n_formulae, max_z + 1).
+    """
+    table = fetch_table("elements").loc[:, ["atomic_number", "symbol"]]
+    table = table.set_index("symbol")
+    compositions = [Composition(f).as_dict() for f in formulae]
+    elements = list(set([el for comp in compositions for el in comp.keys()]))
+    max_z_data = table.loc[elements, "atomic_number"].max()
+    if max_z == -1:
+        max_z = max_z_data
+    else:
+        assert (
+            max_z >= max_z_data
+        ), "max_z is smaller than the maximum atomic number in the data"
+    comp_tensor = torch.zeros(len(formulae), max_z + 1)
+    for idx, comp in enumerate(compositions):
+        for el, amt in comp.items():
+            comp_tensor[idx, table.loc[el, "atomic_number"]] = amt
+    return comp_tensor.to(torch.int32)
 
 
 class CrystalFeat(Dataset):
@@ -73,10 +112,16 @@ class CrystalFeat(Dataset):
         self.ytransform = scaley
         data_df = pd.read_csv(osp.join(csv_path, subset + "_data.csv"))
         self.y = torch.tensor(data_df[target].values, dtype=torch.float32)
-        sub_cols = [
-            col for col in data_df.columns if col not in set(self.cols_of_interest)
-        ]
-        H_index = sub_cols.index("H")  # should be 8
+        if "Formulae" in data_df.columns:
+            # N x (max_z + 1) -> H is index 1
+            self.composition = formulae_to_z_tensor(data_df["Formulae"].values)
+        else:
+            sub_cols = [
+                col for col in data_df.columns if col not in set(self.cols_of_interest)
+            ]
+            H_index = sub_cols.index("H")  # should be 8
+            # N x (max_z + 1) -> H is index 1
+            self.composition = composition_df_to_z_tensor(data_df[sub_cols[H_index:]])
         # N
         self.sg = torch.tensor(data_df["Space Group"].values, dtype=torch.int32)
         # N x 6
@@ -84,12 +129,12 @@ class CrystalFeat(Dataset):
             data_df[["a", "b", "c", "alpha", "beta", "gamma"]].values,
             dtype=torch.float32,
         )
-        # N x (max_z + 1) -> H is index 1
-        self.composition = composition_df_to_z_tensor(data_df[sub_cols[H_index:]])
 
         # To directly handle missing atomic numbers
         # missing_atoms = torch.zeros(x.shape[0], 5)
-        # self.composition = torch.cat((x[:, 8:92].to(torch.int32), missing_atoms, x[:, 92:]), dim=-1)
+        # self.composition = torch.cat(
+        #   (x[:, 8:92].to(torch.int32), missing_atoms, x[:, 92:]), dim=-1
+        # )
 
     def __len__(self):
         return self.sg.shape[0]
@@ -173,25 +218,19 @@ class CrystalGraph(InMemoryDataset):
         if self.name == "mp20":
             from dave.utils.cdvae_csv import write_data_csv
 
-            download_url(
-                f"https://raw.githubusercontent.com/txie-93/cdvae/main/data/mp_20/train.csv",
-                temp_raw,
-            )
-            download_url(
-                f"https://raw.githubusercontent.com/txie-93/cdvae/main/data/mp_20/val.csv",
-                temp_raw,
-            )
-            download_url(
-                f"https://raw.githubusercontent.com/txie-93/cdvae/main/data/mp_20/test.csv",
-                temp_raw,
-            )
+            base_url = "https://raw.githubusercontent.com/txie-93/cdvae/main/data/mp_20"
+            download_url(f"{base_url}/train.csv", temp_raw)
+            download_url(f"{base_url}/val.csv", temp_raw)
+            download_url(f"{base_url}/test.csv", temp_raw)
             write_data_csv(self.raw_dir)
+
         if self.name == "matbench_mp_e_form":
             from dave.utils.mb_data_process import base_split, base_write_dataset_csv
 
             json_file = raw_parent / "matbench_mp_e_form.json"
             if not json_file.is_file():
-                json_url = "https://ml.materialsproject.org/projects/matbench_mp_e_form.json.gz"
+                base_url = "https://ml.materialsproject.org/projects"
+                json_url = f"{base_url}/matbench_mp_e_form.json.gz"
                 print("Downloading from " + json_url)
                 with open(str(json_file), "wb") as j:
                     r = requests.get(json_url)
@@ -305,12 +344,12 @@ class CrystalGraph(InMemoryDataset):
             datapoint.energy = data.y
             datapoint.struct = [data.struct]
             datapoint.lp = data.lp.unsqueeze(0)
-        
+
         if data.natoms != datapoint.natoms:
             print("Warning: natoms mismatch")
         # if not (data.atomic_numbers == datapoint.atomic_numbers).all():
         #     print("Warning: atomic_numbers mismatch")
-        
+
         # Consider a single pyxtal sample for now
         data = pyxtal_data_list[0]  # TODO
         return data

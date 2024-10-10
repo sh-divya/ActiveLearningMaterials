@@ -223,6 +223,12 @@ def merge_dicts(dict1: dict, dict2: dict, resolve_lists=None) -> dict:
     return return_dict
 
 
+def raise_if_file_not_found(path, type, config):
+    if not Path(path).exists():
+        conf_str = f"Config:\n{dump(config, default_flow_style=None)}"
+        raise FileNotFoundError(f"Could not load {type} from {path}. {conf_str}")
+
+
 def load_scales(config):
     if "scales" not in config:
         return config
@@ -236,14 +242,18 @@ def load_scales(config):
                 src = resolve(src)
             else:
                 src = ROOT / src
+
             assert "mean" in scale_conf and "std" in scale_conf
+
             if scale_conf["load"] == "torch":
-                scales[scale]["mean"] = torch.load(
-                    scale_conf["mean"].replace("$src", str(src))
-                )
-                scales[scale]["std"] = torch.load(
-                    scale_conf["std"].replace("$src", str(src))
-                )
+                mean_path = scale_conf["mean"].replace("$src", str(src))
+                std_path = scale_conf["std"].replace("$src", str(src))
+
+                raise_if_file_not_found(mean_path, "mean scale", config)
+                raise_if_file_not_found(std_path, "std scale", config)
+
+                scales[scale]["mean"] = torch.load(mean_path)
+                scales[scale]["std"] = torch.load(std_path)
         else:
             scales[scale] = scale_conf
 
