@@ -26,6 +26,7 @@ class ProxyModule(pl.LightningModule):
         self.active_logger = config.get("debug") is None
         self.preproc_method = False
 
+
     def training_step(self, batch, batch_idx):
         x, y = preprocess_data(batch, self.preproc_method)
         out = self.model(x, batch_idx).squeeze(-1)

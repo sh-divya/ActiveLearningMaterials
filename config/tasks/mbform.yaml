@@ -1,4 +1,4 @@
-root: /network/scratch/d/divya.sharma/crystals/data/materials_dataset_v3/
+root: /network/scratch/d/divya.sharma/crystals/data/materials_dataset_v4/
 src: $root/data/matbench_mp_e_form
 target: Eform
 scales:
